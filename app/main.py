@@ -1,15 +1,15 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
+from datetime import datetime
 
 from app.api.api import api_router
 from app.core.config import settings
+from app.core.database import create_tables
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
     description="AI 윤리게임 백엔드 API",
-    version="0.1.0",
-    openapi_url=f"{settings.API_V1_STR}/openapi.json"
+    version="0.1.0"
 )
 
 # CORS 설정
@@ -21,15 +21,26 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# API 라우터 포함
-app.include_router(api_router, prefix=settings.API_V1_STR)
+# API 라우터 포함 (prefix 없이)
+app.include_router(api_router)
 
-# 정적 파일 서빙 (음성 파일 등)
-app.mount("/static", StaticFiles(directory="static"), name="static")
+@app.on_event("startup")
+async def startup_event():
+    # 데이터베이스 테이블 생성
+    await create_tables()
 
 @app.get("/")
 async def root():
-    return {"message": "AI 윤리게임 API에 오신 것을 환영합니다!"}
+    return {"message": "AI 윤리게임에 오신 것을 환영합니다!"}
+
+@app.get("/health")
+async def health_check():
+    """헬스 체크 엔드포인트"""
+    return {
+        "status": "healthy",
+        "timestamp": datetime.utcnow().isoformat(),
+        "service": "ai-ethics-game-backend"
+    }
 
 if __name__ == "__main__":
     import uvicorn

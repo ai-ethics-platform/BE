@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  # PostgreSQL 데이터베이스
+  postgres:
+    image: postgres:15
+    container_name: ai_ethics_postgres
+    environment:
+      POSTGRES_DB: ai_ethics_db
+      POSTGRES_USER: ai_ethics_user
+      POSTGRES_PASSWORD: ai_ethics_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - ai_ethics_network
+
+  # Redis (WebSocket 세션 관리용)
+  redis:
+    image: redis:7-alpine
+    container_name: ai_ethics_redis
+    ports:
+      - "6379:6379"
+    networks:
+      - ai_ethics_network
+
+  # FastAPI 애플리케이션
+  backend:
+    build: .
+    container_name: ai_ethics_backend
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://ai_ethics_user:ai_ethics_password@postgres:5432/ai_ethics_db
+      - REDIS_URL=redis://redis:6379
+      - SECRET_KEY=your-secret-key-here
+      - ACCESS_TOKEN_EXPIRE_MINUTES=30
+      - ALGORITHM=HS256
+    volumes:
+      - ./recordings:/app/recordings
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - ai_ethics_network
+    restart: unless-stopped
+
+  # Nginx 리버스 프록시
+  nginx:
+    image: nginx:alpine
+    container_name: ai_ethics_nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./ssl:/etc/nginx/ssl
+    depends_on:
+      - backend
+    networks:
+      - ai_ethics_network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  ai_ethics_network:
+    driver: bridge 

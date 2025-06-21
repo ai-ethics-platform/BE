@@ -1,7 +1,5 @@
 from datetime import datetime
-from typing import List, Optional
-
-from sqlalchemy import Boolean, Column, DateTime, Enum, ForeignKey, Integer, String, Table
+from sqlalchemy import Boolean, Column, DateTime, Integer, String
 from sqlalchemy.orm import relationship
 
 from app.db.base_class import Base
@@ -11,13 +9,13 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
-    username = Column(String, unique=True, index=True)
-    email = Column(String, unique=True, index=True)
-    hashed_password = Column(String)
-    birthdate = Column(String)  # 형식: YYYY/MM/DD
-    gender = Column(String)  # 남/녀/기타
-    education_level = Column(String)  # 초등학생/중학생/고등학생/대학생/대학원생/직장인/기타
-    major = Column(String, nullable=True)  # 전공 (해당하는 경우)
+    username = Column(String(50), unique=True, index=True, nullable=False)
+    email = Column(String(100), unique=True, index=True, nullable=False)
+    hashed_password = Column(String(100), nullable=False)
+    birthdate = Column(String(7), nullable=False)  # YYYY/MM 형식으로 변경
+    gender = Column(String(10), nullable=False)  # "남", "여", "기타"
+    education_level = Column(String(50), nullable=False)  # "고등학생", "대학생", "대학원생", "직장인", "기타"
+    major = Column(String(50), nullable=False)  # "인문계열", "사회계열", "자연계열", "공학계열", "예술계열", "기타"
     
     is_active = Column(Boolean, default=True)
     is_guest = Column(Boolean, default=False)
@@ -29,11 +27,7 @@ class User(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    # 관계 설정
-    rooms = relationship("Room", back_populates="creator")
-    game_sessions = relationship("GameSession", back_populates="user")
-    audio_files = relationship("AudioFile", back_populates="user")
-    
-    # 사용자 통계
-    games_played = Column(Integer, default=0)
-    maps_unlocked = Column(Integer, default=0) 
+    # Relationships
+    created_rooms = relationship("Room", back_populates="creator")
+    room_participations = relationship("RoomParticipant", back_populates="user")
+    voice_participations = relationship("VoiceParticipant", back_populates="user") 

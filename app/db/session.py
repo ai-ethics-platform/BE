@@ -1,5 +1,4 @@
-from sqlalchemy import create_engine
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 
 from app.core.config import settings
@@ -13,13 +12,17 @@ ASYNC_SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace(
 # 비동기 엔진 생성
 engine = create_async_engine(
     ASYNC_SQLALCHEMY_DATABASE_URL,
-    echo=True,
-    future=True,
+    pool_pre_ping=True,
+    echo=True
 )
 
 # 비동기 세션 생성
-AsyncSessionLocal = sessionmaker(
-    engine, class_=AsyncSession, expire_on_commit=False
+SessionLocal = sessionmaker(
+    engine,
+    class_=AsyncSession,
+    expire_on_commit=False,
+    autocommit=False,
+    autoflush=False
 )
 
 
@@ -27,7 +30,7 @@ async def get_db() -> AsyncSession:
     """
     의존성 주입을 위한 데이터베이스 세션 제공 함수
     """
-    async with AsyncSessionLocal() as session:
+    async with SessionLocal() as session:
         try:
             yield session
         finally:

@@ -1,72 +1,116 @@
-from typing import Generator, Optional
-
-from fastapi import Depends, HTTPException, status, WebSocket
+from typing import Generator, Optional, Union
+from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt
-from jose.exceptions import JWTError
 from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 
 from app import models, schemas
 from app.core import security
 from app.core.config import settings
-from app.db.session import get_db
-from app.services import user_service
+from app.db.session import SessionLocal
 
-# OAuth2 토큰 URL 설정
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login", auto_error=False)
+
+
+async def get_db() -> Generator:
+    """
+    데이터베이스 세션 의존성
+    """
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        await db.close()
 
 
 async def get_current_user(
     db: AsyncSession = Depends(get_db),
-    token: str = Depends(oauth2_scheme),
+    token: str = Depends(oauth2_scheme)
 ) -> models.User:
     """
-    현재 인증된 사용자 가져오기
+    현재 인증된 사용자 정보 조회
     """
-    try:
-        # JWT 토큰 디코딩
-        payload = jwt.decode(
-            token, settings.SECRET_KEY, algorithms=[security.ALGORITHM]
-        )
-        token_data = schemas.TokenPayload(**payload)
-    except (JWTError, ValidationError):
+    if not token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="유효하지 않은 인증 정보",
+            detail="Not authenticated",
             headers={"WWW-Authenticate": "Bearer"},
         )
     
-    # 사용자 정보 조회
-    user = await user_service.get(id=token_data.sub)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="사용자를 찾을 수 없습니다",
-        )
-    
-    return user
-
-
-async def get_current_user_ws(token: str) -> Optional[models.User]:
-    """
-    웹소켓 연결용 사용자 인증
-    """
-    if not token:
-        return None
-    
     try:
-        # JWT 토큰 디코딩
         payload = jwt.decode(
             token, settings.SECRET_KEY, algorithms=[security.ALGORITHM]
         )
         token_data = schemas.TokenPayload(**payload)
-    except (JWTError, ValidationError):
-        return None
+    except (jwt.JWTError, ValidationError):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Could not validate credentials",
+        )
     
-    # 사용자 정보 조회
-    user = await user_service.get(id=token_data.sub)
+    result = await db.execute(
+        select(models.User).where(models.User.id == token_data.sub)
+    )
+    user = result.scalar_one_or_none()
+    
     if not user:
-        return None
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
+
+
+async def get_current_active_user(
+    current_user: models.User = Depends(get_current_user),
+) -> models.User:
+    """
+    현재 활성화된 사용자 정보 조회
+    """
+    if not current_user.is_active:
+        raise HTTPException(status_code=400, detail="Inactive user")
+    return current_user
+
+
+async def get_current_user_or_guest(
+    db: AsyncSession = Depends(get_db),
+    token: str = Depends(oauth2_scheme)
+) -> Union[models.User, dict]:
+    """
+    현재 사용자 또는 게스트 정보 조회
+    일반 사용자면 User 모델을 반환하고, 게스트면 dict를 반환
+    """
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     
-    return user 
+    try:
+        payload = jwt.decode(
+            token, settings.SECRET_KEY, algorithms=[security.ALGORITHM]
+        )
+        
+        # 게스트 토큰인지 확인
+        if payload.get("type") == "guest":
+            return {
+                "guest_id": payload.get("guest_id"),
+                "type": "guest"
+            }
+        
+        # 일반 사용자 토큰
+        token_data = schemas.TokenPayload(**payload)
+        result = await db.execute(
+            select(models.User).where(models.User.id == token_data.sub)
+        )
+        user = result.scalar_one_or_none()
+        
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        return user
+        
+    except (jwt.JWTError, ValidationError):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Could not validate credentials",
+        ) 

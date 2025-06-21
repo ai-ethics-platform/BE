@@ -1,3 +1,5 @@
 from app.models.user import User
-from app.models.game import Room, Map, GameSession, room_participants
-from app.models.audio import AudioFile, Transcription, AIAnalysis 
+from app.models.room import Room, RoomParticipant
+from app.models.voice import VoiceSession, VoiceParticipant, VoiceRecording
+
+__all__ = ["User", "Room", "RoomParticipant", "VoiceSession", "VoiceParticipant", "VoiceRecording"] 

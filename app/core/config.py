@@ -1,14 +1,13 @@
 import secrets
 from typing import Any, Dict, List, Optional, Union
 
-from pydantic import AnyHttpUrl, PostgresDsn, field_validator
+from pydantic import AnyHttpUrl, field_validator
 from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    API_V1_STR: str = "/api/v1"
     SECRET_KEY: str = secrets.token_urlsafe(32)
-    # 60분 * 24시간 * 8일 = 8일
+    ALGORITHM: str  # .env에서 읽어옴
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8
     
     # CORS 설정
@@ -24,24 +23,22 @@ class Settings(BaseSettings):
 
     PROJECT_NAME: str = "AI 윤리게임"
     
-    # PostgreSQL 설정
-    POSTGRES_SERVER: str = "localhost"
-    POSTGRES_USER: str = "postgres"
-    POSTGRES_PASSWORD: str = "postgres"
-    POSTGRES_DB: str = "ai_ethics_game"
-    SQLALCHEMY_DATABASE_URI: Optional[PostgresDsn] = None
+    # Database settings
+    DB_HOST: str = "localhost"
+    DB_PORT: int = 3306
+    DB_USER: str = "root"
+    DB_PASSWORD: str = ""
+    DB_NAME: str = "ai_ethics_db"
+    
+    # Database URL
+    SQLALCHEMY_DATABASE_URI: Optional[str] = None
 
     @field_validator("SQLALCHEMY_DATABASE_URI", mode="before")
-    def assemble_db_connection(cls, v: Optional[str], values: Dict[str, Any]) -> Any:
+    def assemble_db_connection(cls, v: Optional[str], info) -> Any:
         if isinstance(v, str):
             return v
-        return PostgresDsn.build(
-            scheme="postgresql",
-            username=values.data.get("POSTGRES_USER"),
-            password=values.data.get("POSTGRES_PASSWORD"),
-            host=values.data.get("POSTGRES_SERVER"),
-            path=f"{values.data.get('POSTGRES_DB') or ''}",
-        )
+        values = info.data
+        return f"mysql+aiomysql://{values['DB_USER']}:{values['DB_PASSWORD']}@{values['DB_HOST']}:{values['DB_PORT']}/{values['DB_NAME']}"
     
     # OpenAI API 설정
     OPENAI_API_KEY: str = ""
