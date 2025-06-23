@@ -343,6 +343,40 @@ class VoiceService:
         
         return voice_recording
 
+    @staticmethod
+    async def get_session_participants(
+        db: AsyncSession,
+        session_id: str
+    ) -> List[models.VoiceParticipant]:
+        """세션의 모든 참가자 조회"""
+        voice_session = await VoiceService.get_voice_session_by_id(db=db, session_id=session_id)
+        if not voice_session:
+            return []
+        
+        return voice_session.participants
+
+    @staticmethod
+    async def get_participant_by_user(
+        db: AsyncSession,
+        session_id: str,
+        user_id: Optional[int],
+        guest_id: Optional[str]
+    ) -> Optional[models.VoiceParticipant]:
+        """사용자별 참가자 정보 조회"""
+        voice_session = await VoiceService.get_voice_session_by_id(db=db, session_id=session_id)
+        if not voice_session:
+            return None
+        
+        participant_query = select(models.VoiceParticipant).where(
+            and_(
+                models.VoiceParticipant.voice_session_id == voice_session.id,
+                models.VoiceParticipant.user_id == user_id if user_id else 
+                models.VoiceParticipant.guest_id == guest_id
+            )
+        )
+        result = await db.execute(participant_query)
+        return result.scalar_one_or_none()
+
 
 # 서비스 인스턴스
 voice_service = VoiceService() 

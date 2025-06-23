@@ -3,10 +3,10 @@ from sqlalchemy.orm import sessionmaker
 
 from app.core.config import settings
 
-# PostgreSQL 연결 문자열을 비동기 형식으로 변환
+# MySQL 연결 문자열을 비동기 형식으로 변환
 SQLALCHEMY_DATABASE_URL = str(settings.SQLALCHEMY_DATABASE_URI)
 ASYNC_SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace(
-    "postgresql://", "postgresql+asyncpg://"
+    "mysql://", "mysql+aiomysql://"
 )
 
 # 비동기 엔진 생성

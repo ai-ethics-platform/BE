@@ -7,7 +7,7 @@ python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
 python-multipart==0.0.6
 httpx==0.25.1
-psycopg2-binary==2.9.9
+aiomysql==0.2.0
 alembic==1.12.1
 openai==1.2.4
 python-dotenv==1.0.0
@@ -18,4 +18,4 @@ pytest-cov==4.1.0
 speechrecognition==3.10.0
 pydub==0.25.1
 boto3==1.28.64
-asyncpg==0.28.0 
+redis==5.0.1 

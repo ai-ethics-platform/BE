@@ -11,19 +11,20 @@ jobs:
     runs-on: ubuntu-latest
     
     services:
-      postgres:
-        image: postgres:15
+      mysql:
+        image: mysql:8.0
         env:
-          POSTGRES_DB: test_db
-          POSTGRES_USER: test_user
-          POSTGRES_PASSWORD: test_password
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: test_db
+          MYSQL_USER: test_user
+          MYSQL_PASSWORD: test_password
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "mysqladmin ping"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
         ports:
-          - 5432:5432
+          - 3306:3306
 
     steps:
     - uses: actions/checkout@v3
@@ -40,7 +41,7 @@ jobs:
     
     - name: Run tests
       env:
-        DATABASE_URL: postgresql+asyncpg://test_user:test_password@localhost:5432/test_db
+        DATABASE_URL: mysql+aiomysql://test_user:test_password@localhost:3306/test_db
         SECRET_KEY: test-secret-key
       run: |
         python -m pytest tests/ -v
