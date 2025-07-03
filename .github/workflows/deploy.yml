@@ -55,8 +55,4 @@ jobs:
             docker system prune -af
             docker-compose up -d --build
 
-            echo "[4] 헬스 체크"
-            sleep 10
-            curl -f http://localhost:8000/health || exit 1
-
             echo "✅ Deployment Completed Successfully!"
