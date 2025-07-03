@@ -7,16 +7,14 @@ on:
 
 jobs:
   Deploy-to-EC2:
-    name: Deploy to EC2
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Decode private key
+      - name: Create private key file from EC2_KEY
         run: |
-          echo "${{ secrets.EC2_KEY_B64 }}" | base64 -d > key.pem
+          echo "${{ secrets.EC2_KEY }}" > key.pem
           chmod 600 key.pem
 
       - name: Connect and deploy
@@ -27,7 +25,7 @@ jobs:
           key_path: key.pem
           port: 22
           script: |
-            echo "[1] 프로젝트 위치 이동 또는 클론"
+            echo "[1] 프로젝트 이동 또는 클론"
             cd ~
             if [ -d "ai_ethics_game" ]; then
               cd ai_ethics_game
@@ -52,7 +50,7 @@ jobs:
             BACKEND_CORS_ORIGINS=["http://localhost:3000", "http://localhost:8000"]
             EOF
 
-            echo "[3] 도커 리셋 및 빌드"
+            echo "[3] Docker 리셋 및 빌드"
             docker-compose down || true
             docker system prune -af
             docker-compose up -d --build
