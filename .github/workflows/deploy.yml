@@ -8,6 +8,7 @@ on:
 jobs:
   Deploy-to-EC2:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -35,20 +36,8 @@ jobs:
               cd ai_ethics_game
             fi
 
-            echo "[2] .env 파일 생성"
-            cat > .env << EOF
-            DB_HOST=${{ secrets.DB_HOST }}
-            DB_PORT=${{ secrets.DB_PORT }}
-            DB_USER=${{ secrets.DB_USER }}
-            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-            DB_NAME=${{ secrets.DB_NAME }}
-            SECRET_KEY=${{ secrets.SECRET_KEY }}
-            ALGORITHM=HS256
-            ACCESS_TOKEN_EXPIRE_MINUTES=60
-            AUDIO_UPLOAD_DIR=static/audio
-            MAX_AUDIO_SIZE_MB=10
-            BACKEND_CORS_ORIGINS=["http://localhost:3000", "http://localhost:8000"]
-            EOF
+            echo "[2] .env 파일 생성 (base64 복호화)"
+            echo "${{ secrets.ENV_VARS_B64 }}" | base64 -d > .env
 
             echo "[3] Docker 리셋 및 빌드"
             docker-compose down || true
