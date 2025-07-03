@@ -9,20 +9,22 @@ from app.core.database import create_tables
 app = FastAPI(
     title=settings.PROJECT_NAME,
     description="AI 윤리게임 백엔드 API",
-    version="0.1.0"
+    version="0.1.0",
+    openapi_url=f"/openapi.json"
 )
 
 # CORS 설정
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.BACKEND_CORS_ORIGINS,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+if settings.BACKEND_CORS_ORIGINS:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=[str(origin) for origin in settings.BACKEND_CORS_ORIGINS],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
 # API 라우터 포함 (prefix 없이)
-app.include_router(api_router)
+app.include_router(api_router, prefix="/api/v1")
 
 @app.on_event("startup")
 async def startup_event():
@@ -39,7 +41,8 @@ async def health_check():
     return {
         "status": "healthy",
         "timestamp": datetime.utcnow().isoformat(),
-        "service": "ai-ethics-game-backend"
+        "service": "ai-ethics-game-backend",
+        "message": "AI Ethics Game Backend is running"
     }
 
 if __name__ == "__main__":

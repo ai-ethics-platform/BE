@@ -1,224 +1,235 @@
 # AI Ethics Game Backend 배포 가이드
 
-## 🚀 배포 아키텍처
+## 🚀 AWS EC2 + GitHub Actions 자동 배포
 
-```
-Internet → Nginx (SSL/TLS) → FastAPI Backend → PostgreSQL + Redis
-```
+### 1. AWS RDS 데이터베이스 생성
 
-## 📋 사전 요구사항
+#### 1.1 RDS 인스턴스 생성
+- **엔진**: MySQL 8.0
+- **템플릿**: 개발/테스트
+- **인스턴스 식별자**: `ai-ethics-db`
+- **마스터 사용자명**: `admin`
+- **마스터 비밀번호**: 강력한 비밀번호 설정
+- **인스턴스 크기**: `db.t3.micro` (무료 티어)
+- **스토리지**: 20GB
+- **퍼블릭 액세스**: 예
+- **VPC**: 기본 VPC
+- **보안 그룹**: MySQL 포트(3306) 허용
 
-### 서버 요구사항
-- Ubuntu 20.04+ 또는 CentOS 8+
-- Docker & Docker Compose
-- 최소 2GB RAM, 20GB 디스크
-- 도메인 (SSL 인증서용)
+#### 1.2 데이터베이스 생성 후 얻을 정보
+- **엔드포인트**: `ai-ethics-db.xxxxx.ap-northeast-2.rds.amazonaws.com`
+- **포트**: 3306
+- **데이터베이스명**: `ai_ethics_db`
+- **사용자명**: `admin`
+- **비밀번호**: 설정한 비밀번호
 
-### GitHub Secrets 설정
-다음 시크릿을 GitHub 저장소에 설정해야 합니다:
+### 2. EC2 인스턴스 생성
 
-1. **DOCKER_USERNAME**: Docker Hub 사용자명
-2. **DOCKER_PASSWORD**: Docker Hub 액세스 토큰
-3. **SERVER_HOST**: 서버 IP 주소
-4. **SERVER_USERNAME**: 서버 SSH 사용자명
-5. **SERVER_SSH_KEY**: 서버 SSH 개인키
+#### 2.1 EC2 인스턴스 설정
+- **AMI**: Amazon Linux 2023
+- **인스턴스 타입**: t2.micro (무료 티어)
+- **키 페어**: 새로 생성
+- **보안 그룹**: 다음 포트 허용
+  - SSH (22)
+  - HTTP (80)
+  - HTTPS (443)
+  - 커스텀 TCP (8000) - FastAPI용
 
-## 🔧 서버 초기 설정
-
-### 1. Docker 설치
+#### 2.2 사용자 데이터 (선택사항)
 ```bash
-# Ubuntu
-curl -fsSL https://get.docker.com -o get-docker.sh
-sudo sh get-docker.sh
-sudo usermod -aG docker $USER
-
-# Docker Compose 설치
-sudo curl -L "https://github.com/docker/compose/releases/download/v2.20.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-sudo chmod +x /usr/local/bin/docker-compose
+#!/bin/bash
+yum update -y
+yum install -y docker
+systemctl start docker
+systemctl enable docker
+usermod -a -G docker ec2-user
 ```
 
-### 2. 프로젝트 디렉토리 생성
+### 3. GitHub Secrets 설정
+
+GitHub 저장소의 Settings → Secrets and variables → Actions에서 다음 시크릿들을 설정:
+
+#### 3.1 AWS 관련
+```
+AWS_ACCESS_KEY_ID=your-access-key
+AWS_SECRET_ACCESS_KEY=your-secret-key
+AWS_REGION=ap-northeast-2
+```
+
+#### 3.2 EC2 관련
+```
+EC2_HOST=your-ec2-public-ip
+SSH_PRIVATE_KEY=your-private-key-content
+```
+
+#### 3.3 데이터베이스 관련
+```
+DB_HOST=ai-ethics-db.xxxxx.ap-northeast-2.rds.amazonaws.com
+DB_PORT=3306
+DB_USER=admin
+DB_PASSWORD=your-db-password
+DB_NAME=ai_ethics_db
+```
+
+#### 3.4 애플리케이션 관련
+```
+SECRET_KEY=your-secret-key-here
+```
+
+### 4. 배포 프로세스
+
+#### 4.1 자동 배포 (GitHub Actions)
+1. `main` 브랜치에 코드 푸시
+2. GitHub Actions가 자동으로 실행
+3. 테스트 통과 후 EC2에 자동 배포
+
+#### 4.2 수동 배포
 ```bash
-sudo mkdir -p /opt/ai-ethics-game
-sudo chown $USER:$USER /opt/ai-ethics-game
-cd /opt/ai-ethics-game
-```
+# EC2에 SSH 연결
+ssh -i your-key.pem ec2-user@your-ec2-ip
 
-### 3. SSL 인증서 설정 (Let's Encrypt)
-```bash
-# Certbot 설치
-sudo apt install certbot
+# 프로젝트 클론
+git clone https://github.com/your-username/your-repo.git ai_ethics_game
+cd ai_ethics_game
 
-# SSL 인증서 발급
-sudo certbot certonly --standalone -d your-domain.com
+# 환경 변수 설정
+export DB_HOST=your-rds-endpoint
+export DB_PASSWORD=your-db-password
+export SECRET_KEY=your-secret-key
 
-# 인증서를 Nginx용 디렉토리로 복사
-sudo mkdir -p /opt/ai-ethics-game/ssl
-sudo cp /etc/letsencrypt/live/your-domain.com/fullchain.pem /opt/ai-ethics-game/ssl/cert.pem
-sudo cp /etc/letsencrypt/live/your-domain.com/privkey.pem /opt/ai-ethics-game/ssl/key.pem
-sudo chown -R $USER:$USER /opt/ai-ethics-game/ssl
-```
-
-## 🚀 배포 방법
-
-### 방법 1: GitHub Actions 자동 배포 (권장)
-
-1. **GitHub 저장소에 코드 푸시**
-   ```bash
-   git add .
-   git commit -m "Add deployment configuration"
-   git push origin main
-   ```
-
-2. **GitHub Actions에서 자동 배포 확인**
-   - GitHub 저장소 → Actions 탭에서 배포 진행 상황 확인
-
-### 방법 2: 수동 배포
-
-1. **서버에 프로젝트 파일 복사**
-   ```bash
-   scp -r . user@your-server:/opt/ai-ethics-game/
-   ```
-
-2. **환경 변수 설정**
-   ```bash
-   cd /opt/ai-ethics-game
-   cp .env.example .env
-   # .env 파일 편집하여 실제 값으로 설정
-   ```
-
-3. **배포 실행**
-   ```bash
-   chmod +x deploy.sh
-   ./deploy.sh
-   ```
-
-## 🔧 환경 변수 설정
-
-`.env` 파일을 생성하고 다음 변수들을 설정하세요:
-
-```env
-# 데이터베이스
-DATABASE_URL=postgresql+asyncpg://ai_ethics_user:ai_ethics_password@postgres:5432/ai_ethics_db
-
-# Redis
-REDIS_URL=redis://redis:6379
-
-# JWT
-SECRET_KEY=your-super-secret-key-here
-ACCESS_TOKEN_EXPIRE_MINUTES=30
-ALGORITHM=HS256
-
-# CORS
-BACKEND_CORS_ORIGINS=["https://your-domain.com", "http://localhost:3000"]
-
-# 도메인
-DOMAIN=your-domain.com
-```
-
-## 📊 모니터링 및 로그
-
-### 서비스 상태 확인
-```bash
-# 모든 서비스 상태 확인
-docker-compose ps
-
-# 특정 서비스 로그 확인
-docker-compose logs backend
-docker-compose logs nginx
-docker-compose logs postgres
-```
-
-### 헬스 체크
-```bash
-# 백엔드 헬스 체크
-curl http://localhost:8000/health
-
-# Nginx를 통한 헬스 체크
-curl https://your-domain.com/health
-```
-
-## 🔄 업데이트 및 롤백
-
-### 업데이트
-```bash
-cd /opt/ai-ethics-game
-git pull origin main
+# 배포 실행
+chmod +x deploy.sh
 ./deploy.sh
 ```
 
-### 롤백
+### 5. 배포 확인
+
+#### 5.1 헬스 체크
 ```bash
-# 이전 이미지로 롤백
-docker-compose down
-docker-compose up -d backend:previous-tag
+curl http://your-ec2-ip:8000/health
 ```
 
-## 🛠️ 문제 해결
+#### 5.2 API 문서
+```
+http://your-ec2-ip:8000/docs
+```
 
-### 일반적인 문제들
+#### 5.3 로그 확인
+```bash
+docker-compose logs -f
+```
 
-1. **포트 충돌**
-   ```bash
-   # 사용 중인 포트 확인
-   sudo netstat -tulpn | grep :80
-   sudo netstat -tulpn | grep :443
-   ```
+### 6. 환경 변수 설정
 
-2. **권한 문제**
-   ```bash
-   # Docker 권한 확인
-   sudo usermod -aG docker $USER
-   newgrp docker
-   ```
+#### 6.1 프로덕션 환경 변수
+```env
+# Database settings
+DB_HOST=ai-ethics-db.xxxxx.ap-northeast-2.rds.amazonaws.com
+DB_PORT=3306
+DB_USER=admin
+DB_PASSWORD=your-strong-password
+DB_NAME=ai_ethics_db
 
-3. **SSL 인증서 갱신**
-   ```bash
-   # Let's Encrypt 인증서 자동 갱신
-   sudo crontab -e
-   # 다음 줄 추가: 0 12 * * * /usr/bin/certbot renew --quiet
-   ```
+# JWT settings
+SECRET_KEY=your-production-secret-key
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=60
 
-### 로그 확인
+# CORS settings
+BACKEND_CORS_ORIGINS=["https://your-frontend-domain.com"]
+
+# Audio settings
+AUDIO_UPLOAD_DIR=static/audio
+MAX_AUDIO_SIZE_MB=10
+```
+
+### 7. 트러블슈팅
+
+#### 7.1 데이터베이스 연결 오류
+```bash
+# RDS 보안 그룹에서 EC2 IP 허용
+# EC2에서 RDS 연결 테스트
+telnet your-rds-endpoint 3306
+```
+
+#### 7.2 Docker 권한 오류
+```bash
+# EC2에서 Docker 그룹에 사용자 추가
+sudo usermod -a -G docker ec2-user
+# 재로그인 필요
+```
+
+#### 7.3 포트 충돌
+```bash
+# 사용 중인 포트 확인
+sudo netstat -tlnp | grep :8000
+# 프로세스 종료
+sudo kill -9 <process-id>
+```
+
+### 8. 모니터링
+
+#### 8.1 로그 모니터링
 ```bash
 # 실시간 로그 확인
 docker-compose logs -f backend
 
-# 특정 시간 이후 로그
-docker-compose logs --since="2024-01-01T00:00:00" backend
+# 특정 시간 로그 확인
+docker-compose logs --since="2024-01-15T10:00:00" backend
 ```
 
-## 📈 성능 최적화
-
-### Nginx 설정 최적화
-- Gzip 압축 활성화
-- 정적 파일 캐싱
-- HTTP/2 지원
-
-### 데이터베이스 최적화
-- PostgreSQL 설정 튜닝
-- 인덱스 최적화
-- 연결 풀 설정
-
-## 🔒 보안 설정
-
-### 방화벽 설정
+#### 8.2 리소스 모니터링
 ```bash
-# UFW 방화벽 설정
-sudo ufw allow 22/tcp
-sudo ufw allow 80/tcp
-sudo ufw allow 443/tcp
-sudo ufw enable
+# 컨테이너 상태 확인
+docker-compose ps
+
+# 리소스 사용량 확인
+docker stats
 ```
 
-### SSL/TLS 보안
-- HSTS 헤더 설정
-- 보안 헤더 추가
-- SSL 프로토콜 제한
+### 9. 백업 및 복구
 
-## 📞 지원
+#### 9.1 데이터베이스 백업
+```bash
+# RDS 스냅샷 생성 (AWS 콘솔에서)
+# 또는 mysqldump 사용
+mysqldump -h your-rds-endpoint -u admin -p ai_ethics_db > backup.sql
+```
 
-문제가 발생하면 다음을 확인하세요:
-1. 서비스 로그: `docker-compose logs`
-2. 시스템 리소스: `htop`, `df -h`
-3. 네트워크 연결: `ping`, `curl` 
+#### 9.2 애플리케이션 백업
+```bash
+# 코드 백업
+git clone https://github.com/your-username/your-repo.git
+
+# 환경 변수 백업
+cp .env .env.backup
+```
+
+### 10. 보안 고려사항
+
+#### 10.1 네트워크 보안
+- RDS 보안 그룹에서 EC2 IP만 허용
+- EC2 보안 그룹에서 필요한 포트만 열기
+- HTTPS 사용 권장
+
+#### 10.2 애플리케이션 보안
+- 강력한 SECRET_KEY 사용
+- 환경 변수로 민감한 정보 관리
+- 정기적인 보안 업데이트
+
+#### 10.3 데이터 보안
+- 정기적인 데이터베이스 백업
+- 암호화된 연결 사용
+- 접근 로그 모니터링
+
+---
+
+## 🎉 배포 완료!
+
+배포가 완료되면 다음 URL들로 접근 가능합니다:
+
+- **헬스 체크**: `http://your-ec2-ip:8000/health`
+- **API 문서**: `http://your-ec2-ip:8000/docs`
+- **OpenAPI 스키마**: `http://your-ec2-ip:8000/openapi.json`
+
+프론트엔드에서 이 백엔드 API를 사용하여 AI 윤리게임을 구현할 수 있습니다! 
