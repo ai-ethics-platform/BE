@@ -13,7 +13,6 @@ services:
   # FastAPI 애플리케이션
   backend:
     build: .
-    container_name: ai_ethics_backend
     env_file:
       - .env
     environment:
