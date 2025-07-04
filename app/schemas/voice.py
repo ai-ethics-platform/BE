@@ -2,7 +2,6 @@ from datetime import datetime
 from typing import List, Optional
 from pydantic import BaseModel, Field
 
-
 # 음성 세션 생성 요청 스키마
 class VoiceSessionCreate(BaseModel):
     room_code: str = Field(..., min_length=4, max_length=20, description="방 코드")
@@ -147,3 +146,8 @@ class ParticipantEvent(BaseModel):
     participant_id: int
     nickname: str
     timestamp: datetime = Field(default_factory=datetime.utcnow) 
+
+class VoiceParticipant(BaseModel):
+    id: int
+    name: str
+    is_speaking: bool

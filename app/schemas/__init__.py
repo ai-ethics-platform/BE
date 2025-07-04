@@ -29,6 +29,7 @@ from .room import (
     RoomLeaveResponse,
     AVAILABLE_TOPICS
 )
+from .voice import VoiceParticipant, VoiceSession, VoiceSessionCreate
 
 __all__ = [
     "User",
@@ -58,5 +59,8 @@ __all__ = [
     "RoomResetResponse",
     "RoomLeaveRequest",
     "RoomLeaveResponse",
-    "AVAILABLE_TOPICS"
-] 
+    "AVAILABLE_TOPICS",
+    "VoiceParticipant",
+    "VoiceSession",
+    "VoiceSessionCreate"
+]
