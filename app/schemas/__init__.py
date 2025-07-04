@@ -29,7 +29,27 @@ from .room import (
     RoomLeaveResponse,
     AVAILABLE_TOPICS
 )
-from .voice import VoiceParticipant, VoiceSession, VoiceSessionCreate
+from .voice import (
+    VoiceParticipant,
+    VoiceSession,
+    VoiceSessionCreate,
+    VoiceJoinRequest,
+    VoiceJoinResponse,
+    VoiceLeaveRequest,
+    VoiceLeaveResponse,
+    VoiceStatusUpdate,
+    VoiceStatusResponse,
+    VoiceSessionInfo,
+    RecordingStartRequest,
+    RecordingStartResponse,
+    RecordingStopRequest,
+    RecordingStopResponse,
+    RecordingUploadRequest,
+    RecordingUploadResponse,
+    WebSocketMessage,
+    VoiceStatusBroadcast,
+    ParticipantEvent
+)
 
 __all__ = [
     "User",
@@ -62,5 +82,21 @@ __all__ = [
     "AVAILABLE_TOPICS",
     "VoiceParticipant",
     "VoiceSession",
-    "VoiceSessionCreate"
+    "VoiceSessionCreate",
+    "VoiceJoinRequest",
+    "VoiceJoinResponse",
+    "VoiceLeaveRequest",
+    "VoiceLeaveResponse",
+    "VoiceStatusUpdate",
+    "VoiceStatusResponse",
+    "VoiceSessionInfo",
+    "RecordingStartRequest",
+    "RecordingStartResponse",
+    "RecordingStopRequest",
+    "RecordingStopResponse",
+    "RecordingUploadRequest",
+    "RecordingUploadResponse",
+    "WebSocketMessage",
+    "VoiceStatusBroadcast",
+    "ParticipantEvent"
 ]

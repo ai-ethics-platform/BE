@@ -23,12 +23,13 @@ class VoiceSession(BaseModel):
 # 음성 참가자 상태 스키마
 class VoiceParticipant(BaseModel):
     id: int
+    name: str
+    is_speaking: bool
     voice_session_id: int
     user_id: Optional[int] = None
     guest_id: Optional[str] = None
     nickname: str
     is_mic_on: bool
-    is_speaking: bool
     is_connected: bool
     recording_file_path: Optional[str] = None
     recording_started_at: Optional[datetime] = None
