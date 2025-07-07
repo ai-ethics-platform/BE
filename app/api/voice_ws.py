@@ -23,7 +23,7 @@ print("🧪 security.verify_token is:", security.verify_token)
 router = APIRouter()
 
 #   WebSocket Endpoint
-@router.websocket("/ws/voice/{session_id}")
+@router.websocket("/voice/{session_id}")
 async def voice_session_ws(
     websocket: WebSocket,
     session_id: str,
