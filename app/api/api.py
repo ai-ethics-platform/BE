@@ -1,7 +1,8 @@
 # app/api/api.py
 from fastapi import APIRouter
 
-from app.api.endpoints import auth, users, rooms, voice, voice_ws
+from app.api.endpoints import auth, users, rooms, voice
+from app.api import voice_ws
 
 api_router = APIRouter()
 
