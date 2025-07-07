@@ -46,14 +46,16 @@ def get_password_hash(password: str) -> str:
     """
     return pwd_context.hash(password)
 
-
 def verify_token(token: str):
+    print("📥 받은 토큰: ", token)
     try:
         logger.info(f"🔐 Token verifying: {token}")
-        logger.info(f"🔑 SECRET_KEY used: {settings.SECRET_KEY}")  # 👈 이거 꼭 넣자
+        logger.info(f"🔑 SECRET_KEY used: {settings.SECRET_KEY}")
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
         logger.info(f"✅ JWT payload: {payload}")
+        print("🔍 디코딩된 payload: ", payload)  # ✅ 위치를 여기에 둬야 함
         return payload
     except JWTError as e:
         logger.error(f"❌ JWT 검증 실패: {e}")
+        print("❌ JWT 검증 실패:", e)  # 디버깅 로그도 추가하면 좋음
         return False

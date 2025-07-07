@@ -29,14 +29,10 @@ async def voice_session_ws(
     db: AsyncSession = Depends(get_db),
 ):
     # 1. 연결 수락 전에 토큰 검증
-    token = websocket.query_params.get("token")
-
-    if token and token.startswith('"') and token.endswith('"'):
-        token = token[1:-1]
+    token = websocket.query_params.get("token", "").strip('"')
+    print("📥 받은 토큰: ", token)
 
     payload = security.verify_token(token)
-
-    print("📥 받은 토큰: ", token)
     print("🔍 디코딩된 payload: ", payload)
 
     if not token or not payload:
