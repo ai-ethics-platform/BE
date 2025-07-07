@@ -94,7 +94,24 @@ async def voice_session_ws(
                         is_speaking=participant.is_speaking,
                     ).model_dump()
                 )
-
+            # 3) 녹음 시작
+            elif mtype == "start_recording":
+                participant = await voice_service.start_recording(
+                    db=db,
+                    session_id=session_id,
+                    user_id=data.get("user_id"),
+                    guest_id=data.get("guest_id"),
+                )
+                print(f"🎙️ 녹음 시작됨: {participant.recording_file_path}")
+            # 4) 녹음 종료
+            elif mtype == "stop_recording":
+                participant, duration = await voice_service.stop_recording(
+                    db=db,
+                    session_id=session_id,
+                    user_id=data.get("user_id"),
+                    guest_id=data.get("guest_id"),
+                )
+                print(f"🛑 녹음 종료됨: {participant.recording_file_path}, duration={duration}s")
     except WebSocketDisconnect:
         manager.disconnect(websocket)
         await manager.broadcast_to_session(
