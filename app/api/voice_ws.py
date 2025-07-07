@@ -19,7 +19,6 @@ from app.schemas.voice import VoiceStatusBroadcast, ParticipantEvent
 from app.core.websocket_manager import websocket_manager as manager
 from app.core.security import verify_token
 from app.core import security
-print("📥 받은 토큰: ", security.verify_token)
 router = APIRouter()
 
 #   WebSocket Endpoint
@@ -33,8 +32,8 @@ async def voice_session_ws(
     token = websocket.query_params.get("token")
     payload = security.verify_token(token)
 
-    print(f"🔐 받은 토큰: {token}")
-    print(f"🔍 디코딩된 payload: {payload}")
+    print("📥 받은 토큰: ", token)                # ✅ 받은 토큰 문자열 출력
+    print("🔍 디코딩된 payload: ", payload)
 
     if not token or not payload:
         print("❌ WebSocket 연결 거부됨 - 토큰 문제")
