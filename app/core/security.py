@@ -49,12 +49,10 @@ def get_password_hash(password: str) -> str:
 def verify_token(token: str):
     try:
         logger.info(f"🔐 Token verifying: {token}")
+        logger.info(f"🔑 SECRET_KEY used: {settings.SECRET_KEY}")  # 👈 이거 꼭 넣자
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
         logger.info(f"✅ JWT payload: {payload}")
         return payload
     except JWTError as e:
         logger.error(f"❌ JWT 검증 실패: {e}")
-        return False
-    except Exception as e:
-        logger.exception(f"❗ 예기치 못한 에러 발생: {e}")
         return False
