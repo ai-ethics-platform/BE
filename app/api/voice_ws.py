@@ -26,8 +26,9 @@ router = APIRouter()
 async def voice_session_ws(
     websocket: WebSocket,
     session_id: str,
-    db: AsyncSession = Depends(get_db),
+    # db: AsyncSession = Depends(get_db),
 ):
+    print("✅ WebSocket 도달 확인")
     # 1. 연결 수락 전에 토큰 검증
     token = websocket.query_params.get("token", "").strip('"')
     print("📥 받은 토큰: ", token)
