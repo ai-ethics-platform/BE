@@ -19,7 +19,7 @@ from app.schemas.voice import VoiceStatusBroadcast, ParticipantEvent
 from app.core.websocket_manager import websocket_manager as manager
 from app.core.security import verify_token
 from app.core import security
-print("🧪 security.verify_token is:", security.verify_token)
+print("📥 받은 토큰: ", security.verify_token)
 router = APIRouter()
 
 #   WebSocket Endpoint
