@@ -145,6 +145,6 @@ class VoiceStatusBroadcast(BaseModel):
 # WebSocket 참가자 입장/퇴장 메시지
 class ParticipantEvent(BaseModel):
     type: str = Field(..., description="이벤트 타입: join/leave")
-    participant_id: int
+    participant_id: Optional[int]
     nickname: str
     timestamp: datetime = Field(default_factory=datetime.utcnow) 
