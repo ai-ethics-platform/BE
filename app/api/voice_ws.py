@@ -105,3 +105,12 @@ async def _handle_init(db: AsyncSession, session_id: str, data: dict):
             guest_id=guest_id,
             nickname=nickname,
         )
+
+def verify_token(token: str):
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        print("JWT payload:", payload)  # 로그 추가
+        return payload
+    except JWTError as e:
+        print("JWT 검증 실패:", e)  # 로그 추가
+        return False
