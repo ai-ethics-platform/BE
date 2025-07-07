@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from typing import Any, Union
 
-from jose import jwt
+from jose import jwt, JWTError
 from passlib.context import CryptContext
 
 from app.core.config import settings
@@ -41,4 +41,12 @@ def get_password_hash(password: str) -> str:
     """
     비밀번호 해싱
     """
-    return pwd_context.hash(password) 
+    return pwd_context.hash(password)
+
+
+def verify_token(token: str):
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        return payload  # 또는 필요한 유저 정보 반환
+    except JWTError:
+        return False 

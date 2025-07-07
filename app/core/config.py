@@ -6,8 +6,8 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    SECRET_KEY: str = secrets.token_urlsafe(32)
-    ALGORITHM: str  # .env에서 읽어옴
+    SECRET_KEY: str
+    ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8
     
     # CORS 설정
