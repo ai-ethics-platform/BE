@@ -33,7 +33,11 @@ async def voice_session_ws(
     token = websocket.query_params.get("token")
     payload = verify_token(token)
 
+    print(f"🔐 받은 토큰: {token}")
+    print(f"🔍 디코딩된 payload: {payload}")
+
     if not token or not payload:
+        print("❌ WebSocket 연결 거부됨 - 토큰 문제")
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
         return
 
