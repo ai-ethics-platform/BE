@@ -1,3 +1,4 @@
+# app/schemas/voice.py
 from datetime import datetime
 from typing import List, Optional
 from pydantic import BaseModel, Field
@@ -147,8 +148,3 @@ class ParticipantEvent(BaseModel):
     participant_id: int
     nickname: str
     timestamp: datetime = Field(default_factory=datetime.utcnow) 
-
-class VoiceParticipant(BaseModel):
-    id: int
-    name: str
-    is_speaking: bool

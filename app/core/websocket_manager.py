@@ -1,3 +1,4 @@
+# app/core/websocket_manager.py
 import json
 import asyncio
 from typing import Dict, Set, Optional

@@ -1,3 +1,4 @@
+# app/services/voice_service.py
 from typing import List, Optional, Union
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, update
@@ -379,4 +380,4 @@ class VoiceService:
 
 
 # 서비스 인스턴스
-voice_service = VoiceService() 
+voice_service = VoiceService()
