@@ -1,3 +1,4 @@
+# app/core/config.py
 import secrets
 from typing import Any, Dict, List, Optional, Union
 
@@ -52,4 +53,5 @@ class Settings(BaseSettings):
         env_file = ".env"
 
 
-settings = Settings() 
+settings = Settings()
+print("🔧 Loaded SECRET_KEY:", settings.SECRET_KEY)
