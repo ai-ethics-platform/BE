@@ -23,8 +23,7 @@ if settings.BACKEND_CORS_ORIGINS:
         allow_headers=["*"],
     )
 
-# API 라우터 포함 (prefix 없이)
-app.include_router(api_router, prefix="/api/v1")
+app.include_router(api_router)
 
 @app.on_event("startup")
 async def startup_event():
