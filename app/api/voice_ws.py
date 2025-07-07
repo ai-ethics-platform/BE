@@ -32,7 +32,7 @@ async def voice_session_ws(
     token = websocket.query_params.get("token", "").strip('"')
     print("📥 받은 토큰: ", token)
 
-    payload = security.verify_token(token)
+    payload = verify_token(token)
     print("🔍 디코딩된 payload: ", payload)
 
     if not token or not payload:
