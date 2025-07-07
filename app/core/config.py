@@ -54,4 +54,3 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
-print("🔧 Loaded SECRET_KEY:", settings.SECRET_KEY)
