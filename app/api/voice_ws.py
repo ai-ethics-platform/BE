@@ -6,7 +6,7 @@ app/api/voice_ws.py
 """
 
 # app/api/voice_ws.py
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, status
 from typing import Dict, List, Optional
 import json
 from datetime import datetime
@@ -17,6 +17,7 @@ from app.core.deps import get_db
 from app.services.voice_service import voice_service
 from app.schemas.voice import VoiceStatusBroadcast, ParticipantEvent
 from app.core.websocket_manager import websocket_manager as manager
+from app.core.security import verify_token  # JWT 검증 함수 예시
 
 router = APIRouter()
 
@@ -27,6 +28,13 @@ async def voice_session_ws(
     session_id: str,
     db: AsyncSession = Depends(get_db),
 ):
+    # 1. 연결 수락 전에 토큰 검증
+    token = websocket.query_params.get("token")
+    if not token or not verify_token(token):
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+        return
+
+    await websocket.accept()
 
     try:
         while True:
