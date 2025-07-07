@@ -17,7 +17,7 @@ from app.core.deps import get_db
 from app.services.voice_service import voice_service
 from app.schemas.voice import VoiceStatusBroadcast, ParticipantEvent
 from app.core.websocket_manager import websocket_manager as manager
-from app.core.security import verify_token  # JWT 검증 함수 예시
+from app.core.security import verify_token
 
 router = APIRouter()
 
@@ -105,12 +105,3 @@ async def _handle_init(db: AsyncSession, session_id: str, data: dict):
             guest_id=guest_id,
             nickname=nickname,
         )
-
-def verify_token(token: str):
-    try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        print("JWT payload:", payload)  # 로그 추가
-        return payload
-    except JWTError as e:
-        print("JWT 검증 실패:", e)  # 로그 추가
-        return False

@@ -46,7 +46,9 @@ def get_password_hash(password: str) -> str:
 
 def verify_token(token: str):
     try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        return payload  # 또는 필요한 유저 정보 반환
-    except JWTError:
-        return False 
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
+        print("JWT payload:", payload)  # 로그 추가
+        return payload
+    except JWTError as e:
+        print("JWT 검증 실패:", e)  # 로그 추가
+        return False
