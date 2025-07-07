@@ -5,6 +5,8 @@ from jose import jwt, JWTError
 from passlib.context import CryptContext
 
 from app.core.config import settings
+import logging
+logger = logging.getLogger("uvicorn.error")
 
 # 비밀번호 해싱을 위한 컨텍스트
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -46,9 +48,10 @@ def get_password_hash(password: str) -> str:
 
 def verify_token(token: str):
     try:
+        logger.info(f"🔐 Token verifying: {token}")
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
-        print("JWT payload:", payload)  # 로그 추가
+        logger.info(f"✅ JWT payload: {payload}")
         return payload
     except JWTError as e:
-        print("JWT 검증 실패:", e)  # 로그 추가
+        logger.error(f"❌ JWT 검증 실패: {e}")
         return False
