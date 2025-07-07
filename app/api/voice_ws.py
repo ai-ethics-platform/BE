@@ -31,12 +31,24 @@ async def voice_session_ws(
 ):
     # 1. 연결 수락 전에 토큰 검증
     token = websocket.query_params.get("token")
-    if not token or not verify_token(token):
+    payload = verify_token(token)
+
+    if not token or not payload:
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
         return
 
+    user_id = payload.get("sub")
     await websocket.accept()
 
+    # 2. 초기 연결 처리
+    # dict 형태로 넘기기
+    await _handle_init(db, session_id, {
+        "user_id": user_id,
+        "guest_id": None,
+        "nickname": "익명유저"
+})
+
+    # 3. 메시지 수신 루프
     try:
         while True:
             raw = await websocket.receive_text()
