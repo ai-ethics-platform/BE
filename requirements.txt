@@ -26,3 +26,4 @@ celery
 redis
 aioredis
 ffmpeg-python
+bcrypt==4.0.1
