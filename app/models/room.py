@@ -25,6 +25,9 @@ class Room(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
+    ai_type = Column(Integer, nullable=True)  # 1, 2, 3 중 하나. 최초 1회만 저장
+    ai_name = Column(String(100), nullable=True)  # AI 이름. 최초 1회만 저장
+
     # Relationships
     creator = relationship("User", back_populates="created_rooms")
     participants = relationship("RoomParticipant", back_populates="room")
