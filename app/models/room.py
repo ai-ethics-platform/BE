@@ -46,6 +46,7 @@ class RoomParticipant(Base):
     nickname = Column(String(50), nullable=False)
     is_ready = Column(Boolean, default=False, nullable=False)
     is_host = Column(Boolean, default=False, nullable=False)  # 방장 여부
+    role_id = Column(Integer, nullable=True)  # 역할 ID (1: 요양보호사, 2: 가족, 3: AI 개발자)
     joined_at = Column(DateTime(timezone=True), server_default=func.now())
 
     # Relationships

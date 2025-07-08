@@ -27,7 +27,10 @@ from .room import (
     RoomResetResponse,
     RoomLeaveRequest,
     RoomLeaveResponse,
-    AVAILABLE_TOPICS
+    RoleAssignment,
+    RoleAssignmentResult,
+    AVAILABLE_TOPICS,
+    ROLE_DEFINITIONS
 )
 from .voice import (
     VoiceParticipant,
@@ -79,7 +82,10 @@ __all__ = [
     "RoomResetResponse",
     "RoomLeaveRequest",
     "RoomLeaveResponse",
+    "RoleAssignment",
+    "RoleAssignmentResult",
     "AVAILABLE_TOPICS",
+    "ROLE_DEFINITIONS",
     "VoiceParticipant",
     "VoiceSession",
     "VoiceSessionCreate",

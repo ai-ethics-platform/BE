@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, update
 from sqlalchemy.orm import selectinload
 from datetime import datetime, timedelta
+import random
 
 from app import models, schemas
 from app.core.deps import get_db
@@ -479,6 +480,65 @@ class RoomService:
         await db.commit()
         
         return room_code, room.current_players, room_deleted, new_host_info, room.is_started
+
+    @staticmethod
+    async def assign_roles(
+        db: AsyncSession,
+        room_code: str
+    ) -> List[schemas.RoleAssignment]:
+        """
+        방의 모든 참가자에게 역할을 랜덤 배정
+        Returns: 역할 배정 결과 목록
+        """
+        
+        # 방 조회
+        room = await RoomService.get_room_by_code(db=db, room_code=room_code)
+        if not room:
+            raise ValueError("존재하지 않는 방 코드입니다.")
+        
+        if not room.is_active:
+            raise ValueError("비활성화된 방입니다.")
+        
+        if room.is_started:
+            raise ValueError("이미 시작된 게임입니다.")
+        
+        # 방의 모든 참가자 조회
+        participants_query = select(models.RoomParticipant).where(
+            models.RoomParticipant.room_id == room.id
+        )
+        participants_result = await db.execute(participants_query)
+        participants = participants_result.scalars().all()
+        
+        if len(participants) != 3:
+            raise ValueError("역할 배정은 3명의 참가자가 모두 있어야 합니다.")
+        
+        # 사용 가능한 역할 ID 목록 (1, 2, 3)
+        available_roles = [1, 2, 3]
+        
+        # 참가자들을 랜덤하게 섞기
+        shuffled_participants = list(participants)
+        random.shuffle(shuffled_participants)
+        
+        # 역할 배정
+        assignments = []
+        for i, participant in enumerate(shuffled_participants):
+            role_id = available_roles[i]
+            participant.role_id = role_id
+            
+            # 플레이어 ID 결정 (user_id 또는 guest_id)
+            player_id = str(participant.user_id) if participant.user_id else participant.guest_id
+            
+            assignment = schemas.RoleAssignment(
+                player_id=player_id,
+                role_id=role_id,
+                role_name=schemas.ROLE_DEFINITIONS[role_id]
+            )
+            assignments.append(assignment)
+        
+        # 데이터베이스에 저장
+        await db.commit()
+        
+        return assignments
 
 
 # 서비스 인스턴스

@@ -1,6 +1,7 @@
 from typing import Any, List, Union
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, and_
 
 from app import models, schemas
 from app.api import deps
@@ -435,4 +436,40 @@ async def leave_room(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"방 나가기 중 오류가 발생했습니다: {str(e)}"
+        )
+
+
+@router.post("/assign-roles/{room_code}", response_model=schemas.RoleAssignmentResult)
+async def assign_roles(
+    room_code: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: Union[models.User, dict] = Depends(deps.get_current_user_or_guest)
+) -> Any:
+    """
+    역할 랜덤 배정
+    - 방의 모든 참가자에게 역할을 랜덤하게 배정
+    - 3명의 참가자가 모두 있어야 함
+    - 역할 ID: 1(요양보호사), 2(가족), 3(AI 개발자)
+    """
+    try:
+        # 역할 배정 실행
+        assignments = await room_service.assign_roles(
+            db=db,
+            room_code=room_code
+        )
+        
+        return schemas.RoleAssignmentResult(
+            assignments=assignments,
+            message="역할이 성공적으로 배정되었습니다."
+        )
+        
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"역할 배정 중 오류가 발생했습니다: {str(e)}"
         ) 

@@ -31,10 +31,24 @@ class RoomParticipant(BaseModel):
     nickname: str
     is_ready: bool
     is_host: bool
+    role_id: Optional[int] = None
     joined_at: datetime
 
     class Config:
         from_attributes = True
+
+
+# 역할 배정 응답 스키마
+class RoleAssignment(BaseModel):
+    player_id: str = Field(..., description="플레이어 ID (user_id 또는 guest_id)")
+    role_id: int = Field(..., description="역할 ID (1: 요양보호사, 2: 가족, 3: AI 개발자)")
+    role_name: str = Field(..., description="역할 이름")
+
+
+# 역할 배정 결과 스키마
+class RoleAssignmentResult(BaseModel):
+    assignments: List[RoleAssignment] = Field(..., description="역할 배정 결과 목록")
+    message: str = Field("역할이 성공적으로 배정되었습니다.", description="응답 메시지")
 
 
 # Room 응답 스키마
@@ -95,6 +109,13 @@ AVAILABLE_TOPICS = [
     "AI 교육 시스템"
 ]
 
+# 역할 정의
+ROLE_DEFINITIONS = {
+    1: "요양보호사",
+    2: "가족",
+    3: "AI 개발자"
+}
+
 # 방 코드로 입장하는 요청 스키마
 class RoomJoinByCode(BaseModel):
     room_code: str = Field(..., min_length=4, max_length=20, description="방 입장 코드")
@@ -115,7 +136,7 @@ class RoomJoinResponse(BaseModel):
 
 # 준비 상태 변경 요청 스키마
 class RoomReadyRequest(BaseModel):
-    room_code: str = Field(..., min_length=4, max_length=20, description="방 코드")
+    pass  # 헤더의 토큰으로 사용자 식별
 
 
 # 준비 상태 변경 응답 스키마
@@ -129,7 +150,7 @@ class RoomReadyResponse(BaseModel):
 
 # 방 상태 초기화 요청 스키마 (테스트용)
 class RoomResetRequest(BaseModel):
-    room_code: str = Field(..., min_length=4, max_length=20, description="방 코드")
+    pass
 
 
 # 방 상태 초기화 응답 스키마 (테스트용)
@@ -140,7 +161,7 @@ class RoomResetResponse(BaseModel):
 
 # 방 나가기 요청 스키마
 class RoomLeaveRequest(BaseModel):
-    room_code: str = Field(..., min_length=4, max_length=20, description="방 코드")
+    pass  # 헤더의 토큰으로 사용자 식별
 
 
 # 방 나가기 응답 스키마
