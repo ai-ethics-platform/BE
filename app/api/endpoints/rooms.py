@@ -442,8 +442,7 @@ async def leave_room(
 @router.post("/assign-roles/{room_code}", response_model=schemas.RoleAssignmentResult)
 async def assign_roles(
     room_code: str,
-    db: AsyncSession = Depends(get_db),
-    current_user: Union[models.User, dict] = Depends(deps.get_current_user_or_guest)
+    db: AsyncSession = Depends(get_db)
 ) -> Any:
     """
     역할 랜덤 배정
