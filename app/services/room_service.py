@@ -21,14 +21,8 @@ class RoomService:
         """공개 방 생성"""
         
         # 방 코드 결정
-        if room_data.allow_random_matching:
-            # 랜덤 방 코드 생성
-            room_code = await RoomService._generate_unique_room_code(db)
-        else:
+        if room_data.custom_room_code:
             # 사용자 지정 방 코드 사용
-            if not room_data.custom_room_code:
-                raise ValueError("allow_random_matching이 false일 때는 custom_room_code를 제공해야 합니다.")
-            
             # 중복 확인
             existing_room = await db.execute(
                 select(models.Room).where(models.Room.room_code == room_data.custom_room_code)
@@ -37,6 +31,9 @@ class RoomService:
                 raise ValueError(f"방 코드 '{room_data.custom_room_code}'는 이미 사용 중입니다.")
             
             room_code = room_data.custom_room_code
+        else:
+            # 랜덤 방 코드 생성
+            room_code = await RoomService._generate_unique_room_code(db)
         
         # 방 생성
         db_room = models.Room(
@@ -45,7 +42,7 @@ class RoomService:
             description=room_data.description,
             topic=room_data.topic,
             is_public=True,
-            allow_random_matching=room_data.allow_random_matching,
+            allow_random_matching=True,  # 기본값
             max_players=3,  # 고정값 3
             current_players=1,  # 생성자가 자동 입장
             created_by=creator_id  # 게스트의 경우 None
@@ -190,14 +187,8 @@ class RoomService:
         """비공개 방 생성"""
         
         # 방 코드 결정
-        if room_data.allow_random_matching:
-            # 랜덤 방 코드 생성
-            room_code = await RoomService._generate_unique_room_code(db)
-        else:
+        if room_data.custom_room_code:
             # 사용자 지정 방 코드 사용
-            if not room_data.custom_room_code:
-                raise ValueError("allow_random_matching이 false일 때는 custom_room_code를 제공해야 합니다.")
-            
             # 중복 확인
             existing_room = await db.execute(
                 select(models.Room).where(models.Room.room_code == room_data.custom_room_code)
@@ -206,6 +197,9 @@ class RoomService:
                 raise ValueError(f"방 코드 '{room_data.custom_room_code}'는 이미 사용 중입니다.")
             
             room_code = room_data.custom_room_code
+        else:
+            # 랜덤 방 코드 생성
+            room_code = await RoomService._generate_unique_room_code(db)
         
         # 방 생성
         db_room = models.Room(
@@ -214,7 +208,7 @@ class RoomService:
             description=room_data.description,
             topic=room_data.topic,
             is_public=False,  # 비공개 방
-            allow_random_matching=room_data.allow_random_matching,
+            allow_random_matching=True,  # 기본값
             max_players=3,  # 고정값 3
             current_players=1,  # 생성자가 자동 입장
             created_by=creator_id  # 게스트의 경우 None

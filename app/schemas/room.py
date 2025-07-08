@@ -8,9 +8,7 @@ class RoomCreatePublic(BaseModel):
     title: str = Field(..., min_length=1, max_length=100, description="방 제목")
     description: Optional[str] = Field(None, max_length=500, description="방 설명")
     topic: str = Field(..., description="플레이 주제")
-    allow_random_matching: bool = Field(True, description="랜덤 배정 허용 여부")
-    custom_room_code: Optional[str] = Field(None, min_length=4, max_length=20, description="사용자 지정 방 코드 (allow_random_matching이 false일 때 사용)")
-    max_players: int = Field(3, ge=3, le=3, description="플레이어 수 (고정: 3명)")
+    custom_room_code: Optional[str] = Field(None, min_length=4, max_length=20, description="사용자 지정 방 코드 (없으면 랜덤 생성)")
 
 
 # 비공개 방 생성 요청 스키마
@@ -18,9 +16,7 @@ class RoomCreatePrivate(BaseModel):
     title: str = Field(..., min_length=1, max_length=100, description="방 제목")
     description: Optional[str] = Field(None, max_length=500, description="방 설명")
     topic: str = Field(..., description="플레이 주제")
-    allow_random_matching: bool = Field(True, description="랜덤 배정 허용 여부")
-    custom_room_code: Optional[str] = Field(None, min_length=4, max_length=20, description="사용자 지정 방 코드 (allow_random_matching이 false일 때 사용)")
-    max_players: int = Field(3, ge=3, le=3, description="플레이어 수 (고정: 3명)")
+    custom_room_code: Optional[str] = Field(None, min_length=4, max_length=20, description="사용자 지정 방 코드 (없으면 랜덤 생성)")
 
 
 # Room 참가자 스키마
