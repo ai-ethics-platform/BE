@@ -534,6 +534,46 @@ class RoomService:
         
         return assignments
 
+    @staticmethod
+    async def set_ai_type(db: AsyncSession, room_code: str, ai_type: int):
+        room = await RoomService.get_room_by_code(db, room_code)
+        if not room:
+            raise ValueError("존재하지 않는 방입니다.")
+        if room.ai_type is not None:
+            raise ValueError("이미 AI 형태가 저장되어 있습니다.")
+        room.ai_type = ai_type
+        await db.commit()
+        return room
+
+    @staticmethod
+    async def get_ai_type(db: AsyncSession, room_code: str):
+        room = await RoomService.get_room_by_code(db, room_code)
+        if not room:
+            raise ValueError("존재하지 않는 방입니다.")
+        if room.ai_type is None:
+            raise ValueError("아직 AI 형태가 저장되지 않았습니다.")
+        return room.ai_type
+
+    @staticmethod
+    async def set_ai_name(db: AsyncSession, room_code: str, ai_name: str):
+        room = await RoomService.get_room_by_code(db, room_code)
+        if not room:
+            raise ValueError("존재하지 않는 방입니다.")
+        if room.ai_name:
+            raise ValueError("이미 AI 이름이 저장되어 있습니다.")
+        room.ai_name = ai_name
+        await db.commit()
+        return room
+
+    @staticmethod
+    async def get_ai_name(db: AsyncSession, room_code: str):
+        room = await RoomService.get_room_by_code(db, room_code)
+        if not room:
+            raise ValueError("존재하지 않는 방입니다.")
+        if not room.ai_name:
+            raise ValueError("아직 AI 이름이 저장되지 않았습니다.")
+        return room.ai_name
+
 
 # 서비스 인스턴스
 room_service = RoomService() 

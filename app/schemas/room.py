@@ -168,4 +168,28 @@ class RoomLeaveResponse(BaseModel):
     new_host: Optional[dict] = Field(None, description="새로운 방장 정보 (방장이 바뀐 경우)")
     game_started: bool = Field(..., description="게임이 시작된 상태인지 여부")
     requires_lobby_redirect: bool = Field(..., description="대기실로 리다이렉트가 필요한지 여부")
-    message: str = "방에서 나갔습니다." 
+    message: str = "방에서 나갔습니다."
+
+
+# AI 형태 저장 요청
+class AiTypeSelectRequest(BaseModel):
+    room_code: str = Field(..., description="방 코드")
+    ai_type: int = Field(..., ge=1, le=3, description="AI 형태 (1: 로봇, 2: 중간, 3: 사람)")
+
+
+# AI 형태 조회 응답
+class AiTypeSelectResponse(BaseModel):
+    room_code: str
+    ai_type: int
+
+
+# AI 이름 저장 요청
+class AiNameRequest(BaseModel):
+    room_code: str = Field(..., description="방 코드")
+    ai_name: str = Field(..., min_length=1, max_length=100, description="AI 이름")
+
+
+# AI 이름 조회 응답
+class AiNameResponse(BaseModel):
+    room_code: str
+    ai_name: str 

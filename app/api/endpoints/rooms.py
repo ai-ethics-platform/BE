@@ -471,4 +471,52 @@ async def assign_roles(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"역할 배정 중 오류가 발생했습니다: {str(e)}"
-        ) 
+        )
+
+
+@router.post("/ai-select", response_model=schemas.AiTypeSelectResponse)
+async def set_ai_type(
+    req: schemas.AiTypeSelectRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    try:
+        room = await room_service.set_ai_type(db, req.room_code, req.ai_type)
+        return schemas.AiTypeSelectResponse(room_code=room.room_code, ai_type=room.ai_type)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get("/ai-select", response_model=schemas.AiTypeSelectResponse)
+async def get_ai_type(
+    room_code: str,
+    db: AsyncSession = Depends(get_db)
+):
+    try:
+        ai_type = await room_service.get_ai_type(db, room_code)
+        return schemas.AiTypeSelectResponse(room_code=room_code, ai_type=ai_type)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/ai-name", response_model=schemas.AiNameResponse)
+async def set_ai_name(
+    req: schemas.AiNameRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    try:
+        room = await room_service.set_ai_name(db, req.room_code, req.ai_name)
+        return schemas.AiNameResponse(room_code=room.room_code, ai_name=room.ai_name)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.get("/ai-name", response_model=schemas.AiNameResponse)
+async def get_ai_name(
+    room_code: str,
+    db: AsyncSession = Depends(get_db)
+):
+    try:
+        ai_name = await room_service.get_ai_name(db, room_code)
+        return schemas.AiNameResponse(room_code=room_code, ai_name=ai_name)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) 
