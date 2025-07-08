@@ -30,7 +30,11 @@ from .room import (
     RoleAssignment,
     RoleAssignmentResult,
     AVAILABLE_TOPICS,
-    ROLE_DEFINITIONS
+    ROLE_DEFINITIONS,
+    AiTypeSelectRequest,
+    AiTypeSelectResponse,
+    AiNameRequest,
+    AiNameResponse,
 )
 from .voice import (
     VoiceParticipant,
@@ -104,5 +108,9 @@ __all__ = [
     "RecordingUploadResponse",
     "WebSocketMessage",
     "VoiceStatusBroadcast",
-    "ParticipantEvent"
+    "ParticipantEvent",
+    "AiTypeSelectRequest",
+    "AiTypeSelectResponse",
+    "AiNameRequest",
+    "AiNameResponse",
 ]
