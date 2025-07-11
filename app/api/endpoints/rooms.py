@@ -520,3 +520,128 @@ async def get_ai_name(
         return schemas.AiNameResponse(room_code=room_code, ai_name=ai_name)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) 
+
+# 라운드 선택 관련 API 엔드포인트들
+
+@router.post("/round/{room_code}/choice", response_model=schemas.ChoiceSubmitResponse)
+async def submit_round_choice(
+    room_code: str,
+    choice_data: schemas.RoundChoiceRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: Union[models.User, dict] = Depends(deps.get_current_user_or_guest)
+) -> Any:
+    """
+    라운드 개인 선택 제출
+    - 각 플레이어가 자신의 선택을 서버에 전송
+    - 선택지: 1~4
+    """
+    try:
+        # 사용자 정보 추출
+        if isinstance(current_user, models.User):
+            user_id = current_user.id
+            guest_id = None
+        else:
+            # 게스트 사용자
+            user_id = None
+            guest_id = current_user.get('guest_id')
+        
+        # 선택 제출
+        round_choice = await room_service.submit_round_choice(
+            db=db,
+            room_code=room_code,
+            round_number=choice_data.round_number,
+            choice=choice_data.choice,
+            user_id=user_id,
+            guest_id=guest_id
+        )
+        
+        return schemas.ChoiceSubmitResponse(
+            room_code=room_code,
+            round_number=choice_data.round_number,
+            choice=choice_data.choice,
+            message="개인 선택이 성공적으로 제출되었습니다."
+        )
+        
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"선택 제출 중 오류가 발생했습니다: {str(e)}"
+        )
+
+
+@router.post("/round/{room_code}/consensus", response_model=schemas.ConsensusSubmitResponse)
+async def submit_consensus_choice(
+    room_code: str,
+    consensus_data: schemas.ConsensusChoiceRequest,
+    db: AsyncSession = Depends(get_db)
+) -> Any:
+    """
+    라운드 합의 선택 제출
+    - 합의된 선택을 서버에 전송
+    - 선택지: 1~4
+    """
+    try:
+        # 합의 선택 제출
+        consensus_choice = await room_service.submit_consensus_choice(
+            db=db,
+            room_code=room_code,
+            round_number=consensus_data.round_number,
+            choice=consensus_data.choice
+        )
+        
+        return schemas.ConsensusSubmitResponse(
+            room_code=room_code,
+            round_number=consensus_data.round_number,
+            choice=consensus_data.choice,
+            message="합의 선택이 성공적으로 제출되었습니다."
+        )
+        
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"합의 선택 제출 중 오류가 발생했습니다: {str(e)}"
+        )
+
+
+@router.get("/round/{room_code}/status", response_model=schemas.ChoiceStatusResponse)
+async def get_choice_status(
+    room_code: str,
+    round_number: int,
+    db: AsyncSession = Depends(get_db)
+) -> Any:
+    """
+    라운드별 선택 완료 현황 조회
+    - 각 플레이어의 선택 완료 여부를 조회
+    - 합의 선택 완료 여부도 포함
+    - 프론트엔드에서 polling하여 실시간성 구현
+    """
+    try:
+        # 선택 완료 현황 조회
+        status_response = await room_service.get_choice_status(
+            db=db,
+            room_code=room_code,
+            round_number=round_number
+        )
+        
+        return status_response
+        
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"선택 현황 조회 중 오류가 발생했습니다: {str(e)}"
+        ) 

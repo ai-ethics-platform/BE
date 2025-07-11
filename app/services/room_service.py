@@ -574,6 +574,181 @@ class RoomService:
             raise ValueError("아직 AI 이름이 저장되지 않았습니다.")
         return room.ai_name
 
+    @staticmethod
+    async def submit_round_choice(
+        db: AsyncSession,
+        room_code: str,
+        round_number: int,
+        choice: int,
+        user_id: Optional[int],
+        guest_id: Optional[str]
+    ) -> models.RoundChoice:
+        """라운드 개인 선택 제출"""
+        
+        # 방 조회
+        room = await RoomService.get_room_by_code(db=db, room_code=room_code)
+        if not room:
+            raise ValueError("존재하지 않는 방 코드입니다.")
+        
+        # 참가자 조회
+        participant_query = select(models.RoomParticipant).where(
+            and_(
+                models.RoomParticipant.room_id == room.id,
+                models.RoomParticipant.user_id == user_id if user_id else 
+                models.RoomParticipant.guest_id == guest_id
+            )
+        )
+        result = await db.execute(participant_query)
+        participant = result.scalar_one_or_none()
+        
+        if not participant:
+            raise ValueError("방에 참가하지 않은 사용자입니다.")
+        
+        # 이미 선택했는지 확인
+        existing_choice_query = select(models.RoundChoice).where(
+            and_(
+                models.RoundChoice.room_id == room.id,
+                models.RoundChoice.round_number == round_number,
+                models.RoundChoice.participant_id == participant.id
+            )
+        )
+        existing_result = await db.execute(existing_choice_query)
+        existing_choice = existing_result.scalar_one_or_none()
+        
+        if existing_choice:
+            # 기존 선택 업데이트
+            existing_choice.choice = choice
+            await db.commit()
+            await db.refresh(existing_choice)
+            return existing_choice
+        
+        # 새로운 선택 생성
+        round_choice = models.RoundChoice(
+            room_id=room.id,
+            round_number=round_number,
+            participant_id=participant.id,
+            choice=choice
+        )
+        
+        db.add(round_choice)
+        await db.commit()
+        await db.refresh(round_choice)
+        
+        return round_choice
+
+    @staticmethod
+    async def submit_consensus_choice(
+        db: AsyncSession,
+        room_code: str,
+        round_number: int,
+        choice: int
+    ) -> models.ConsensusChoice:
+        """라운드 합의 선택 제출"""
+        
+        # 방 조회
+        room = await RoomService.get_room_by_code(db=db, room_code=room_code)
+        if not room:
+            raise ValueError("존재하지 않는 방 코드입니다.")
+        
+        # 이미 합의 선택했는지 확인
+        existing_consensus_query = select(models.ConsensusChoice).where(
+            and_(
+                models.ConsensusChoice.room_id == room.id,
+                models.ConsensusChoice.round_number == round_number
+            )
+        )
+        existing_result = await db.execute(existing_consensus_query)
+        existing_consensus = existing_result.scalar_one_or_none()
+        
+        if existing_consensus:
+            # 기존 합의 선택 업데이트
+            existing_consensus.choice = choice
+            await db.commit()
+            await db.refresh(existing_consensus)
+            return existing_consensus
+        
+        # 새로운 합의 선택 생성
+        consensus_choice = models.ConsensusChoice(
+            room_id=room.id,
+            round_number=round_number,
+            choice=choice
+        )
+        
+        db.add(consensus_choice)
+        await db.commit()
+        await db.refresh(consensus_choice)
+        
+        return consensus_choice
+
+    @staticmethod
+    async def get_choice_status(
+        db: AsyncSession,
+        room_code: str,
+        round_number: int
+    ) -> schemas.ChoiceStatusResponse:
+        """라운드별 선택 완료 현황 조회"""
+        
+        # 방 조회
+        room = await RoomService.get_room_by_code(db=db, room_code=room_code)
+        if not room:
+            raise ValueError("존재하지 않는 방 코드입니다.")
+        
+        # 모든 참가자 조회
+        participants_query = select(models.RoomParticipant).where(
+            models.RoomParticipant.room_id == room.id
+        )
+        participants_result = await db.execute(participants_query)
+        participants = participants_result.scalars().all()
+        
+        # 각 참가자의 선택 완료 여부 확인
+        participants_status = []
+        completed_count = 0
+        
+        for participant in participants:
+            # 해당 라운드의 선택 조회
+            choice_query = select(models.RoundChoice).where(
+                and_(
+                    models.RoundChoice.room_id == room.id,
+                    models.RoundChoice.round_number == round_number,
+                    models.RoundChoice.participant_id == participant.id
+                )
+            )
+            choice_result = await db.execute(choice_query)
+            choice = choice_result.scalar_one_or_none()
+            
+            has_choice = choice is not None
+            if has_choice:
+                completed_count += 1
+            
+            participants_status.append({
+                "participant_id": participant.id,
+                "nickname": participant.nickname,
+                "user_id": participant.user_id,
+                "guest_id": participant.guest_id,
+                "has_choice": has_choice,
+                "choice": choice.choice if choice else None
+            })
+        
+        # 합의 선택 완료 여부 확인
+        consensus_query = select(models.ConsensusChoice).where(
+            and_(
+                models.ConsensusChoice.room_id == room.id,
+                models.ConsensusChoice.round_number == round_number
+            )
+        )
+        consensus_result = await db.execute(consensus_query)
+        consensus_choice = consensus_result.scalar_one_or_none()
+        
+        consensus_completed = consensus_choice is not None
+        
+        return schemas.ChoiceStatusResponse(
+            round_number=round_number,
+            room_code=room_code,
+            participants=participants_status,
+            all_completed=completed_count == len(participants),
+            consensus_completed=consensus_completed
+        ) 
+
 
 # 서비스 인스턴스
 room_service = RoomService() 

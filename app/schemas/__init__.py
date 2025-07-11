@@ -35,6 +35,11 @@ from .room import (
     AiTypeSelectResponse,
     AiNameRequest,
     AiNameResponse,
+    RoundChoiceRequest,
+    ConsensusChoiceRequest,
+    ChoiceStatusResponse,
+    ChoiceSubmitResponse,
+    ConsensusSubmitResponse,
 )
 from .voice import (
     VoiceParticipant,
@@ -113,4 +118,9 @@ __all__ = [
     "AiTypeSelectResponse",
     "AiNameRequest",
     "AiNameResponse",
+    "RoundChoiceRequest",
+    "ConsensusChoiceRequest",
+    "ChoiceStatusResponse",
+    "ChoiceSubmitResponse",
+    "ConsensusSubmitResponse",
 ]

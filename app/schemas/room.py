@@ -193,3 +193,35 @@ class AiNameRequest(BaseModel):
 class AiNameResponse(BaseModel):
     room_code: str
     ai_name: str 
+
+# 라운드 개인 선택 제출 요청 스키마
+class RoundChoiceRequest(BaseModel):
+    round_number: int = Field(..., ge=1, description="라운드 번호")
+    choice: int = Field(..., ge=1, le=4, description="선택지 (1~4)")
+
+# 라운드 합의 선택 제출 요청 스키마
+class ConsensusChoiceRequest(BaseModel):
+    round_number: int = Field(..., ge=1, description="라운드 번호")
+    choice: int = Field(..., ge=1, le=4, description="선택지 (1~4)")
+
+# 선택 완료 현황 조회 응답 스키마
+class ChoiceStatusResponse(BaseModel):
+    round_number: int
+    room_code: str
+    participants: List[dict] = Field(..., description="참가자별 선택 완료 현황")
+    all_completed: bool = Field(..., description="모든 참가자가 선택을 완료했는지 여부")
+    consensus_completed: bool = Field(..., description="합의 선택이 완료되었는지 여부")
+
+# 선택 제출 응답 스키마
+class ChoiceSubmitResponse(BaseModel):
+    room_code: str
+    round_number: int
+    choice: int
+    message: str = "선택이 성공적으로 제출되었습니다."
+
+# 합의 선택 제출 응답 스키마
+class ConsensusSubmitResponse(BaseModel):
+    room_code: str
+    round_number: int
+    choice: int
+    message: str = "합의 선택이 성공적으로 제출되었습니다." 

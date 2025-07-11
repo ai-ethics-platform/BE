@@ -55,3 +55,29 @@ class RoomParticipant(Base):
     # Relationships
     room = relationship("Room", back_populates="participants")
     user = relationship("User", back_populates="room_participations") 
+
+# 라운드별 개인 선택 저장
+class RoundChoice(Base):
+    __tablename__ = "round_choices"
+
+    id = Column(Integer, primary_key=True, index=True)
+    room_id = Column(Integer, ForeignKey("rooms.id"), nullable=False)
+    round_number = Column(Integer, nullable=False)
+    participant_id = Column(Integer, ForeignKey("room_participants.id"), nullable=False)
+    choice = Column(Integer, nullable=False)  # 1~4
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    room = relationship("Room")
+    participant = relationship("RoomParticipant")
+
+# 라운드별 합의 선택 저장
+class ConsensusChoice(Base):
+    __tablename__ = "consensus_choices"
+
+    id = Column(Integer, primary_key=True, index=True)
+    room_id = Column(Integer, ForeignKey("rooms.id"), nullable=False)
+    round_number = Column(Integer, nullable=False)
+    choice = Column(Integer, nullable=False)  # 1~4
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    room = relationship("Room") 
