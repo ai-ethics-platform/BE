@@ -211,6 +211,8 @@ class ChoiceStatusResponse(BaseModel):
     participants: List[dict] = Field(..., description="참가자별 선택 완료 현황")
     all_completed: bool = Field(..., description="모든 참가자가 선택을 완료했는지 여부")
     consensus_completed: bool = Field(..., description="합의 선택이 완료되었는지 여부")
+    can_proceed: bool = Field(..., description="다음 단계로 진행 가능한지 여부")
+    consensus_choice: Optional[int] = Field(None, description="합의 선택된 선택지 (1~4)")
 
 # 선택 제출 응답 스키마
 class ChoiceSubmitResponse(BaseModel):

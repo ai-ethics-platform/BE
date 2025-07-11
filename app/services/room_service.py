@@ -604,6 +604,19 @@ class RoomService:
         if not participant:
             raise ValueError("방에 참가하지 않은 사용자입니다.")
         
+        # 합의 선택이 이미 완료되었는지 확인
+        consensus_query = select(models.ConsensusChoice).where(
+            and_(
+                models.ConsensusChoice.room_id == room.id,
+                models.ConsensusChoice.round_number == round_number
+            )
+        )
+        consensus_result = await db.execute(consensus_query)
+        consensus_choice = consensus_result.scalar_one_or_none()
+        
+        if consensus_choice:
+            raise ValueError("합의 선택이 완료되어 개인 선택을 변경할 수 없습니다.")
+        
         # 이미 선택했는지 확인
         existing_choice_query = select(models.RoundChoice).where(
             and_(
@@ -641,14 +654,34 @@ class RoomService:
         db: AsyncSession,
         room_code: str,
         round_number: int,
-        choice: int
+        choice: int,
+        user_id: Optional[int],
+        guest_id: Optional[str]
     ) -> models.ConsensusChoice:
-        """라운드 합의 선택 제출"""
+        """라운드 합의 선택 제출 (방장만 가능)"""
         
         # 방 조회
         room = await RoomService.get_room_by_code(db=db, room_code=room_code)
         if not room:
             raise ValueError("존재하지 않는 방 코드입니다.")
+        
+        # 참가자 조회 (권한 체크용)
+        participant_query = select(models.RoomParticipant).where(
+            and_(
+                models.RoomParticipant.room_id == room.id,
+                models.RoomParticipant.user_id == user_id if user_id else 
+                models.RoomParticipant.guest_id == guest_id
+            )
+        )
+        result = await db.execute(participant_query)
+        participant = result.scalar_one_or_none()
+        
+        if not participant:
+            raise ValueError("방에 참가하지 않은 사용자입니다.")
+        
+        # 방장 권한 체크
+        if not participant.is_host:
+            raise ValueError("합의 선택은 방장만 제출할 수 있습니다.")
         
         # 이미 합의 선택했는지 확인
         existing_consensus_query = select(models.ConsensusChoice).where(
@@ -700,6 +733,18 @@ class RoomService:
         participants_result = await db.execute(participants_query)
         participants = participants_result.scalars().all()
         
+        # 합의 선택 완료 여부 확인
+        consensus_query = select(models.ConsensusChoice).where(
+            and_(
+                models.ConsensusChoice.room_id == room.id,
+                models.ConsensusChoice.round_number == round_number
+            )
+        )
+        consensus_result = await db.execute(consensus_query)
+        consensus_choice = consensus_result.scalar_one_or_none()
+        
+        consensus_completed = consensus_choice is not None
+        
         # 각 참가자의 선택 완료 여부 확인
         participants_status = []
         completed_count = 0
@@ -720,33 +765,39 @@ class RoomService:
             if has_choice:
                 completed_count += 1
             
+            # 상태 텍스트 결정
+            if consensus_completed:
+                status = "제출 완료"
+            elif has_choice:
+                status = "선택완료"
+            else:
+                status = "대기중"
+            
             participants_status.append({
                 "participant_id": participant.id,
                 "nickname": participant.nickname,
                 "user_id": participant.user_id,
                 "guest_id": participant.guest_id,
+                "is_host": participant.is_host,
                 "has_choice": has_choice,
-                "choice": choice.choice if choice else None
+                "choice": choice.choice if choice else None,
+                "status": status
             })
         
-        # 합의 선택 완료 여부 확인
-        consensus_query = select(models.ConsensusChoice).where(
-            and_(
-                models.ConsensusChoice.room_id == room.id,
-                models.ConsensusChoice.round_number == round_number
-            )
-        )
-        consensus_result = await db.execute(consensus_query)
-        consensus_choice = consensus_result.scalar_one_or_none()
+        # 전체 상태 결정
+        all_completed = completed_count == len(participants)
         
-        consensus_completed = consensus_choice is not None
+        # 다음 단계 진행 가능 여부
+        can_proceed = all_completed and consensus_completed
         
         return schemas.ChoiceStatusResponse(
             round_number=round_number,
             room_code=room_code,
             participants=participants_status,
-            all_completed=completed_count == len(participants),
-            consensus_completed=consensus_completed
+            all_completed=all_completed,
+            consensus_completed=consensus_completed,
+            can_proceed=can_proceed,
+            consensus_choice=consensus_choice.choice if consensus_choice else None
         ) 
 
 

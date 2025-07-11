@@ -578,20 +578,33 @@ async def submit_round_choice(
 async def submit_consensus_choice(
     room_code: str,
     consensus_data: schemas.ConsensusChoiceRequest,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: Union[models.User, dict] = Depends(deps.get_current_user_or_guest)
 ) -> Any:
     """
-    라운드 합의 선택 제출
+    라운드 합의 선택 제출 (방장만 가능)
     - 합의된 선택을 서버에 전송
     - 선택지: 1~4
+    - 방장만 제출 가능
     """
     try:
+        # 사용자 정보 추출
+        if isinstance(current_user, models.User):
+            user_id = current_user.id
+            guest_id = None
+        else:
+            # 게스트 사용자
+            user_id = None
+            guest_id = current_user.get('guest_id')
+        
         # 합의 선택 제출
         consensus_choice = await room_service.submit_consensus_choice(
             db=db,
             room_code=room_code,
             round_number=consensus_data.round_number,
-            choice=consensus_data.choice
+            choice=consensus_data.choice,
+            user_id=user_id,
+            guest_id=guest_id
         )
         
         return schemas.ConsensusSubmitResponse(
