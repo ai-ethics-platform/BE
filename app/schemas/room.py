@@ -217,12 +217,22 @@ class RoundChoiceRequest(BaseModel):
     round_number: int = Field(..., ge=1, description="라운드 번호")
     choice: int = Field(..., ge=1, le=4, description="선택지 (1~4)")
 
-# 라운드 합의 선택 제출 요청 스키마
+# 개별 확신도 제출 요청 스키마
+class IndividualConfidenceRequest(BaseModel):
+    round_number: int = Field(..., ge=1, description="라운드 번호")
+    confidence: int = Field(..., ge=1, le=5, description="확신도 (1~5)")
+
+# 합의 선택 요청 스키마
 class ConsensusChoiceRequest(BaseModel):
     round_number: int = Field(..., ge=1, description="라운드 번호")
     choice: int = Field(..., ge=1, le=4, description="선택지 (1~4)")
 
-# 선택 완료 현황 조회 응답 스키마
+# 합의 선택에 대한 확신도 제출 요청 스키마
+class ConsensusConfidenceRequest(BaseModel):
+    round_number: int = Field(..., ge=1, description="라운드 번호")
+    confidence: int = Field(..., ge=1, le=5, description="확신도 (1~5)")
+
+# 선택 상태 응답 스키마
 class ChoiceStatusResponse(BaseModel):
     round_number: int
     room_code: str
@@ -238,6 +248,13 @@ class ChoiceSubmitResponse(BaseModel):
     round_number: int
     choice: int
     message: str = "선택이 성공적으로 제출되었습니다."
+
+# 확신도 제출 응답 스키마
+class ConfidenceSubmitResponse(BaseModel):
+    room_code: str
+    round_number: int
+    confidence: int
+    message: str = "확신도가 성공적으로 제출되었습니다."
 
 # 합의 선택 제출 응답 스키마
 class ConsensusSubmitResponse(BaseModel):

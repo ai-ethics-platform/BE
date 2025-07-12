@@ -617,9 +617,9 @@ class RoomService:
         consensus_choice = consensus_result.scalar_one_or_none()
         
         if consensus_choice:
-            raise ValueError("합의 선택이 완료되어 개인 선택을 변경할 수 없습니다.")
+            raise ValueError("합의 선택이 이미 완료되어 개인 선택을 변경할 수 없습니다.")
         
-        # 이미 선택했는지 확인
+        # 기존 선택이 있는지 확인
         existing_choice_query = select(models.RoundChoice).where(
             and_(
                 models.RoundChoice.room_id == room.id,
@@ -627,8 +627,8 @@ class RoomService:
                 models.RoundChoice.participant_id == participant.id
             )
         )
-        existing_result = await db.execute(existing_choice_query)
-        existing_choice = existing_result.scalar_one_or_none()
+        existing_choice_result = await db.execute(existing_choice_query)
+        existing_choice = existing_choice_result.scalar_one_or_none()
         
         if existing_choice:
             # 기존 선택 업데이트
@@ -636,38 +636,36 @@ class RoomService:
             await db.commit()
             await db.refresh(existing_choice)
             return existing_choice
-        
-        # 새로운 선택 생성
-        round_choice = models.RoundChoice(
-            room_id=room.id,
-            round_number=round_number,
-            participant_id=participant.id,
-            choice=choice
-        )
-        
-        db.add(round_choice)
-        await db.commit()
-        await db.refresh(round_choice)
-        
-        return round_choice
+        else:
+            # 새로운 선택 생성
+            round_choice = models.RoundChoice(
+                room_id=room.id,
+                round_number=round_number,
+                participant_id=participant.id,
+                choice=choice
+            )
+            db.add(round_choice)
+            await db.commit()
+            await db.refresh(round_choice)
+            return round_choice
 
     @staticmethod
-    async def submit_consensus_choice(
+    async def submit_individual_confidence(
         db: AsyncSession,
         room_code: str,
         round_number: int,
-        choice: int,
+        confidence: int,
         user_id: Optional[int],
         guest_id: Optional[str]
-    ) -> models.ConsensusChoice:
-        """라운드 합의 선택 제출 (방장만 가능)"""
+    ) -> models.RoundChoice:
+        """개별 확신도 제출"""
         
         # 방 조회
         room = await RoomService.get_room_by_code(db=db, room_code=room_code)
         if not room:
             raise ValueError("존재하지 않는 방 코드입니다.")
         
-        # 참가자 조회 (권한 체크용)
+        # 참가자 조회
         participant_query = select(models.RoomParticipant).where(
             and_(
                 models.RoomParticipant.room_id == room.id,
@@ -681,19 +679,88 @@ class RoomService:
         if not participant:
             raise ValueError("방에 참가하지 않은 사용자입니다.")
         
-        # 방장 권한 체크
+        # 개인 선택이 있는지 확인
+        choice_query = select(models.RoundChoice).where(
+            and_(
+                models.RoundChoice.room_id == room.id,
+                models.RoundChoice.round_number == round_number,
+                models.RoundChoice.participant_id == participant.id
+            )
+        )
+        choice_result = await db.execute(choice_query)
+        round_choice = choice_result.scalar_one_or_none()
+        
+        if not round_choice:
+            raise ValueError("먼저 개인 선택을 제출해야 합니다.")
+        
+        # 확신도 업데이트
+        round_choice.confidence = confidence
+        await db.commit()
+        await db.refresh(round_choice)
+        return round_choice
+
+    @staticmethod
+    async def submit_consensus_choice(
+        db: AsyncSession,
+        room_code: str,
+        round_number: int,
+        choice: int,
+        user_id: Optional[int],
+        guest_id: Optional[str]
+    ) -> models.ConsensusChoice:
+        """합의 선택 제출 (방장만 가능)"""
+        
+        # 방 조회
+        room = await RoomService.get_room_by_code(db=db, room_code=room_code)
+        if not room:
+            raise ValueError("존재하지 않는 방 코드입니다.")
+        
+        # 참가자 조회
+        participant_query = select(models.RoomParticipant).where(
+            and_(
+                models.RoomParticipant.room_id == room.id,
+                models.RoomParticipant.user_id == user_id if user_id else 
+                models.RoomParticipant.guest_id == guest_id
+            )
+        )
+        result = await db.execute(participant_query)
+        participant = result.scalar_one_or_none()
+        
+        if not participant:
+            raise ValueError("방에 참가하지 않은 사용자입니다.")
+        
+        # 방장인지 확인
         if not participant.is_host:
             raise ValueError("합의 선택은 방장만 제출할 수 있습니다.")
         
-        # 이미 합의 선택했는지 확인
+        # 모든 참가자가 개인 선택을 완료했는지 확인
+        all_participants_query = select(models.RoomParticipant).where(
+            models.RoomParticipant.room_id == room.id
+        )
+        all_participants_result = await db.execute(all_participants_query)
+        all_participants = all_participants_result.scalars().all()
+        
+        for p in all_participants:
+            choice_query = select(models.RoundChoice).where(
+                and_(
+                    models.RoundChoice.room_id == room.id,
+                    models.RoundChoice.round_number == round_number,
+                    models.RoundChoice.participant_id == p.id
+                )
+            )
+            choice_result = await db.execute(choice_query)
+            if not choice_result.scalar_one_or_none():
+                raise ValueError("모든 참가자가 개인 선택을 완료해야 합니다.")
+        
+        # 기존 합의 선택이 있는지 확인
         existing_consensus_query = select(models.ConsensusChoice).where(
             and_(
                 models.ConsensusChoice.room_id == room.id,
                 models.ConsensusChoice.round_number == round_number
             )
         )
-        existing_result = await db.execute(existing_consensus_query)
-        existing_consensus = existing_result.scalar_one_or_none()
+        existing_consensus_result = await db.execute(existing_consensus_query)
+        existing_consensus = existing_consensus_result.scalar_one_or_none()
         
         if existing_consensus:
             # 기존 합의 선택 업데이트
@@ -701,18 +768,65 @@ class RoomService:
             await db.commit()
             await db.refresh(existing_consensus)
             return existing_consensus
+        else:
+            # 새로운 합의 선택 생성
+            consensus_choice = models.ConsensusChoice(
+                room_id=room.id,
+                round_number=round_number,
+                choice=choice
+            )
+            db.add(consensus_choice)
+            await db.commit()
+            await db.refresh(consensus_choice)
+            return consensus_choice
+
+    @staticmethod
+    async def submit_consensus_confidence(
+        db: AsyncSession,
+        room_code: str,
+        round_number: int,
+        confidence: int,
+        user_id: Optional[int],
+        guest_id: Optional[str]
+    ) -> models.ConsensusChoice:
+        """합의 선택에 대한 확신도 제출"""
         
-        # 새로운 합의 선택 생성
-        consensus_choice = models.ConsensusChoice(
-            room_id=room.id,
-            round_number=round_number,
-            choice=choice
+        # 방 조회
+        room = await RoomService.get_room_by_code(db=db, room_code=room_code)
+        if not room:
+            raise ValueError("존재하지 않는 방 코드입니다.")
+        
+        # 참가자 조회
+        participant_query = select(models.RoomParticipant).where(
+            and_(
+                models.RoomParticipant.room_id == room.id,
+                models.RoomParticipant.user_id == user_id if user_id else 
+                models.RoomParticipant.guest_id == guest_id
+            )
         )
+        result = await db.execute(participant_query)
+        participant = result.scalar_one_or_none()
         
-        db.add(consensus_choice)
+        if not participant:
+            raise ValueError("방에 참가하지 않은 사용자입니다.")
+        
+        # 합의 선택이 있는지 확인
+        consensus_query = select(models.ConsensusChoice).where(
+            and_(
+                models.ConsensusChoice.room_id == room.id,
+                models.ConsensusChoice.round_number == round_number
+            )
+        )
+        consensus_result = await db.execute(consensus_query)
+        consensus_choice = consensus_result.scalar_one_or_none()
+        
+        if not consensus_choice:
+            raise ValueError("먼저 합의 선택이 제출되어야 합니다.")
+        
+        # 확신도 업데이트
+        consensus_choice.confidence = confidence
         await db.commit()
         await db.refresh(consensus_choice)
-        
         return consensus_choice
 
     @staticmethod
@@ -721,7 +835,7 @@ class RoomService:
         room_code: str,
         round_number: int
     ) -> schemas.ChoiceStatusResponse:
-        """라운드별 선택 완료 현황 조회"""
+        """라운드별 선택 상태 조회"""
         
         # 방 조회
         room = await RoomService.get_room_by_code(db=db, room_code=room_code)
@@ -735,7 +849,36 @@ class RoomService:
         participants_result = await db.execute(participants_query)
         participants = participants_result.scalars().all()
         
-        # 합의 선택 완료 여부 확인
+        # 참가자별 선택 현황
+        participant_status = []
+        all_completed = True
+        
+        for participant in participants:
+            # 개인 선택 조회
+            choice_query = select(models.RoundChoice).where(
+                and_(
+                    models.RoundChoice.room_id == room.id,
+                    models.RoundChoice.round_number == round_number,
+                    models.RoundChoice.participant_id == participant.id
+                )
+            )
+            choice_result = await db.execute(choice_query)
+            round_choice = choice_result.scalar_one_or_none()
+            
+            status = {
+                "participant_id": participant.id,
+                "nickname": participant.nickname,
+                "choice_completed": round_choice is not None,
+                "choice": round_choice.choice if round_choice else None,
+                "confidence_completed": round_choice.confidence is not None if round_choice else False,
+                "confidence": round_choice.confidence if round_choice else None
+            }
+            participant_status.append(status)
+            
+            if not round_choice:
+                all_completed = False
+        
+        # 합의 선택 조회
         consensus_query = select(models.ConsensusChoice).where(
             and_(
                 models.ConsensusChoice.room_id == room.id,
@@ -746,56 +889,12 @@ class RoomService:
         consensus_choice = consensus_result.scalar_one_or_none()
         
         consensus_completed = consensus_choice is not None
-        
-        # 각 참가자의 선택 완료 여부 확인
-        participants_status = []
-        completed_count = 0
-        
-        for participant in participants:
-            # 해당 라운드의 선택 조회
-            choice_query = select(models.RoundChoice).where(
-                and_(
-                    models.RoundChoice.room_id == room.id,
-                    models.RoundChoice.round_number == round_number,
-                    models.RoundChoice.participant_id == participant.id
-                )
-            )
-            choice_result = await db.execute(choice_query)
-            choice = choice_result.scalar_one_or_none()
-            
-            has_choice = choice is not None
-            if has_choice:
-                completed_count += 1
-            
-            # 상태 텍스트 결정
-            if consensus_completed:
-                status = "제출 완료"
-            elif has_choice:
-                status = "선택완료"
-            else:
-                status = "대기중"
-            
-            participants_status.append({
-                "participant_id": participant.id,
-                "nickname": participant.nickname,
-                "user_id": participant.user_id,
-                "guest_id": participant.guest_id,
-                "is_host": participant.is_host,
-                "has_choice": has_choice,
-                "choice": choice.choice if choice else None,
-                "status": status
-            })
-        
-        # 전체 상태 결정
-        all_completed = completed_count == len(participants)
-        
-        # 다음 단계 진행 가능 여부
         can_proceed = all_completed and consensus_completed
         
         return schemas.ChoiceStatusResponse(
             round_number=round_number,
             room_code=room_code,
-            participants=participants_status,
+            participants=participant_status,
             all_completed=all_completed,
             consensus_completed=consensus_completed,
             can_proceed=can_proceed,

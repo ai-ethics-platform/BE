@@ -65,6 +65,7 @@ class RoundChoice(Base):
     round_number = Column(Integer, nullable=False)
     participant_id = Column(Integer, ForeignKey("room_participants.id"), nullable=False)
     choice = Column(Integer, nullable=False)  # 1~4
+    confidence = Column(Integer, nullable=True)  # 1~5 확신도
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     room = relationship("Room")
@@ -78,6 +79,7 @@ class ConsensusChoice(Base):
     room_id = Column(Integer, ForeignKey("rooms.id"), nullable=False)
     round_number = Column(Integer, nullable=False)
     choice = Column(Integer, nullable=False)  # 1~4
+    confidence = Column(Integer, nullable=True)  # 1~5 확신도
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     room = relationship("Room") 
