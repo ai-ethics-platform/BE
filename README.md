@@ -5,11 +5,11 @@ FastAPI를 이용한 AI 윤리게임 백엔드 서버입니다.
 ## 기술 스택
 - Python 3.9+
 - FastAPI
-- SQLAlchemy (ORM)
-- PostgreSQL
+- MySQL
 - OpenAI API (GPT)
 - Docker
 - GitHub Actions
+- WebSocket, Redis
 
 ## 주요 기능
 - 사용자 인증 및 관리
