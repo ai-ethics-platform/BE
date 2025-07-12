@@ -64,26 +64,6 @@ async def authenticate_user(db: AsyncSession, username: str, password: str) -> O
     return user
 
 
-async def update_user_consent(
-    db: AsyncSession,
-    user_id: int,
-    consent_in: schemas.ConsentUpdate
-) -> Optional[models.User]:
-    """
-    사용자 동의 정보 업데이트
-    """
-    user = await get_user(db, user_id)
-    if not user:
-        return None
-    
-    user.data_consent = consent_in.data_consent
-    user.voice_consent = consent_in.voice_consent
-    
-    await db.commit()
-    await db.refresh(user)
-    return user
-
-
 async def create_guest(db: AsyncSession, guest_id: str) -> models.User:
     db_user = models.User(
         username=guest_id,

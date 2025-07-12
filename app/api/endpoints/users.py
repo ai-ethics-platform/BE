@@ -42,20 +42,4 @@ async def get_user_stats(
     사용자 게임 통계 조회
     """
     stats = await user_service.get_stats(user_id=current_user.id)
-    return stats
-
-
-@router.post("/consent", response_model=schemas.User)
-async def update_user_consent(
-    consent_in: schemas.ConsentUpdate,
-    current_user: models.User = Depends(deps.get_current_user),
-) -> Any:
-    """
-    사용자 동의 정보 업데이트
-    """
-    user = await user_service.update_consent(
-        user=current_user,
-        data_consent=consent_in.data_consent,
-        voice_consent=consent_in.voice_consent
-    )
-    return user 
+    return stats 
