@@ -12,7 +12,7 @@ class RoomCreatePublic(BaseModel):
         None,
         min_length=6,
         max_length=6,
-        regex="^\\d{6}$",
+        pattern="^\\d{6}$",
         description="사용자 지정 방 코드 (6자리 숫자, 없으면 랜덤 생성)"
     )
 
@@ -26,7 +26,7 @@ class RoomCreatePrivate(BaseModel):
         None,
         min_length=6,
         max_length=6,
-        regex="^\\d{6}$",
+        pattern="^\\d{6}$",
         description="사용자 지정 방 코드 (6자리 숫자, 없으면 랜덤 생성)"
     )
 
@@ -130,7 +130,7 @@ class RoomJoinByCode(BaseModel):
         ..., 
         min_length=6, 
         max_length=6, 
-        regex="^\\d{6}$",
+        pattern="^\\d{6}$",
         description="방 입장 코드 (6자리 숫자)"
     )
     nickname: str = Field(..., min_length=1, max_length=50, description="게임 내 닉네임")
