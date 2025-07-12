@@ -62,6 +62,8 @@ class UserBase(BaseModel):
 # 사용자 생성 시 필요한 추가 속성
 class UserCreate(UserBase):
     password: str = Field(min_length=8)
+    data_consent: bool = Field(..., description="데이터 수집 동의")
+    voice_consent: bool = Field(..., description="음성 녹음 동의")
 
 
 # 로그인용 스키마

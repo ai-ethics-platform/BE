@@ -43,8 +43,8 @@ async def create_user(db: AsyncSession, user_in: schemas.UserCreate) -> models.U
         major=user_in.major,
         is_active=True,
         is_guest=False,
-        data_consent=False,
-        voice_consent=False
+        data_consent=user_in.data_consent,
+        voice_consent=user_in.voice_consent
     )
     db.add(db_user)
     await db.commit()
