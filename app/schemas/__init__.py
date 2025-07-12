@@ -40,6 +40,7 @@ from .room import (
     ChoiceStatusResponse,
     ChoiceSubmitResponse,
     ConsensusSubmitResponse,
+    ConfidenceSubmitResponse,
 )
 from .voice import (
     VoiceParticipant,
@@ -123,4 +124,5 @@ __all__ = [
     "ChoiceStatusResponse",
     "ChoiceSubmitResponse",
     "ConsensusSubmitResponse",
+    "ConfidenceSubmitResponse",
 ]
