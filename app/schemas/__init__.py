@@ -37,6 +37,8 @@ from .room import (
     AiNameResponse,
     RoundChoiceRequest,
     ConsensusChoiceRequest,
+    IndividualConfidenceRequest,
+    ConsensusConfidenceRequest,
     ChoiceStatusResponse,
     ChoiceSubmitResponse,
     ConsensusSubmitResponse,
@@ -125,4 +127,6 @@ __all__ = [
     "ChoiceSubmitResponse",
     "ConsensusSubmitResponse",
     "ConfidenceSubmitResponse",
+    "IndividualConfidenceRequest",
+    "ConsensusConfidenceRequest",
 ]
