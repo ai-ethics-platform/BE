@@ -35,8 +35,8 @@ class Room(Base):
 
     @classmethod
     def generate_room_code(cls) -> str:
-        """8자리 랜덤 방 코드 생성"""
-        return ''.join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(8))
+        """6자리 숫자만으로 랜덤 방 코드 생성"""
+        return ''.join(secrets.choice(string.digits) for _ in range(6))
 
 
 class RoomParticipant(Base):

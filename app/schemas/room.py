@@ -8,7 +8,13 @@ class RoomCreatePublic(BaseModel):
     title: str = Field(..., min_length=1, max_length=100, description="방 제목")
     description: Optional[str] = Field(None, max_length=500, description="방 설명")
     topic: str = Field(..., description="플레이 주제")
-    custom_room_code: Optional[str] = Field(None, min_length=4, max_length=20, description="사용자 지정 방 코드 (없으면 랜덤 생성)")
+    custom_room_code: Optional[str] = Field(
+        None,
+        min_length=6,
+        max_length=6,
+        regex="^\\d{6}$",
+        description="사용자 지정 방 코드 (6자리 숫자, 없으면 랜덤 생성)"
+    )
 
 
 # 비공개 방 생성 요청 스키마
@@ -16,7 +22,13 @@ class RoomCreatePrivate(BaseModel):
     title: str = Field(..., min_length=1, max_length=100, description="방 제목")
     description: Optional[str] = Field(None, max_length=500, description="방 설명")
     topic: str = Field(..., description="플레이 주제")
-    custom_room_code: Optional[str] = Field(None, min_length=4, max_length=20, description="사용자 지정 방 코드 (없으면 랜덤 생성)")
+    custom_room_code: Optional[str] = Field(
+        None,
+        min_length=6,
+        max_length=6,
+        regex="^\\d{6}$",
+        description="사용자 지정 방 코드 (6자리 숫자, 없으면 랜덤 생성)"
+    )
 
 
 # Room 참가자 스키마
@@ -114,7 +126,13 @@ ROLE_DEFINITIONS = {
 
 # 방 코드로 입장하는 요청 스키마
 class RoomJoinByCode(BaseModel):
-    room_code: str = Field(..., min_length=4, max_length=20, description="방 입장 코드")
+    room_code: str = Field(
+        ..., 
+        min_length=6, 
+        max_length=6, 
+        regex="^\\d{6}$",
+        description="방 입장 코드 (6자리 숫자)"
+    )
     nickname: str = Field(..., min_length=1, max_length=50, description="게임 내 닉네임")
 
 

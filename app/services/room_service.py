@@ -22,7 +22,9 @@ class RoomService:
         
         # 방 코드 결정
         if room_data.custom_room_code:
-            # 사용자 지정 방 코드 사용
+            # 6자리 숫자 유효성 검사
+            if not (isinstance(room_data.custom_room_code, str) and room_data.custom_room_code.isdigit() and len(room_data.custom_room_code) == 6):
+                raise ValueError("방 코드는 6자리 숫자여야 합니다.")
             # 중복 확인
             existing_room = await db.execute(
                 select(models.Room).where(models.Room.room_code == room_data.custom_room_code)
@@ -185,17 +187,17 @@ class RoomService:
         creator_nickname: str
     ) -> models.Room:
         """비공개 방 생성"""
-        
         # 방 코드 결정
         if room_data.custom_room_code:
-            # 사용자 지정 방 코드 사용
+            # 6자리 숫자 유효성 검사
+            if not (isinstance(room_data.custom_room_code, str) and room_data.custom_room_code.isdigit() and len(room_data.custom_room_code) == 6):
+                raise ValueError("방 코드는 6자리 숫자여야 합니다.")
             # 중복 확인
             existing_room = await db.execute(
                 select(models.Room).where(models.Room.room_code == room_data.custom_room_code)
             )
             if existing_room.scalar_one_or_none():
                 raise ValueError(f"방 코드 '{room_data.custom_room_code}'는 이미 사용 중입니다.")
-            
             room_code = room_data.custom_room_code
         else:
             # 랜덤 방 코드 생성
