@@ -1,0 +1,47 @@
+name: deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  Deploy-to-EC2:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Create private key file from EC2_KEY
+        run: |
+          echo "${{ secrets.EC2_KEY }}" > key.pem
+          chmod 600 key.pem
+
+      - name: Connect and deploy to EC2
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key_path: key.pem
+          port: 22
+          script: |
+            echo "[1] 프로젝트 이동 또는 클론"
+            cd ~
+            if [ -d "ai_ethics_game" ]; then
+              cd ai_ethics_game
+              git pull origin main
+            else
+              git clone https://github.com/ai-ethics-platform/BE.git ai_ethics_game
+              cd ai_ethics_game
+            fi
+
+            echo "[2] .env 파일 생성 (base64 decode)"
+            echo "${{ secrets.ENCODED_ENV_VARS }}" | base64 -d > .env
+
+            echo "[3] Docker 재시작 및 빌드"
+            docker-compose down || true
+            docker system prune -af
+            docker-compose up -d --build
+
+            echo "✅ Deployment completed!"
