@@ -170,7 +170,13 @@ class RoomReadyResponse(BaseModel):
 
 # 방 상태 초기화 요청 스키마 (테스트용)
 class RoomResetRequest(BaseModel):
-    pass
+    room_code: str = Field(
+        ..., 
+        min_length=6, 
+        max_length=6, 
+        pattern="^\\d{6}$",
+        description="방 입장 코드 (6자리 숫자)"
+    )
 
 
 # 방 상태 초기화 응답 스키마 (테스트용)
@@ -181,7 +187,13 @@ class RoomResetResponse(BaseModel):
 
 # 방 나가기 요청 스키마
 class RoomLeaveRequest(BaseModel):
-    pass  # 헤더의 토큰으로 사용자 식별
+    room_code: str = Field(
+        ..., 
+        min_length=6, 
+        max_length=6, 
+        pattern="^\\d{6}$",
+        description="방 입장 코드 (6자리 숫자)"
+    )
 
 
 # 방 나가기 응답 스키마
