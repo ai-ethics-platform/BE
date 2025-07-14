@@ -183,6 +183,11 @@ async def voice_session_ws(
                     session_id,
                     {"type": "next_page"}
                 )
+                # 방장 본인에게 안내 메시지 전송
+                await websocket.send_json({
+                    "type": "info",
+                    "message": "next_page 신호를 보냈습니다."
+                })
     except WebSocketDisconnect:
         manager.disconnect(websocket)
         await manager.broadcast_to_session(
