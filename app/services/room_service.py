@@ -901,6 +901,26 @@ class RoomService:
             consensus_choice=consensus_choice.choice if consensus_choice else None
         ) 
 
+    @staticmethod
+    async def get_room_participant_by_code(
+        db: AsyncSession,
+        room_code: str,
+        user_id: Optional[int] = None,
+        guest_id: Optional[str] = None
+    ) -> Optional[models.RoomParticipant]:
+        """room_code와 user_id/guest_id로 RoomParticipant 조회"""
+        room = await RoomService.get_room_by_code(db, room_code)
+        if not room:
+            return None
+        participant_query = select(models.RoomParticipant).where(
+            and_(
+                models.RoomParticipant.room_id == room.id,
+                models.RoomParticipant.user_id == user_id if user_id else models.RoomParticipant.guest_id == guest_id
+            )
+        )
+        result = await db.execute(participant_query)
+        return result.scalar_one_or_none()
+
 
 # 서비스 인스턴스
 room_service = RoomService() 

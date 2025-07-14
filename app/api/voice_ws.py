@@ -127,6 +127,32 @@ async def voice_session_ws(
                         "duration": duration
                     }
                 })
+            # 5) 방장만 다음 페이지 신호
+            elif mtype == "next_page":
+                # 방장 권한 체크
+                from app.services.room_service import RoomService
+                # session_id가 room_code라면 그대로 사용, 아니라면 매핑 필요
+                room_code = session_id
+                # user_id/guest_id는 payload나 data에서 추출
+                check_user_id = data.get("user_id") or user_id
+                check_guest_id = data.get("guest_id")
+                participant = await RoomService.get_room_participant_by_code(
+                    db=db,
+                    room_code=room_code,
+                    user_id=check_user_id,
+                    guest_id=check_guest_id
+                )
+                if not participant or not participant.is_host:
+                    await websocket.send_json({
+                        "type": "error",
+                        "message": "방장만 다음 페이지로 넘길 수 있습니다."
+                    })
+                    continue
+                # 모든 참가자에게 broadcast
+                await manager.broadcast_to_session(
+                    session_id,
+                    {"type": "next_page"}
+                )
     except WebSocketDisconnect:
         manager.disconnect(websocket)
         await manager.broadcast_to_session(
