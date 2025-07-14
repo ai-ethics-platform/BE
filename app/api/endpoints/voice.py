@@ -17,19 +17,19 @@ async def create_voice_session(
     db: AsyncSession = Depends(get_db),
     current_user: Union[models.User, dict] = Depends(get_current_user_or_guest)
 ) -> Any:
-    """음성 세션 생성"""
+    """
+    음성 세션 생성
+    """
     try:
         # 사용자 정보 추출
         user_id = current_user.id if isinstance(current_user, models.User) else None
-        nickname = current_user.nickname if isinstance(current_user, models.User) else current_user.get("nickname", "게스트")
-        
+        # nickname은 이제 session_data.nickname에서 받음
         voice_session = await VoiceService.create_voice_session(
             db=db,
             room_code=session_data.room_code,
             creator_id=user_id,
-            creator_nickname=nickname
+            creator_nickname=session_data.nickname
         )
-        
         return voice_session
         
     except ValueError as e:
