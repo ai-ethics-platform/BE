@@ -697,3 +697,4 @@ async def get_choice_status(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"선택 현황 조회 중 오류가 발생했습니다: {str(e)}"
         ) 
+ 

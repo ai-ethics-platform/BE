@@ -150,7 +150,13 @@ class RoomJoinResponse(BaseModel):
 
 # 준비 상태 변경 요청 스키마
 class RoomReadyRequest(BaseModel):
-    pass  # 헤더의 토큰으로 사용자 식별
+    room_code: str = Field(
+        ..., 
+        min_length=6, 
+        max_length=6, 
+        pattern="^\\d{6}$",
+        description="방 입장 코드 (6자리 숫자)"
+    )
 
 
 # 준비 상태 변경 응답 스키마
