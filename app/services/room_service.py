@@ -921,6 +921,30 @@ class RoomService:
         result = await db.execute(participant_query)
         return result.scalar_one_or_none()
 
+    @staticmethod
+    async def get_room_participant_by_room_id(
+        db: AsyncSession,
+        room_id: int,
+        user_id: Optional[int] = None,
+        guest_id: Optional[str] = None
+    ) -> Optional[models.RoomParticipant]:
+        """room_id와 user_id/guest_id로 RoomParticipant 조회"""
+        participant_query = None
+        if user_id is not None:
+            participant_query = select(models.RoomParticipant).where(
+                models.RoomParticipant.room_id == room_id,
+                models.RoomParticipant.user_id == user_id
+            )
+        elif guest_id is not None:
+            participant_query = select(models.RoomParticipant).where(
+                models.RoomParticipant.room_id == room_id,
+                models.RoomParticipant.guest_id == guest_id
+            )
+        else:
+            return None
+        result = await db.execute(participant_query)
+        return result.scalar_one_or_none()
+
 
 # 서비스 인스턴스
 room_service = RoomService() 

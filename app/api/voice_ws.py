@@ -129,8 +129,17 @@ async def voice_session_ws(
                 })
             # 5) 방장만 다음 페이지 신호
             elif mtype == "next_page":
+                from app.services.voice_service import VoiceService
                 from app.services.room_service import RoomService
-                room_code = session_id
+                # session_id로 voice_session을 조회해서 room_id를 얻음
+                voice_session = await VoiceService.get_voice_session_by_id(db, session_id)
+                if not voice_session:
+                    await websocket.send_json({
+                        "type": "error",
+                        "message": "존재하지 않는 음성 세션입니다."
+                    })
+                    continue
+                room_id = voice_session.room_id
                 # user_id/guest_id를 명확하게 int/None으로 변환
                 check_user_id = data.get("user_id")
                 check_guest_id = data.get("guest_id")
@@ -138,31 +147,29 @@ async def voice_session_ws(
                     check_user_id = int(check_user_id) if check_user_id is not None else None
                 except Exception:
                     check_user_id = None
-                # payload의 user_id도 int로 변환
                 try:
                     user_id_int = int(user_id) if user_id is not None else None
                 except Exception:
                     user_id_int = None
-                # guest_id는 None이면 user_id로, 아니면 guest_id로만 비교
                 participant = None
                 if check_user_id is not None:
-                    participant = await RoomService.get_room_participant_by_code(
+                    participant = await RoomService.get_room_participant_by_room_id(
                         db=db,
-                        room_code=room_code,
+                        room_id=room_id,
                         user_id=check_user_id,
                         guest_id=None
                     )
                 elif check_guest_id is not None:
-                    participant = await RoomService.get_room_participant_by_code(
+                    participant = await RoomService.get_room_participant_by_room_id(
                         db=db,
-                        room_code=room_code,
+                        room_id=room_id,
                         user_id=None,
                         guest_id=check_guest_id
                     )
                 elif user_id_int is not None:
-                    participant = await RoomService.get_room_participant_by_code(
+                    participant = await RoomService.get_room_participant_by_room_id(
                         db=db,
-                        room_code=room_code,
+                        room_id=room_id,
                         user_id=user_id_int,
                         guest_id=None
                     )
