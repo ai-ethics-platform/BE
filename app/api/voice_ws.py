@@ -129,26 +129,49 @@ async def voice_session_ws(
                 })
             # 5) 방장만 다음 페이지 신호
             elif mtype == "next_page":
-                # 방장 권한 체크
                 from app.services.room_service import RoomService
-                # session_id가 room_code라면 그대로 사용, 아니라면 매핑 필요
                 room_code = session_id
-                # user_id/guest_id는 payload나 data에서 추출
-                check_user_id = data.get("user_id") or user_id
+                # user_id/guest_id를 명확하게 int/None으로 변환
+                check_user_id = data.get("user_id")
                 check_guest_id = data.get("guest_id")
-                participant = await RoomService.get_room_participant_by_code(
-                    db=db,
-                    room_code=room_code,
-                    user_id=check_user_id,
-                    guest_id=check_guest_id
-                )
+                try:
+                    check_user_id = int(check_user_id) if check_user_id is not None else None
+                except Exception:
+                    check_user_id = None
+                # payload의 user_id도 int로 변환
+                try:
+                    user_id_int = int(user_id) if user_id is not None else None
+                except Exception:
+                    user_id_int = None
+                # guest_id는 None이면 user_id로, 아니면 guest_id로만 비교
+                participant = None
+                if check_user_id is not None:
+                    participant = await RoomService.get_room_participant_by_code(
+                        db=db,
+                        room_code=room_code,
+                        user_id=check_user_id,
+                        guest_id=None
+                    )
+                elif check_guest_id is not None:
+                    participant = await RoomService.get_room_participant_by_code(
+                        db=db,
+                        room_code=room_code,
+                        user_id=None,
+                        guest_id=check_guest_id
+                    )
+                elif user_id_int is not None:
+                    participant = await RoomService.get_room_participant_by_code(
+                        db=db,
+                        room_code=room_code,
+                        user_id=user_id_int,
+                        guest_id=None
+                    )
                 if not participant or not participant.is_host:
                     await websocket.send_json({
                         "type": "error",
                         "message": "방장만 다음 페이지로 넘길 수 있습니다."
                     })
                     continue
-                # 모든 참가자에게 broadcast
                 await manager.broadcast_to_session(
                     session_id,
                     {"type": "next_page"}
