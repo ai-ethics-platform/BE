@@ -129,6 +129,7 @@ async def voice_session_ws(
                 })
             # 5) 방장만 다음 페이지 신호
             elif mtype == "next_page":
+                print(f"🟢 next_page 메시지 수신! data={data}, user_id={user_id}")
                 from app.services.voice_service import VoiceService
                 from app.services.room_service import RoomService
                 # session_id로 voice_session을 조회해서 room_id를 얻음
@@ -174,15 +175,18 @@ async def voice_session_ws(
                         guest_id=None
                     )
                 if not participant or not participant.is_host:
+                    print("❌ 방장 아님, next_page 거부")
                     await websocket.send_json({
                         "type": "error",
                         "message": "방장만 다음 페이지로 넘길 수 있습니다."
                     })
                     continue
+                print("✅ 방장 확인, next_page 브로드캐스트 시작")
                 await manager.broadcast_to_session(
                     session_id,
                     {"type": "next_page"}
                 )
+                print("✅ next_page 브로드캐스트 완료")
                 # 방장 본인에게 안내 메시지 전송 -> 내 test 용이기도 함
                 await websocket.send_json({
                     "type": "info",
