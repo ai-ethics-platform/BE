@@ -13,4 +13,4 @@ api_router.include_router(users.router, prefix="/users", tags=["users"])
 api_router.include_router(rooms.router, prefix="/rooms", tags=["rooms"])
 api_router.include_router(voice.router, prefix="/voice", tags=["voice"])
 api_router.include_router(voice_ws.router, prefix="/ws", tags=["voice_ws"])
-api_router.include_router(voice_signaling_ws.router, prefix="/ws", tags=["voice_signaling_ws"])  # WebRTC 시그널링 라우터 등록
+api_router.include_router(voice_signaling_ws.router, tags=["voice_signaling_ws"])
