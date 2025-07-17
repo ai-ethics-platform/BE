@@ -26,7 +26,7 @@ class ConnectionManager:
 
 manager = ConnectionManager()
 
-@router.websocket("/ws/voice/signaling")
+@router.websocket("/ws/signaling")
 async def signaling_ws(
     websocket: WebSocket,
     room_code: str = Query(..., description="참여할 방 코드"),
