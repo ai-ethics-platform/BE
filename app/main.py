@@ -18,6 +18,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
+        "https://www.dilemmai-idl.com",
         "http://localhost:3000",
         "http://localhost:8000",
         "https://dilemmai.org"

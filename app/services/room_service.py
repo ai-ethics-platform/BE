@@ -901,6 +901,100 @@ class RoomService:
             consensus_choice=consensus_choice.choice if consensus_choice else None
         ) 
 
+    @staticmethod
+    async def get_role_assignment_status(
+        db: AsyncSession,
+        room_code: str
+    ) -> schemas.RoleAssignmentStatus:
+        """방의 역할 배정 상태 조회"""
+        
+        # 방 조회
+        room = await RoomService.get_room_by_code(db=db, room_code=room_code)
+        if not room:
+            raise ValueError("존재하지 않는 방 코드입니다.")
+        
+        if not room.is_active:
+            raise ValueError("비활성화된 방입니다.")
+        
+        # 방의 모든 참가자 조회
+        participants_query = select(models.RoomParticipant).where(
+            models.RoomParticipant.room_id == room.id
+        )
+        participants_result = await db.execute(participants_query)
+        participants = participants_result.scalars().all()
+        
+        # 역할 배정 상태 확인
+        assignments = []
+        all_assigned = True
+        
+        for participant in participants:
+            # 플레이어 ID 결정 (user_id 또는 guest_id)
+            player_id = str(participant.user_id) if participant.user_id else participant.guest_id
+            
+            if participant.role_id is not None:
+                # 역할이 배정된 경우
+                assignment = schemas.RoleAssignment(
+                    player_id=player_id,
+                    role_id=participant.role_id,
+                    role_name=schemas.ROLE_DEFINITIONS[participant.role_id]
+                )
+                assignments.append(assignment)
+            else:
+                # 역할이 배정되지 않은 경우
+                all_assigned = False
+        
+        return schemas.RoleAssignmentStatus(
+            room_code=room_code,
+            is_roles_assigned=all_assigned and len(participants) == 3,
+            assignments=assignments if all_assigned else [],
+            total_participants=len(participants),
+            assigned_participants=len([p for p in participants if p.role_id is not None])
+        )
+
+    @staticmethod
+    async def get_room_participant_by_code(
+        db: AsyncSession,
+        room_code: str,
+        user_id: Optional[int] = None,
+        guest_id: Optional[str] = None
+    ) -> Optional[models.RoomParticipant]:
+        """room_code와 user_id/guest_id로 RoomParticipant 조회"""
+        room = await RoomService.get_room_by_code(db, room_code)
+        if not room:
+            return None
+        participant_query = select(models.RoomParticipant).where(
+            and_(
+                models.RoomParticipant.room_id == room.id,
+                models.RoomParticipant.user_id == user_id if user_id else models.RoomParticipant.guest_id == guest_id
+            )
+        )
+        result = await db.execute(participant_query)
+        return result.scalar_one_or_none()
+
+    @staticmethod
+    async def get_room_participant_by_room_id(
+        db: AsyncSession,
+        room_id: int,
+        user_id: Optional[int] = None,
+        guest_id: Optional[str] = None
+    ) -> Optional[models.RoomParticipant]:
+        """room_id와 user_id/guest_id로 RoomParticipant 조회"""
+        participant_query = None
+        if user_id is not None:
+            participant_query = select(models.RoomParticipant).where(
+                models.RoomParticipant.room_id == room_id,
+                models.RoomParticipant.user_id == user_id
+            )
+        elif guest_id is not None:
+            participant_query = select(models.RoomParticipant).where(
+                models.RoomParticipant.room_id == room_id,
+                models.RoomParticipant.guest_id == guest_id
+            )
+        else:
+            return None
+        result = await db.execute(participant_query)
+        return result.scalar_one_or_none()
+
 
 # 서비스 인스턴스
 room_service = RoomService() 

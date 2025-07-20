@@ -82,3 +82,7 @@ async def create_guest(db: AsyncSession, guest_id: str) -> models.User:
     await db.commit()
     await db.refresh(db_user)
     return db_user
+
+
+async def update(db_obj: models.User, obj_in: schemas.UserUpdate) -> models.User:
+    return db_obj

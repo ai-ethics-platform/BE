@@ -29,6 +29,7 @@ from .room import (
     RoomLeaveResponse,
     RoleAssignment,
     RoleAssignmentResult,
+    RoleAssignmentStatus,
     AVAILABLE_TOPICS,
     ROLE_DEFINITIONS,
     AiTypeSelectRequest,
@@ -96,6 +97,7 @@ __all__ = [
     "RoomLeaveResponse",
     "RoleAssignment",
     "RoleAssignmentResult",
+    "RoleAssignmentStatus",
     "AVAILABLE_TOPICS",
     "ROLE_DEFINITIONS",
     "VoiceParticipant",
@@ -129,4 +131,4 @@ __all__ = [
     "ConfidenceSubmitResponse",
     "IndividualConfidenceRequest",
     "ConsensusConfidenceRequest",
-]
+] 

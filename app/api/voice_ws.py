@@ -127,6 +127,71 @@ async def voice_session_ws(
                         "duration": duration
                     }
                 })
+            # 5) 방장만 다음 페이지 신호
+            elif mtype == "next_page":
+                print(f"🟢 next_page 메시지 수신! data={data}, user_id={user_id}")
+                from app.services.voice_service import VoiceService
+                from app.services.room_service import RoomService
+                # session_id로 voice_session을 조회해서 room_id를 얻음
+                voice_session = await VoiceService.get_voice_session_by_id(db, session_id)
+                if not voice_session:
+                    await websocket.send_json({
+                        "type": "error",
+                        "message": "존재하지 않는 음성 세션입니다."
+                    })
+                    continue
+                room_id = voice_session.room_id
+                # user_id/guest_id를 명확하게 int/None으로 변환
+                check_user_id = data.get("user_id")
+                check_guest_id = data.get("guest_id")
+                try:
+                    check_user_id = int(check_user_id) if check_user_id is not None else None
+                except Exception:
+                    check_user_id = None
+                try:
+                    user_id_int = int(user_id) if user_id is not None else None
+                except Exception:
+                    user_id_int = None
+                participant = None
+                if check_user_id is not None:
+                    participant = await RoomService.get_room_participant_by_room_id(
+                        db=db,
+                        room_id=room_id,
+                        user_id=check_user_id,
+                        guest_id=None
+                    )
+                elif check_guest_id is not None:
+                    participant = await RoomService.get_room_participant_by_room_id(
+                        db=db,
+                        room_id=room_id,
+                        user_id=None,
+                        guest_id=check_guest_id
+                    )
+                elif user_id_int is not None:
+                    participant = await RoomService.get_room_participant_by_room_id(
+                        db=db,
+                        room_id=room_id,
+                        user_id=user_id_int,
+                        guest_id=None
+                    )
+                if not participant or not participant.is_host:
+                    print("❌ 방장 아님, next_page 거부")
+                    await websocket.send_json({
+                        "type": "error",
+                        "message": "방장만 다음 페이지로 넘길 수 있습니다."
+                    })
+                    continue
+                print("✅ 방장 확인, next_page 브로드캐스트 시작")
+                await manager.broadcast_to_session(
+                    session_id,
+                    {"type": "next_page"}
+                )
+                print("✅ next_page 브로드캐스트 완료")
+                # 방장 본인에게 안내 메시지 전송 -> 내 test 용이기도 함
+                await websocket.send_json({
+                    "type": "info",
+                    "message": "next_page 신호를 보냈습니다."
+                })
     except WebSocketDisconnect:
         manager.disconnect(websocket)
         await manager.broadcast_to_session(

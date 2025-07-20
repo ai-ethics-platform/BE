@@ -95,6 +95,13 @@ async def get_room_by_code(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="존재하지 않는 방 코드입니다."
         )
+    
+    # 디버깅: participants의 role_id 값 확인
+    print(f"🔍 방 코드 {room_code} 조회 결과:")
+    print(f"   - 총 참가자 수: {len(room.participants)}")
+    for i, participant in enumerate(room.participants):
+        print(f"   - 참가자 {i+1}: {participant.nickname}, role_id={participant.role_id}, is_host={participant.is_host}")
+    
     return room
 
 
@@ -474,6 +481,37 @@ async def assign_roles(
         )
 
 
+@router.get("/assign-roles/{room_code}", response_model=schemas.RoleAssignmentStatus)
+async def get_role_assignment_status(
+    room_code: str,
+    db: AsyncSession = Depends(get_db)
+) -> Any:
+    """
+    방의 역할 배정 상태 조회
+    - 모든 참가자에게 역할이 배정되었는지 확인
+    - 역할 배정이 완료된 경우 배정 결과 반환
+    """
+    try:
+        # 역할 배정 상태 조회
+        status = await room_service.get_role_assignment_status(
+            db=db,
+            room_code=room_code
+        )
+        
+        return status
+        
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"역할 배정 상태 조회 중 오류가 발생했습니다: {str(e)}"
+        )
+
+
 @router.post("/ai-select", response_model=schemas.AiTypeSelectResponse)
 async def set_ai_type(
     req: schemas.AiTypeSelectRequest,
@@ -697,3 +735,4 @@ async def get_choice_status(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"선택 현황 조회 중 오류가 발생했습니다: {str(e)}"
         ) 
+ 

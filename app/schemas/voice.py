@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 # 음성 세션 생성 요청 스키마
 class VoiceSessionCreate(BaseModel):
     room_code: str = Field(..., min_length=4, max_length=20, description="방 코드")
+    nickname: str = Field(..., min_length=1, max_length=50, description="음성 세션에서 사용할 닉네임")
 
 
 # 음성 세션 응답 스키마

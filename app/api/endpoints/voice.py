@@ -17,6 +17,7 @@ async def create_voice_session(
     db: AsyncSession = Depends(get_db),
     current_user: Union[models.User, dict] = Depends(get_current_user_or_guest)
 ) -> Any:
+<<<<<<< HEAD
     """음성 세션 생성 또는 기존 세션 조회"""
     try:
         # 사용자 정보 추출
@@ -42,6 +43,22 @@ async def create_voice_session(
                 creator_nickname=nickname
             )
             return voice_session
+=======
+    """
+    음성 세션 생성
+    """
+    try:
+        # 사용자 정보 추출
+        user_id = current_user.id if isinstance(current_user, models.User) else None
+        # nickname은 이제 session_data.nickname에서 받음
+        voice_session = await VoiceService.create_voice_session(
+            db=db,
+            room_code=session_data.room_code,
+            creator_id=user_id,
+            creator_nickname=session_data.nickname
+        )
+        return voice_session
+>>>>>>> 7f1c75453de1486f5def005990aba4ebbb5fc524
         
     except ValueError as e:
         raise HTTPException(
