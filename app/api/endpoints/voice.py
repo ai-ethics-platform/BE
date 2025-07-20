@@ -21,7 +21,7 @@ async def create_voice_session(
     try:
         # 사용자 정보 추출
         user_id = current_user.id if isinstance(current_user, models.User) else None
-        nickname = current_user.username if isinstance(current_user, models.User) else current_user.get("nickname", "게스트")
+        nickname = session_data.nickname  # 요청 body에서 받은 nickname 사용
         
         # 1. 방 코드로 기존 음성 세션이 있는지 확인
         existing_session = await VoiceService.get_voice_session_by_room_code(
@@ -124,7 +124,7 @@ async def join_voice_session(
         user_id = current_user.id if isinstance(current_user, models.User) else None
         guest_id = None if isinstance(current_user, models.User) else current_user.get("guest_id")
         
-        participant = await VoiceService.join_voice_session(
+        result = await VoiceService.join_voice_session(
             db=db,
             session_id=session_id,
             user_id=user_id,
@@ -135,11 +135,23 @@ async def join_voice_session(
         # 세션 정보 조회
         voice_session = await VoiceService.get_voice_session_by_id(db=db, session_id=session_id)
         
-        return schemas.VoiceJoinResponse(
-            session=voice_session,
-            participant=participant,
-            message="음성 세션에 참가했습니다."
-        )
+        # 결과가 리스트인지 확인 (3명이 꽉 찬 경우)
+        if isinstance(result, list):
+            # 3명이 꽉 찬 경우
+            return {
+                "session": voice_session,
+                "participants": result,
+                "total_participants": len(result),
+                "message": "음성 세션이 가득 찼습니다. (최대 3명)",
+                "is_full": True
+            }
+        else:
+            # 정상 참가한 경우
+            return schemas.VoiceJoinResponse(
+                session=voice_session,
+                participant=result,
+                message="음성 세션에 참가했습니다."
+            )
         
     except ValueError as e:
         raise HTTPException(
