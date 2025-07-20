@@ -17,7 +17,7 @@ class WebSocketManager:
     
     async def connect(self, websocket: WebSocket, session_id: str, user_info: dict):
         """WebSocket 연결"""
-        await websocket.accept()
+        # accept는 이미 호출된 상태로 가정
         
         if session_id not in self.active_connections:
             self.active_connections[session_id] = set()

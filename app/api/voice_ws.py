@@ -43,7 +43,11 @@ async def voice_session_ws(
 
     user_id = payload.get("sub")
 
-    # 2. 메시지 수신 루프
+    # 2. WebSocket 연결 수락
+    await websocket.accept()
+    print("✅ WebSocket 연결 수락 완료")
+
+    # 3. 메시지 수신 루프
     try:
         while True:
             raw = await websocket.receive_text()
