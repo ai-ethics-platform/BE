@@ -17,20 +17,31 @@ async def create_voice_session(
     db: AsyncSession = Depends(get_db),
     current_user: Union[models.User, dict] = Depends(get_current_user_or_guest)
 ) -> Any:
-    """음성 세션 생성"""
+    """음성 세션 생성 또는 기존 세션 조회"""
     try:
         # 사용자 정보 추출
         user_id = current_user.id if isinstance(current_user, models.User) else None
         nickname = current_user.nickname if isinstance(current_user, models.User) else current_user.get("nickname", "게스트")
         
-        voice_session = await VoiceService.create_voice_session(
-            db=db,
-            room_code=session_data.room_code,
-            creator_id=user_id,
-            creator_nickname=nickname
+        # 1. 방 코드로 기존 음성 세션이 있는지 확인
+        existing_session = await VoiceService.get_voice_session_by_room_code(
+            db=db, room_code=session_data.room_code
         )
         
-        return voice_session
+        if existing_session:
+            # 기존 세션이 있으면 그 세션 반환
+            print(f"✅ 기존 음성 세션 발견: {existing_session.session_id}")
+            return existing_session
+        else:
+            # 없으면 새로 생성
+            print(f"🆕 새 음성 세션 생성: {session_data.room_code}")
+            voice_session = await VoiceService.create_voice_session(
+                db=db,
+                room_code=session_data.room_code,
+                creator_id=user_id,
+                creator_nickname=nickname
+            )
+            return voice_session
         
     except ValueError as e:
         raise HTTPException(
@@ -161,6 +172,34 @@ async def leave_voice_session(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"음성 세션 퇴장 중 오류가 발생했습니다: {str(e)}"
+        )
+
+
+@router.get("/sessions/room/{room_code}", response_model=schemas.VoiceSession)
+async def get_voice_session_by_room_code(
+    room_code: str,
+    db: AsyncSession = Depends(get_db)
+) -> Any:
+    """방 코드로 음성 세션 조회"""
+    try:
+        voice_session = await VoiceService.get_voice_session_by_room_code(
+            db=db, room_code=room_code
+        )
+        
+        if not voice_session:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="해당 방의 음성 세션이 없습니다."
+            )
+        
+        return voice_session
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"음성 세션 조회 중 오류가 발생했습니다: {str(e)}"
         )
 
 

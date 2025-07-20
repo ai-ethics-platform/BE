@@ -66,6 +66,25 @@ class VoiceService:
         return voice_session
     
     @staticmethod
+    async def get_voice_session_by_room_code(
+        db: AsyncSession,
+        room_code: str
+    ) -> Optional[models.VoiceSession]:
+        """방 코드로 음성 세션 조회"""
+        result = await db.execute(
+            select(models.VoiceSession)
+            .join(models.Room)
+            .options(selectinload(models.VoiceSession.participants))
+            .where(
+                and_(
+                    models.Room.room_code == room_code,
+                    models.VoiceSession.is_active == True
+                )
+            )
+        )
+        return result.scalar_one_or_none()
+    
+    @staticmethod
     def _generate_session_id() -> str:
         """고유한 세션 ID 생성"""
         return ''.join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(12))
