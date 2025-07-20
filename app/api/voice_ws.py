@@ -42,7 +42,6 @@ async def voice_session_ws(
         return
 
     user_id = payload.get("sub")
-    await websocket.accept()
 
     # 2. 초기 연결 처리
     # dict 형태로 넘기기
