@@ -21,7 +21,7 @@ async def create_voice_session(
     try:
         # 사용자 정보 추출
         user_id = current_user.id if isinstance(current_user, models.User) else None
-        nickname = current_user.nickname if isinstance(current_user, models.User) else current_user.get("nickname", "게스트")
+        nickname = current_user.username if isinstance(current_user, models.User) else current_user.get("nickname", "게스트")
         
         # 1. 방 코드로 기존 음성 세션이 있는지 확인
         existing_session = await VoiceService.get_voice_session_by_room_code(
@@ -83,6 +83,34 @@ async def get_voice_session_by_room_code(
         )
 
 
+@router.get("/sessions/{session_id}", response_model=schemas.VoiceSession)
+async def get_voice_session_by_id(
+    session_id: str,
+    db: AsyncSession = Depends(get_db)
+) -> Any:
+    """세션 ID로 음성 세션 조회"""
+    try:
+        voice_session = await VoiceService.get_voice_session_by_id(
+            db=db, session_id=session_id
+        )
+        
+        if not voice_session:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="존재하지 않는 음성 세션입니다."
+            )
+        
+        return voice_session
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"음성 세션 조회 중 오류가 발생했습니다: {str(e)}"
+        )
+
+
 @router.post("/sessions/{session_id}/join", response_model=schemas.VoiceJoinResponse)
 async def join_voice_session(
     session_id: str,
@@ -96,7 +124,7 @@ async def join_voice_session(
         user_id = current_user.id if isinstance(current_user, models.User) else None
         guest_id = None if isinstance(current_user, models.User) else current_user.get("guest_id")
         
-        participant = await VoiceService.join_voice_session(
+        result = await VoiceService.join_voice_session(
             db=db,
             session_id=session_id,
             user_id=user_id,
@@ -107,11 +135,23 @@ async def join_voice_session(
         # 세션 정보 조회
         voice_session = await VoiceService.get_voice_session_by_id(db=db, session_id=session_id)
         
-        return schemas.VoiceJoinResponse(
-            session=voice_session,
-            participant=participant,
-            message="음성 세션에 참가했습니다."
-        )
+        # 결과가 리스트인지 확인 (3명이 꽉 찬 경우)
+        if isinstance(result, list):
+            # 3명이 꽉 찬 경우
+            return {
+                "session": voice_session,
+                "participants": result,
+                "total_participants": len(result),
+                "message": "음성 세션이 가득 찼습니다. (최대 3명)",
+                "is_full": True
+            }
+        else:
+            # 정상 참가한 경우
+            return schemas.VoiceJoinResponse(
+                session=voice_session,
+                participant=result,
+                message="음성 세션에 참가했습니다."
+            )
         
     except ValueError as e:
         raise HTTPException(
@@ -203,158 +243,96 @@ async def leave_voice_session(
         )
 
 
-@router.get("/sessions/{session_id}", response_model=schemas.VoiceSessionInfo)
-async def get_voice_session_info(
-    session_id: str,
-    db: AsyncSession = Depends(get_db)
-) -> Any:
-    """음성 세션 정보 조회"""
+@router.websocket("/ws/voice/{session_id}")
+async def websocket_endpoint(websocket: WebSocket, session_id: str):
+    """WebSocket 연결 - 음성 세션 실시간 통신"""
+    await websocket_manager.connect(websocket, session_id)
     try:
-        voice_session = await VoiceService.get_voice_session_by_id(db=db, session_id=session_id)
-        if not voice_session:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="존재하지 않는 음성 세션입니다."
-            )
-        
-        return schemas.VoiceSessionInfo(
-            session=voice_session,
-            participants=voice_session.participants,
-            total_participants=len(voice_session.participants)
-        )
-        
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"음성 세션 정보 조회 중 오류가 발생했습니다: {str(e)}"
-        )
-
-
-@router.post("/sessions/{session_id}/recording/start", response_model=schemas.RecordingStartResponse)
-async def start_recording(
-    session_id: str,
-    db: AsyncSession = Depends(get_db),
-    current_user: Union[models.User, dict] = Depends(get_current_user_or_guest)
-) -> Any:
-    """녹음 시작"""
-    try:
-        # 사용자 정보 추출
-        user_id = current_user.id if isinstance(current_user, models.User) else None
-        guest_id = None if isinstance(current_user, models.User) else current_user.get("guest_id")
-        
-        participant = await VoiceService.start_recording(
-            db=db,
-            session_id=session_id,
-            user_id=user_id,
-            guest_id=guest_id
-        )
-        
-        return schemas.RecordingStartResponse(
-            participant=participant,
-            recording_file_path=participant.recording_file_path,
-            message="녹음이 시작되었습니다."
-        )
-        
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"녹음 시작 중 오류가 발생했습니다: {str(e)}"
-        )
-
-
-@router.post("/sessions/{session_id}/recording/stop", response_model=schemas.RecordingStopResponse)
-async def stop_recording(
-    session_id: str,
-    db: AsyncSession = Depends(get_db),
-    current_user: Union[models.User, dict] = Depends(get_current_user_or_guest)
-) -> Any:
-    """녹음 종료"""
-    try:
-        # 사용자 정보 추출
-        user_id = current_user.id if isinstance(current_user, models.User) else None
-        guest_id = None if isinstance(current_user, models.User) else current_user.get("guest_id")
-        
-        participant, duration = await VoiceService.stop_recording(
-            db=db,
-            session_id=session_id,
-            user_id=user_id,
-            guest_id=guest_id
-        )
-        
-        return schemas.RecordingStopResponse(
-            participant=participant,
-            recording_file_path=participant.recording_file_path,
-            duration=duration,
-            message="녹음이 종료되었습니다."
-        )
-        
-    except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"녹음 종료 중 오류가 발생했습니다: {str(e)}"
-        )
-
-
-@router.websocket("/ws/{session_id}")
-async def websocket_endpoint(
-    websocket: WebSocket,
-    session_id: str,
-    token: str = None,
-    user_id: int = None,
-    guest_id: str = None,
-    nickname: str = None
-):
-    """WebSocket 연결 엔드포인트"""
-    try:
-        # 사용자 정보 구성
-        user_info = {
-            "user_id": user_id,
-            "guest_id": guest_id,
-            "nickname": nickname,
-            "token": token
-        }
-        
-        # WebSocket 연결
-        await websocket_manager.connect(websocket, session_id, user_info)
-        
-        # 메시지 수신 대기
         while True:
-            try:
-                data = await websocket.receive_text()
-                message = json.loads(data)
+            # 메시지 수신
+            data = await websocket.receive_text()
+            message = json.loads(data)
+            
+            # 메시지 타입에 따른 처리
+            mtype = message.get("type")
+            
+            if mtype == "init":
+                # 초기화 메시지
+                user_id = message.get("user_id")
+                guest_id = message.get("guest_id")
+                nickname = message.get("nickname", "게스트")
                 
-                # 메시지 타입에 따른 처리
-                if message.get("type") == "ping":
-                    # 핑 응답
-                    await websocket.send_text(json.dumps({"type": "pong"}))
-                else:
-                    # 알 수 없는 메시지 타입
-                    await websocket.send_text(json.dumps({
+                # WebSocket 매니저에 사용자 정보 등록
+                await websocket_manager.register_user(websocket, session_id, user_id, guest_id, nickname)
+                
+                # 연결 확인 응답
+                await websocket.send_json({
+                    "type": "init_response",
+                    "status": "connected",
+                    "session_id": session_id
+                })
+                
+            elif mtype == "voice_status":
+                # 음성 상태 변경
+                is_mic_on = message.get("is_mic_on", False)
+                is_speaking = message.get("is_speaking", False)
+                
+                # 다른 참가자들에게 브로드캐스트
+                await websocket_manager.broadcast_to_session(session_id, {
+                    "type": "voice_status_update",
+                    "user_id": message.get("user_id"),
+                    "guest_id": message.get("guest_id"),
+                    "nickname": message.get("nickname"),
+                    "is_mic_on": is_mic_on,
+                    "is_speaking": is_speaking
+                })
+                
+            elif mtype == "next_page":
+                # 다음 페이지 요청 (방장만 가능)
+                user_id = message.get("user_id")
+                guest_id = message.get("guest_id")
+                
+                # 방장 권한 확인
+                is_host = await websocket_manager.is_host(session_id, user_id, guest_id)
+                if not is_host:
+                    await websocket.send_json({
                         "type": "error",
-                        "message": "알 수 없는 메시지 타입입니다."
-                    }))
-                    
-            except WebSocketDisconnect:
-                websocket_manager.disconnect(websocket)
-                break
-            except Exception as e:
-                print(f"WebSocket 메시지 처리 오류: {e}")
-                await websocket.send_text(json.dumps({
-                    "type": "error",
-                    "message": f"메시지 처리 중 오류가 발생했습니다: {str(e)}"
-                }))
+                        "message": "방장만 다음 페이지로 이동할 수 있습니다."
+                    })
+                    continue
                 
+                # 모든 참가자에게 next_page 브로드캐스트
+                await websocket_manager.broadcast_to_session(session_id, {
+                    "type": "next_page"
+                })
+                
+                # 방장에게만 추가 정보 전송
+                await websocket.send_json({
+                    "type": "info",
+                    "message": "다음 페이지로 이동했습니다."
+                })
+                
+            elif mtype == "chat_message":
+                # 채팅 메시지
+                await websocket_manager.broadcast_to_session(session_id, {
+                    "type": "chat_message",
+                    "user_id": message.get("user_id"),
+                    "guest_id": message.get("guest_id"),
+                    "nickname": message.get("nickname"),
+                    "message": message.get("message")
+                })
+                
+            else:
+                # 알 수 없는 메시지 타입
+                await websocket.send_json({
+                    "type": "error",
+                    "message": f"알 수 없는 메시지 타입: {mtype}"
+                })
+                
+    except WebSocketDisconnect:
+        # 연결 해제 처리
+        await websocket_manager.disconnect(websocket, session_id)
     except Exception as e:
-        print(f"WebSocket 연결 오류: {e}")
-        if websocket in websocket_manager.connection_info:
-            websocket_manager.disconnect(websocket) 
+        # 오류 처리
+        print(f"WebSocket 오류: {str(e)}")
+        await websocket_manager.disconnect(websocket, session_id) 

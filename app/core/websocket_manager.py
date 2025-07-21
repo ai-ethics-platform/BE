@@ -4,6 +4,7 @@ import asyncio
 from typing import Dict, Set, Optional
 from fastapi import WebSocket, WebSocketDisconnect
 from datetime import datetime
+from fastapi.encoders import jsonable_encoder
 
 from app import schemas
 
@@ -17,7 +18,7 @@ class WebSocketManager:
     
     async def connect(self, websocket: WebSocket, session_id: str, user_info: dict):
         """WebSocket 연결"""
-        await websocket.accept()
+        # accept는 이미 호출된 상태로 가정
         
         if session_id not in self.active_connections:
             self.active_connections[session_id] = set()
@@ -29,12 +30,12 @@ class WebSocketManager:
         }
         
         # 연결 성공 메시지 전송
-        await websocket.send_text(json.dumps({
+        await websocket.send_text(json.dumps(jsonable_encoder({
             "type": "connection_established",
             "session_id": session_id,
             "user_info": user_info,
             "timestamp": datetime.utcnow().isoformat()
-        }))
+        })))
     
     def disconnect(self, websocket: WebSocket):
         """WebSocket 연결 해제"""
@@ -52,7 +53,7 @@ class WebSocketManager:
             disconnected = set()
             for connection in self.active_connections[session_id]:
                 try:
-                    await connection.send_text(json.dumps(message))
+                    await connection.send_text(json.dumps(jsonable_encoder(message)))
                 except WebSocketDisconnect:
                     disconnected.add(connection)
                 except Exception as e:
@@ -66,7 +67,7 @@ class WebSocketManager:
     async def send_personal_message(self, websocket: WebSocket, message: dict):
         """개별 클라이언트에게 메시지 전송"""
         try:
-            await websocket.send_text(json.dumps(message))
+            await websocket.send_text(json.dumps(jsonable_encoder(message)))
         except WebSocketDisconnect:
             self.disconnect(websocket)
         except Exception as e:

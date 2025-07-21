@@ -42,15 +42,10 @@ async def voice_session_ws(
         return
 
     user_id = payload.get("sub")
-    await websocket.accept()
 
-    # 2. 초기 연결 처리
-    # dict 형태로 넘기기
-    await _handle_init(db, session_id, {
-        "user_id": user_id,
-        "guest_id": None,
-        "nickname": "익명유저"
-})
+    # 2. WebSocket 연결 수락
+    await websocket.accept()
+    print("✅ WebSocket 연결 수락 완료")
 
     # 3. 메시지 수신 루프
     try:

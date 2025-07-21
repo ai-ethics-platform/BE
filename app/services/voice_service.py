@@ -109,7 +109,7 @@ class VoiceService:
         user_id: Optional[int],
         guest_id: Optional[str],
         nickname: str
-    ) -> models.VoiceParticipant:
+    ) -> Union[models.VoiceParticipant, List[models.VoiceParticipant]]:
         """음성 세션 참가"""
         
         # 세션 조회
@@ -119,6 +119,9 @@ class VoiceService:
         
         if not voice_session.is_active:
             raise ValueError("비활성화된 음성 세션입니다.")
+        
+        # 현재 참가자 수 확인
+        current_participants = await VoiceService.get_session_participants(db=db, session_id=session_id)
         
         # 이미 참가 중인지 확인
         existing_participant = await db.execute(
@@ -130,8 +133,15 @@ class VoiceService:
                 )
             )
         )
-        if existing_participant.scalar_one_or_none():
-            raise ValueError("이미 참가 중인 음성 세션입니다.")
+        existing_participant = existing_participant.scalar_one_or_none()
+        if existing_participant:
+            # 이미 참여중이면 기존 참가자 반환
+            return existing_participant
+        
+        # 3명이 꽉 찼는지 확인
+        if len(current_participants) >= 3:
+            # 꽉 찼으면 현재 참가자 목록 반환
+            return current_participants
         
         # 참가자 추가
         participant = models.VoiceParticipant(
@@ -175,7 +185,7 @@ class VoiceService:
             )
         )
         result = await db.execute(participant_query)
-        participant = result.scalar_one_or_none()
+        participant = result.scalars().first()
         
         if not participant:
             raise ValueError("음성 세션에 참가하지 않은 사용자입니다.")
@@ -213,7 +223,7 @@ class VoiceService:
             )
         )
         result = await db.execute(participant_query)
-        participant = result.scalar_one_or_none()
+        participant = result.scalars().first()
         
         if not participant:
             raise ValueError("음성 세션에 참가하지 않은 사용자입니다.")
@@ -258,7 +268,7 @@ class VoiceService:
             )
         )
         result = await db.execute(participant_query)
-        participant = result.scalar_one_or_none()
+        participant = result.scalars().first()
         
         if not participant:
             raise ValueError("음성 세션에 참가하지 않은 사용자입니다.")
@@ -309,7 +319,7 @@ class VoiceService:
             )
         )
         result = await db.execute(participant_query)
-        participant = result.scalar_one_or_none()
+        participant = result.scalars().first()
         
         if not participant:
             raise ValueError("음성 세션에 참가하지 않은 사용자입니다.")
@@ -395,7 +405,7 @@ class VoiceService:
             )
         )
         result = await db.execute(participant_query)
-        return result.scalar_one_or_none()
+        return result.scalars().first()
 
 
 # 서비스 인스턴스

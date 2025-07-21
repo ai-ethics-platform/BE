@@ -25,7 +25,6 @@ class VoiceSession(BaseModel):
 # 음성 참가자 상태 스키마
 class VoiceParticipant(BaseModel):
     id: int
-    name: str
     is_speaking: bool
     voice_session_id: int
     user_id: Optional[int] = None

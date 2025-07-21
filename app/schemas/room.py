@@ -59,6 +59,15 @@ class RoleAssignmentResult(BaseModel):
     message: str = Field("역할이 성공적으로 배정되었습니다.", description="응답 메시지")
 
 
+# 역할 배정 상태 조회 스키마
+class RoleAssignmentStatus(BaseModel):
+    room_code: str = Field(..., description="방 코드")
+    is_roles_assigned: bool = Field(..., description="모든 참가자에게 역할이 배정되었는지 여부")
+    assignments: List[RoleAssignment] = Field(..., description="역할 배정 결과 목록 (모든 참가자에게 배정된 경우에만)")
+    total_participants: int = Field(..., description="총 참가자 수")
+    assigned_participants: int = Field(..., description="역할이 배정된 참가자 수")
+
+
 # Room 응답 스키마
 class Room(BaseModel):
     id: int
