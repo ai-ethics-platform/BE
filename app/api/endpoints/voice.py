@@ -21,7 +21,10 @@ async def create_voice_session(
     try:
         # 사용자 정보 추출
         user_id = current_user.id if isinstance(current_user, models.User) else None
-        nickname = current_user.username if isinstance(current_user, models.User) else current_user.get("nickname", "게스트")
+        if isinstance(current_user, models.User):
+            nickname = current_user.username
+        else:
+            nickname = session_data.nickname  # 요청 body에서 받은 nickname 사용
         
         # 1. 방 코드로 기존 음성 세션이 있는지 확인
         existing_session = await VoiceService.get_voice_session_by_room_code(
