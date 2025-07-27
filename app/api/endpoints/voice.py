@@ -260,7 +260,6 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
             mtype = message.get("type")
             
             if mtype == "init":
-                # 초기화 메시지
                 user_id = message.get("user_id")
                 guest_id = message.get("guest_id")
                 nickname = message.get("nickname", "게스트")
@@ -268,7 +267,7 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
                 # WebSocket 매니저에 사용자 정보 등록
                 await websocket_manager.register_user(websocket, session_id, user_id, guest_id, nickname)
                 
-                # 연결 확인 응답
+                # 연결 확인 
                 await websocket.send_json({
                     "type": "init_response",
                     "status": "connected",
