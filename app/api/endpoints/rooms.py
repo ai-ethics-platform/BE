@@ -4,9 +4,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_
 
 from app import models, schemas
-from app.api import deps
+from app.core.deps import get_db, get_current_user_or_guest
 from app.services.room_service import room_service
-from app.core.deps import get_db
 
 router = APIRouter()
 
@@ -15,7 +14,7 @@ router = APIRouter()
 async def create_public_room(
     room_data: schemas.RoomCreatePublic,
     db: AsyncSession = Depends(get_db),
-    current_user: Union[models.User, dict] = Depends(deps.get_current_user_or_guest)
+    current_user: Union[models.User, dict] = Depends(get_current_user_or_guest)
 ) -> Any:
     """
     공개 방 생성
@@ -118,7 +117,7 @@ async def get_room_by_code(
 async def join_room_by_code(
     join_data: schemas.RoomJoinByCode,
     db: AsyncSession = Depends(get_db),
-    current_user: Union[models.User, dict] = Depends(deps.get_current_user_or_guest)
+    current_user: Union[models.User, dict] = Depends(get_current_user_or_guest)
 ) -> Any:
     """
     방 코드로 방 입장
@@ -175,7 +174,7 @@ async def join_room_by_id(
     room_id: int,
     join_data: schemas.RoomJoinRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: Union[models.User, dict] = Depends(deps.get_current_user_or_guest)
+    current_user: Union[models.User, dict] = Depends(get_current_user_or_guest)
 ) -> Any:
     """
     방 ID로 방 입장 (공개 방 목록에서 선택하여 입장)
@@ -224,7 +223,7 @@ async def join_room_by_id(
 async def create_private_room(
     room_data: schemas.RoomCreatePrivate,
     db: AsyncSession = Depends(get_db),
-    current_user: Union[models.User, dict] = Depends(deps.get_current_user_or_guest)
+    current_user: Union[models.User, dict] = Depends(get_current_user_or_guest)
 ) -> Any:
     """
     비공개 방 생성
@@ -267,7 +266,7 @@ async def get_private_rooms(
     skip: int = 0,
     limit: int = 20,
     db: AsyncSession = Depends(get_db),
-    current_user: Union[models.User, dict] = Depends(deps.get_current_user_or_guest)
+    current_user: Union[models.User, dict] = Depends(get_current_user_or_guest)
 ) -> Any:
     """
     비공개 방 목록 조회
@@ -295,7 +294,7 @@ async def get_private_rooms(
 async def toggle_ready_status(
     ready_data: schemas.RoomReadyRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: Union[models.User, dict] = Depends(deps.get_current_user_or_guest)
+    current_user: Union[models.User, dict] = Depends(get_current_user_or_guest)
 ) -> Any:
     """
     준비 상태 토글
@@ -385,7 +384,7 @@ async def reset_room_status(
 async def leave_room(
     leave_data: schemas.RoomLeaveRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: Union[models.User, dict] = Depends(deps.get_current_user_or_guest)
+    current_user: Union[models.User, dict] = Depends(get_current_user_or_guest)
 ) -> Any:
     """
     방 나가기
@@ -575,7 +574,7 @@ async def submit_round_choice(
     room_code: str,
     choice_data: schemas.RoundChoiceRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: Union[models.User, dict] = Depends(deps.get_current_user_or_guest)
+    current_user: Union[models.User, dict] = Depends(get_current_user_or_guest)
 ) -> Any:
     """
     라운드 개인 선택 제출 (round_number는 body로)
@@ -611,7 +610,7 @@ async def submit_individual_confidence(
     room_code: str,
     confidence_data: schemas.IndividualConfidenceRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: Union[models.User, dict] = Depends(deps.get_current_user_or_guest)
+    current_user: Union[models.User, dict] = Depends(get_current_user_or_guest)
 ) -> Any:
     """
     개별 확신도 제출 (round_number는 body로)
@@ -647,7 +646,7 @@ async def submit_consensus_choice(
     room_code: str,
     choice_data: schemas.ConsensusChoiceRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: Union[models.User, dict] = Depends(deps.get_current_user_or_guest)
+    current_user: Union[models.User, dict] = Depends(get_current_user_or_guest)
 ) -> Any:
     """
     합의 선택 제출 (round_number는 body로)
@@ -683,7 +682,7 @@ async def submit_consensus_confidence(
     room_code: str,
     confidence_data: schemas.ConsensusConfidenceRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: Union[models.User, dict] = Depends(deps.get_current_user_or_guest)
+    current_user: Union[models.User, dict] = Depends(get_current_user_or_guest)
 ) -> Any:
     """
     합의 선택에 대한 확신도 제출 (round_number는 body로)

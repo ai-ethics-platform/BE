@@ -6,7 +6,6 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import schemas
-from app.api import deps
 from app.core import security
 from app.core.config import settings
 from app.services import user_service, auth_service
