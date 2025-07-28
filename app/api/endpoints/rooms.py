@@ -773,4 +773,36 @@ async def get_session_websocket_stats(session_id: str):
         )
     
     return stats 
- 
+
+@router.get("/websocket/health/{session_id}")
+async def get_websocket_health(session_id: str):
+    """특정 세션의 WebSocket 연결 상태 상세 조회"""
+    from app.core.websocket_manager import websocket_manager
+    
+    stats = websocket_manager.get_connection_stats(session_id)
+    health = websocket_manager.get_connection_health(session_id)
+    
+    if not stats:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="해당 세션을 찾을 수 없습니다."
+        )
+    
+    return {
+        "session_id": session_id,
+        "stats": stats,
+        "health": health,
+        "active_connections": len(websocket_manager.get_session_participants(session_id))
+    }
+
+@router.post("/websocket/ping/{session_id}")
+async def ping_websocket_connections(session_id: str):
+    """특정 세션의 WebSocket 연결 상태 확인"""
+    from app.core.websocket_manager import websocket_manager
+    
+    await websocket_manager.ping_connections(session_id)
+    
+    return {
+        "message": f"세션 {session_id}의 연결 상태 확인 완료",
+        "active_connections": len(websocket_manager.get_session_participants(session_id))
+    } 
