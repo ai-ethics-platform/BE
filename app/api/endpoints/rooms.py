@@ -135,10 +135,14 @@ async def join_room_by_code(
         if isinstance(current_user, models.User):
             user_id = current_user.id
             guest_id = None
-        else:
-            # 게스트 사용자
+        elif current_user is not None:  # dict인 경우
             user_id = None
             guest_id = current_user.get('guest_id')
+        else:  # None인 경우
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="인증이 필요합니다."
+            )
         
         participant = await room_service.join_room(
             db=db,
@@ -184,10 +188,14 @@ async def join_room_by_id(
         if isinstance(current_user, models.User):
             user_id = current_user.id
             guest_id = None
-        else:
-            # 게스트 사용자
+        elif current_user is not None:  # dict인 경우
             user_id = None
             guest_id = current_user.get('guest_id')
+        else:  # None인 경우
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="인증이 필요합니다."
+            )
         
         participant = await room_service.join_room(
             db=db,
@@ -306,10 +314,14 @@ async def toggle_ready_status(
         if isinstance(current_user, models.User):
             user_id = current_user.id
             guest_id = None
-        else:
-            # 게스트 사용자
+        elif current_user is not None:  # dict인 경우
             user_id = None
             guest_id = current_user.get('guest_id')
+        else:  # None인 경우
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="인증이 필요합니다."
+            )
         
         participant, room, game_starting, start_time = await room_service.toggle_ready_status(
             db=db,
@@ -397,10 +409,14 @@ async def leave_room(
         if isinstance(current_user, models.User):
             user_id = current_user.id
             guest_id = None
-        else:
-            # 게스트 사용자
+        elif current_user is not None:  # dict인 경우
             user_id = None
             guest_id = current_user.get('guest_id')
+        else:  # None인 경우
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="인증이 필요합니다."
+            )
         
         room_code, remaining_players, room_deleted, new_host_info, game_started = await room_service.leave_room(
             db=db,
@@ -583,9 +599,14 @@ async def submit_round_choice(
         if isinstance(current_user, models.User):
             user_id = current_user.id
             guest_id = None
-        else:
+        elif current_user is not None:  # dict인 경우
             user_id = None
             guest_id = current_user.get('guest_id')
+        else:  # None인 경우
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="인증이 필요합니다."
+            )
         round_choice = await room_service.submit_round_choice(
             db=db,
             room_code=room_code,
@@ -619,9 +640,14 @@ async def submit_individual_confidence(
         if isinstance(current_user, models.User):
             user_id = current_user.id
             guest_id = None
-        else:
+        elif current_user is not None:  # dict인 경우
             user_id = None
             guest_id = current_user.get('guest_id')
+        else:  # None인 경우
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="인증이 필요합니다."
+            )
         round_choice = await room_service.submit_individual_confidence(
             db=db,
             room_code=room_code,
@@ -648,16 +674,19 @@ async def submit_consensus_choice(
     db: AsyncSession = Depends(get_db),
     current_user: Union[models.User, dict] = Depends(get_current_user_or_guest)
 ) -> Any:
-    """
-    합의 선택 제출 (round_number는 body로)
-    """
+    # 합의 선택 제출 (round_number는 body로)
     try:
         if isinstance(current_user, models.User):
             user_id = current_user.id
             guest_id = None
-        else:
+        elif current_user is not None: # dict 인 경우
             user_id = None
             guest_id = current_user.get('guest_id')
+        else: # None인 경우
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="인증이 필요합니다."
+            )
         consensus_choice = await room_service.submit_consensus_choice(
             db=db,
             room_code=room_code,
@@ -691,9 +720,14 @@ async def submit_consensus_confidence(
         if isinstance(current_user, models.User):
             user_id = current_user.id
             guest_id = None
-        else:
+        elif current_user is not None:  # dict인 경우
             user_id = None
             guest_id = current_user.get('guest_id')
+        else:  # None인 경우
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="인증이 필요합니다."
+            )
         consensus_choice = await room_service.submit_consensus_confidence(
             db=db,
             room_code=room_code,
