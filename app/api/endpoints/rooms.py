@@ -4,9 +4,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_
 
 from app import models, schemas
-from app.api import deps
+from app.core.deps import get_db, get_current_user_or_guest
 from app.services.room_service import room_service
-from app.core.deps import get_db
 
 router = APIRouter()
 
@@ -15,7 +14,7 @@ router = APIRouter()
 async def create_public_room(
     room_data: schemas.RoomCreatePublic,
     db: AsyncSession = Depends(get_db),
-    current_user: Union[models.User, dict] = Depends(deps.get_current_user_or_guest)
+    current_user: Union[models.User, dict] = Depends(get_current_user_or_guest)
 ) -> Any:
     """
     공개 방 생성
@@ -118,7 +117,7 @@ async def get_room_by_code(
 async def join_room_by_code(
     join_data: schemas.RoomJoinByCode,
     db: AsyncSession = Depends(get_db),
-    current_user: Union[models.User, dict] = Depends(deps.get_current_user_or_guest)
+    current_user: Union[models.User, dict] = Depends(get_current_user_or_guest)
 ) -> Any:
     """
     방 코드로 방 입장
@@ -136,10 +135,14 @@ async def join_room_by_code(
         if isinstance(current_user, models.User):
             user_id = current_user.id
             guest_id = None
-        else:
-            # 게스트 사용자
+        elif current_user is not None:  # dict인 경우
             user_id = None
             guest_id = current_user.get('guest_id')
+        else:  # None인 경우
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="인증이 필요합니다."
+            )
         
         participant = await room_service.join_room(
             db=db,
@@ -175,7 +178,7 @@ async def join_room_by_id(
     room_id: int,
     join_data: schemas.RoomJoinRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: Union[models.User, dict] = Depends(deps.get_current_user_or_guest)
+    current_user: Union[models.User, dict] = Depends(get_current_user_or_guest)
 ) -> Any:
     """
     방 ID로 방 입장 (공개 방 목록에서 선택하여 입장)
@@ -185,10 +188,14 @@ async def join_room_by_id(
         if isinstance(current_user, models.User):
             user_id = current_user.id
             guest_id = None
-        else:
-            # 게스트 사용자
+        elif current_user is not None:  # dict인 경우
             user_id = None
             guest_id = current_user.get('guest_id')
+        else:  # None인 경우
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="인증이 필요합니다."
+            )
         
         participant = await room_service.join_room(
             db=db,
@@ -224,7 +231,7 @@ async def join_room_by_id(
 async def create_private_room(
     room_data: schemas.RoomCreatePrivate,
     db: AsyncSession = Depends(get_db),
-    current_user: Union[models.User, dict] = Depends(deps.get_current_user_or_guest)
+    current_user: Union[models.User, dict] = Depends(get_current_user_or_guest)
 ) -> Any:
     """
     비공개 방 생성
@@ -267,7 +274,7 @@ async def get_private_rooms(
     skip: int = 0,
     limit: int = 20,
     db: AsyncSession = Depends(get_db),
-    current_user: Union[models.User, dict] = Depends(deps.get_current_user_or_guest)
+    current_user: Union[models.User, dict] = Depends(get_current_user_or_guest)
 ) -> Any:
     """
     비공개 방 목록 조회
@@ -295,7 +302,7 @@ async def get_private_rooms(
 async def toggle_ready_status(
     ready_data: schemas.RoomReadyRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: Union[models.User, dict] = Depends(deps.get_current_user_or_guest)
+    current_user: Union[models.User, dict] = Depends(get_current_user_or_guest)
 ) -> Any:
     """
     준비 상태 토글
@@ -307,10 +314,14 @@ async def toggle_ready_status(
         if isinstance(current_user, models.User):
             user_id = current_user.id
             guest_id = None
-        else:
-            # 게스트 사용자
+        elif current_user is not None:  # dict인 경우
             user_id = None
             guest_id = current_user.get('guest_id')
+        else:  # None인 경우
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="인증이 필요합니다."
+            )
         
         participant, room, game_starting, start_time = await room_service.toggle_ready_status(
             db=db,
@@ -385,7 +396,7 @@ async def reset_room_status(
 async def leave_room(
     leave_data: schemas.RoomLeaveRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: Union[models.User, dict] = Depends(deps.get_current_user_or_guest)
+    current_user: Union[models.User, dict] = Depends(get_current_user_or_guest)
 ) -> Any:
     """
     방 나가기
@@ -398,10 +409,14 @@ async def leave_room(
         if isinstance(current_user, models.User):
             user_id = current_user.id
             guest_id = None
-        else:
-            # 게스트 사용자
+        elif current_user is not None:  # dict인 경우
             user_id = None
             guest_id = current_user.get('guest_id')
+        else:  # None인 경우
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="인증이 필요합니다."
+            )
         
         room_code, remaining_players, room_deleted, new_host_info, game_started = await room_service.leave_room(
             db=db,
@@ -575,7 +590,7 @@ async def submit_round_choice(
     room_code: str,
     choice_data: schemas.RoundChoiceRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: Union[models.User, dict] = Depends(deps.get_current_user_or_guest)
+    current_user: Union[models.User, dict] = Depends(get_current_user_or_guest)
 ) -> Any:
     """
     라운드 개인 선택 제출 (round_number는 body로)
@@ -584,9 +599,14 @@ async def submit_round_choice(
         if isinstance(current_user, models.User):
             user_id = current_user.id
             guest_id = None
-        else:
+        elif current_user is not None:  # dict인 경우
             user_id = None
             guest_id = current_user.get('guest_id')
+        else:  # None인 경우
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="인증이 필요합니다."
+            )
         round_choice = await room_service.submit_round_choice(
             db=db,
             room_code=room_code,
@@ -611,7 +631,7 @@ async def submit_individual_confidence(
     room_code: str,
     confidence_data: schemas.IndividualConfidenceRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: Union[models.User, dict] = Depends(deps.get_current_user_or_guest)
+    current_user: Union[models.User, dict] = Depends(get_current_user_or_guest)
 ) -> Any:
     """
     개별 확신도 제출 (round_number는 body로)
@@ -620,9 +640,14 @@ async def submit_individual_confidence(
         if isinstance(current_user, models.User):
             user_id = current_user.id
             guest_id = None
-        else:
+        elif current_user is not None:  # dict인 경우
             user_id = None
             guest_id = current_user.get('guest_id')
+        else:  # None인 경우
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="인증이 필요합니다."
+            )
         round_choice = await room_service.submit_individual_confidence(
             db=db,
             room_code=room_code,
@@ -647,18 +672,21 @@ async def submit_consensus_choice(
     room_code: str,
     choice_data: schemas.ConsensusChoiceRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: Union[models.User, dict] = Depends(deps.get_current_user_or_guest)
+    current_user: Union[models.User, dict] = Depends(get_current_user_or_guest)
 ) -> Any:
-    """
-    합의 선택 제출 (round_number는 body로)
-    """
+    # 합의 선택 제출 (round_number는 body로)
     try:
         if isinstance(current_user, models.User):
             user_id = current_user.id
             guest_id = None
-        else:
+        elif current_user is not None: # dict 인 경우
             user_id = None
             guest_id = current_user.get('guest_id')
+        else: # None인 경우
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="인증이 필요합니다."
+            )
         consensus_choice = await room_service.submit_consensus_choice(
             db=db,
             room_code=room_code,
@@ -683,7 +711,7 @@ async def submit_consensus_confidence(
     room_code: str,
     confidence_data: schemas.ConsensusConfidenceRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: Union[models.User, dict] = Depends(deps.get_current_user_or_guest)
+    current_user: Union[models.User, dict] = Depends(get_current_user_or_guest)
 ) -> Any:
     """
     합의 선택에 대한 확신도 제출 (round_number는 body로)
@@ -692,9 +720,14 @@ async def submit_consensus_confidence(
         if isinstance(current_user, models.User):
             user_id = current_user.id
             guest_id = None
-        else:
+        elif current_user is not None:  # dict인 경우
             user_id = None
             guest_id = current_user.get('guest_id')
+        else:  # None인 경우
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="인증이 필요합니다."
+            )
         consensus_choice = await room_service.submit_consensus_confidence(
             db=db,
             room_code=room_code,
