@@ -15,26 +15,46 @@ class WebSocketManager:
         self.active_connections: Dict[str, Set[WebSocket]] = {}
         # WebSocket별 사용자 정보
         self.connection_info: Dict[WebSocket, dict] = {}
+        # 연결 상태 모니터링
+        self.connection_stats: Dict[str, dict] = {}
     
     async def connect(self, websocket: WebSocket, session_id: str, user_info: dict):
-        """WebSocket 연결"""
+        """WebSocket 연결 - 동시 접속 제한 없음"""
         # accept는 이미 호출된 상태로 가정
         
         if session_id not in self.active_connections:
             self.active_connections[session_id] = set()
+            self.connection_stats[session_id] = {
+                "total_connections": 0,
+                "current_connections": 0,
+                "max_concurrent": 0,
+                "created_at": datetime.utcnow().isoformat()
+            }
         
         self.active_connections[session_id].add(websocket)
         self.connection_info[websocket] = {
             "session_id": session_id,
-            "user_info": user_info
+            "user_info": user_info,
+            "connected_at": datetime.utcnow().isoformat()
         }
+        
+        # 통계 업데이트
+        self.connection_stats[session_id]["total_connections"] += 1
+        self.connection_stats[session_id]["current_connections"] = len(self.active_connections[session_id])
+        self.connection_stats[session_id]["max_concurrent"] = max(
+            self.connection_stats[session_id]["max_concurrent"],
+            self.connection_stats[session_id]["current_connections"]
+        )
+        
+        print(f"🔗 WebSocket 연결: 세션 {session_id}, 현재 연결 수: {self.connection_stats[session_id]['current_connections']}")
         
         # 연결 성공 메시지 전송
         await websocket.send_text(json.dumps(jsonable_encoder({
             "type": "connection_established",
             "session_id": session_id,
             "user_info": user_info,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.utcnow().isoformat(),
+            "connection_count": self.connection_stats[session_id]["current_connections"]
         })))
     
     def disconnect(self, websocket: WebSocket):
@@ -45,12 +65,22 @@ class WebSocketManager:
                 self.active_connections[session_id].discard(websocket)
                 if not self.active_connections[session_id]:
                     del self.active_connections[session_id]
+                    if session_id in self.connection_stats:
+                        del self.connection_stats[session_id]
+                else:
+                    # 통계 업데이트
+                    self.connection_stats[session_id]["current_connections"] = len(self.active_connections[session_id])
+                    print(f"🔌 WebSocket 해제: 세션 {session_id}, 현재 연결 수: {self.connection_stats[session_id]['current_connections']}")
             del self.connection_info[websocket]
     
     async def broadcast_to_session(self, session_id: str, message: dict):
         """특정 세션의 모든 클라이언트에게 메시지 브로드캐스트"""
         if session_id in self.active_connections:
             disconnected = set()
+            connection_count = len(self.active_connections[session_id])
+            
+            print(f"📢 브로드캐스트: 세션 {session_id}, 대상 연결 수: {connection_count}")
+            
             for connection in self.active_connections[session_id]:
                 try:
                     await connection.send_text(json.dumps(jsonable_encoder(message)))
@@ -100,6 +130,14 @@ class WebSocketManager:
     def get_connection_count(self, session_id: str) -> int:
         """세션의 연결 수 조회"""
         return len(self.active_connections.get(session_id, set()))
+    
+    def get_connection_stats(self, session_id: str) -> Optional[dict]:
+        """세션의 연결 통계 조회"""
+        return self.connection_stats.get(session_id)
+    
+    def get_all_stats(self) -> Dict[str, dict]:
+        """모든 세션의 통계 조회"""
+        return self.connection_stats.copy()
 
 
 # 전역 WebSocket 매니저 인스턴스

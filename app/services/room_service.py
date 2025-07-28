@@ -94,12 +94,16 @@ class RoomService:
     @staticmethod
     async def get_room_by_code(db: AsyncSession, room_code: str) -> Optional[models.Room]:
         """방 코드로 방 조회"""
-        result = await db.execute(
-            select(models.Room)
-            .options(selectinload(models.Room.participants))
-            .where(models.Room.room_code == room_code)
-        )
-        return result.scalar_one_or_none()
+        try:
+            result = await db.execute(
+                select(models.Room)
+                .options(selectinload(models.Room.participants))
+                .where(models.Room.room_code == room_code)
+            )
+            return result.scalar_one_or_none()
+        except Exception as e:
+            print(f"방 조회 중 오류 발생: {str(e)}")
+            raise
     
     @staticmethod
     async def get_public_rooms(

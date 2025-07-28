@@ -1,4 +1,4 @@
-from typing import AsyncGenerator, Optional
+from typing import AsyncGenerator, Optional, Union
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -20,6 +20,9 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async with async_session() as session:
         try:
             yield session
+        except Exception as e:
+            await session.rollback()
+            raise e
         finally:
             await session.close()
 
@@ -65,9 +68,9 @@ async def get_current_active_user(
 async def get_current_user_or_guest(
     db: AsyncSession = Depends(get_db),
     token: Optional[str] = Depends(oauth2_scheme)
-) -> Optional[User]:
+) -> Union[User, dict, None]:
     """
-    인증된 사용자가 있으면 해당 사용자 반환, 없으면 None 반환
+    인증된 사용자가 있으면 해당 사용자 반환, 게스트면 dict 반환, 없으면 None 반환
     """
     if not token:
         return None
@@ -75,6 +78,15 @@ async def get_current_user_or_guest(
         payload = jwt.decode(
             token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
         )
+        
+        # 게스트 토큰인지 확인
+        if payload.get("type") == "guest":
+            return {
+                "guest_id": payload.get("guest_id"),
+                "type": "guest"
+            }
+        
+        # 일반 사용자 토큰
         token_data = TokenPayload(**payload)
         user = await db.get(User, int(token_data.sub))
         return user

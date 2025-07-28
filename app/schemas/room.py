@@ -243,21 +243,25 @@ class AiNameResponse(BaseModel):
 class RoundChoiceRequest(BaseModel):
     round_number: int = Field(..., ge=1, description="라운드 번호")
     choice: int = Field(..., ge=1, le=4, description="선택지 (1~4)")
+    subtopic: Optional[str] = Field(None, description="서브토픽")
 
 # 개별 확신도 제출 요청 스키마
 class IndividualConfidenceRequest(BaseModel):
     round_number: int = Field(..., ge=1, description="라운드 번호")
     confidence: int = Field(..., ge=1, le=5, description="확신도 (1~5)")
+    subtopic: Optional[str] = Field(None, description="서브토픽")
 
 # 합의 선택 요청 스키마
 class ConsensusChoiceRequest(BaseModel):
     round_number: int = Field(..., ge=1, description="라운드 번호")
     choice: int = Field(..., ge=1, le=4, description="선택지 (1~4)")
+    subtopic: Optional[str] = Field(None, description="서브토픽")
 
 # 합의 선택에 대한 확신도 제출 요청 스키마
 class ConsensusConfidenceRequest(BaseModel):
     round_number: int = Field(..., ge=1, description="라운드 번호")
     confidence: int = Field(..., ge=1, le=5, description="확신도 (1~5)")
+    subtopic: Optional[str] = Field(None, description="서브토픽")
 
 # 선택 상태 응답 스키마
 class ChoiceStatusResponse(BaseModel):

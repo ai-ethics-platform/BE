@@ -33,6 +33,14 @@ class Settings(BaseSettings):
     
     # Database URL
     SQLALCHEMY_DATABASE_URI: Optional[str] = None
+    
+    # SQL 로그 설정 (개발 환경에서만 활성화)
+    SQL_ECHO: bool = False
+    
+    # 데이터베이스 연결 풀 설정
+    DB_POOL_SIZE: int = 20
+    DB_MAX_OVERFLOW: int = 30
+    DB_POOL_TIMEOUT: int = 30
 
     @field_validator("SQLALCHEMY_DATABASE_URI", mode="before")
     def assemble_db_connection(cls, v: Optional[str], info) -> Any:

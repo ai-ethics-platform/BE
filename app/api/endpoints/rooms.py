@@ -89,20 +89,29 @@ async def get_room_by_code(
     """
     방 코드로 방 정보 조회
     """
-    room = await room_service.get_room_by_code(db=db, room_code=room_code)
-    if not room:
+    try:
+        room = await room_service.get_room_by_code(db=db, room_code=room_code)
+        if not room:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="존재하지 않는 방 코드입니다."
+            )
+        
+        # 디버깅: participants의 role_id 값 확인
+        print(f"🔍 방 코드 {room_code} 조회 결과:")
+        print(f"   - 총 참가자 수: {len(room.participants)}")
+        for i, participant in enumerate(room.participants):
+            print(f"   - 참가자 {i+1}: {participant.nickname}, role_id={participant.role_id}, is_host={participant.is_host}")
+        
+        return room
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"방 조회 중 예상치 못한 오류: {str(e)}")
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="존재하지 않는 방 코드입니다."
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="방 조회 중 오류가 발생했습니다."
         )
-    
-    # 디버깅: participants의 role_id 값 확인
-    print(f"🔍 방 코드 {room_code} 조회 결과:")
-    print(f"   - 총 참가자 수: {len(room.participants)}")
-    for i, participant in enumerate(room.participants):
-        print(f"   - 참가자 {i+1}: {participant.nickname}, role_id={participant.role_id}, is_host={participant.is_host}")
-    
-    return room
 
 
 @router.post("/join/code", response_model=schemas.RoomJoinResponse)
@@ -735,4 +744,33 @@ async def get_choice_status(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"선택 현황 조회 중 오류가 발생했습니다: {str(e)}"
         ) 
+
+@router.get("/websocket/stats")
+async def get_websocket_stats():
+    """WebSocket 연결 상태 통계 조회"""
+    from app.core.websocket_manager import websocket_manager
+    
+    stats = websocket_manager.get_all_stats()
+    total_sessions = len(stats)
+    total_connections = sum(session_stats["current_connections"] for session_stats in stats.values())
+    
+    return {
+        "total_sessions": total_sessions,
+        "total_connections": total_connections,
+        "sessions": stats
+    }
+
+@router.get("/websocket/stats/{session_id}")
+async def get_session_websocket_stats(session_id: str):
+    """특정 세션의 WebSocket 연결 상태 조회"""
+    from app.core.websocket_manager import websocket_manager
+    
+    stats = websocket_manager.get_connection_stats(session_id)
+    if not stats:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="해당 세션을 찾을 수 없습니다."
+        )
+    
+    return stats 
  
