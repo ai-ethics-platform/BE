@@ -1,6 +1,3 @@
-<<<<<<< HEAD
- 
-=======
 """add_subtopic_to_round_choices_and_consensus_choices
 
 Revision ID: 5c643d20447c
@@ -32,5 +29,3 @@ def downgrade() -> None:
     # Drop the 'subtopic' column from both 'round_choices' and 'consensus_choices' tables
     op.drop_column('round_choices', 'subtopic')
     op.drop_column('consensus_choices', 'subtopic')
-
->>>>>>> 08ac2b66b555ffb675b379d8e20fcf4205bca093
