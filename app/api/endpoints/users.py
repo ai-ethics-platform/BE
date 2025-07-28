@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import models, schemas
-from app.api import deps
+from app.core.deps import get_db, get_current_user
 from app.services import user_service
 
 router = APIRouter()
@@ -12,7 +12,7 @@ router = APIRouter()
 
 @router.get("/me", response_model=schemas.User)
 async def read_user_me(
-    current_user: models.User = Depends(deps.get_current_user),
+    current_user: models.User = Depends(get_current_user),
 ) -> Any:
     """
     현재 로그인한 사용자 정보 조회
@@ -23,7 +23,7 @@ async def read_user_me(
 @router.put("/me", response_model=schemas.User)
 async def update_user_me(
     user_in: schemas.UserUpdate,
-    current_user: models.User = Depends(deps.get_current_user),
+    current_user: models.User = Depends(get_current_user),
 ) -> Any:
     """
     현재 로그인한 사용자 정보 업데이트
@@ -36,7 +36,7 @@ async def update_user_me(
 
 @router.get("/stats", response_model=schemas.UserStats)
 async def get_user_stats(
-    current_user: models.User = Depends(deps.get_current_user),
+    current_user: models.User = Depends(get_current_user),
 ) -> Any:
     """
     사용자 게임 통계 조회
