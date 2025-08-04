@@ -27,10 +27,15 @@ async def create_public_room(
         if isinstance(current_user, models.User):
             creator_id = current_user.id
             creator_nickname = current_user.username
-        else:
+        elif current_user is not None:  # dict 인 경우
             # 게스트 사용자
             creator_id = None
             creator_nickname = f"게스트_{current_user.get('guest_id', 'unknown')}"
+        else:  # None인 경우
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="인증이 필요합니다."
+            )
         
         # 방 생성
         room = await room_service.create_public_room(
@@ -244,10 +249,15 @@ async def create_private_room(
         if isinstance(current_user, models.User):
             creator_id = current_user.id
             creator_nickname = current_user.username
-        else:
+        elif current_user is not None:  # dict 인 경우
             # 게스트 사용자
             creator_id = None
             creator_nickname = f"게스트_{current_user.get('guest_id', 'unknown')}"
+        else:  # None인 경우
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="인증이 필요합니다."
+            )
         
         # 방 생성
         room = await room_service.create_private_room(

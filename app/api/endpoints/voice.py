@@ -124,8 +124,17 @@ async def join_voice_session(
     """음성 세션 참가"""
     try:
         # 사용자 정보 추출
-        user_id = current_user.id if isinstance(current_user, models.User) else None
-        guest_id = None if isinstance(current_user, models.User) else current_user.get("guest_id")
+        if isinstance(current_user, models.User):
+            user_id = current_user.id
+            guest_id = None
+        elif current_user is not None:  # dict인 경우
+            user_id = None
+            guest_id = current_user.get("guest_id")
+        else:  # None인 경우
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="인증이 필요합니다."
+            )
         
         result = await VoiceService.join_voice_session(
             db=db,
@@ -178,8 +187,17 @@ async def update_voice_status(
     """음성 상태 업데이트 (마이크 ON/OFF)"""
     try:
         # 사용자 정보 추출
-        user_id = current_user.id if isinstance(current_user, models.User) else None
-        guest_id = None if isinstance(current_user, models.User) else current_user.get("guest_id")
+        if isinstance(current_user, models.User):
+            user_id = current_user.id
+            guest_id = None
+        elif current_user is not None:  # dict인 경우
+            user_id = None
+            guest_id = current_user.get("guest_id")
+        else:  # None인 경우
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="인증이 필요합니다."
+            )
         
         participant = await VoiceService.update_voice_status(
             db=db,
@@ -219,8 +237,17 @@ async def leave_voice_session(
     """음성 세션 퇴장"""
     try:
         # 사용자 정보 추출
-        user_id = current_user.id if isinstance(current_user, models.User) else None
-        guest_id = None if isinstance(current_user, models.User) else current_user.get("guest_id")
+        if isinstance(current_user, models.User):
+            user_id = current_user.id
+            guest_id = None
+        elif current_user is not None:  # dict인 경우
+            user_id = None
+            guest_id = current_user.get("guest_id")
+        else:  # None인 경우
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="인증이 필요합니다."
+            )
         
         await VoiceService.leave_voice_session(
             db=db,
