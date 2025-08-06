@@ -4,6 +4,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, status, Body
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
+from jose import jwt, JWTError
 
 from app import schemas
 from app.core import security
@@ -142,4 +143,57 @@ async def find_username(
     
     # 아이디의 앞 3글자만 보여주고 나머지는 *로 마스킹
     masked_username = user.username[:3] + "*" * (len(user.username) - 3)
-    return {"username": masked_username, "available": None} 
+    return {"username": masked_username, "available": None}
+
+
+@router.post("/refresh", response_model=schemas.Token)
+async def refresh_token(
+    refresh_token: str = Body(..., embed=True),
+    db: AsyncSession = Depends(get_db)
+) -> Any:
+    """
+    Refresh token을 사용하여 새로운 access token 발급
+    """
+    try:
+        # Refresh token 검증
+        payload = jwt.decode(
+            refresh_token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+        )
+        
+        # Refresh token 타입 확인
+        if payload.get("type") != "refresh":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid token type"
+            )
+        
+        user_id = int(payload.get("sub"))
+        
+        # 사용자 존재 확인
+        user = await user_service.get_user_by_id(db=db, user_id=user_id)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
+        
+        # 새로운 access token 발급
+        new_access_token = auth_service.create_access_token(user.id)
+        new_refresh_token = auth_service.create_refresh_token(user.id)
+        
+        return {
+            "access_token": new_access_token,
+            "refresh_token": new_refresh_token,
+            "token_type": "bearer"
+        }
+        
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid refresh token"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Token refresh failed"
+        ) 
