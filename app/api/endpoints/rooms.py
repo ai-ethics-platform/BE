@@ -1,4 +1,4 @@
-from typing import Any, List, Union
+from typing import Any, List, Union, Dict, Set
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_
@@ -8,6 +8,10 @@ from app.core.deps import get_db, get_current_user_or_guest
 from app.services.room_service import room_service
 
 router = APIRouter()
+
+# 페이지 동기화 상태를 메모리에 저장 (간단한 딕셔너리)
+# {room_code: {page_number: set(user_identifiers)}}
+page_sync_status: Dict[str, Dict[int, Set[str]]] = {}
 
 
 @router.post("/create/public", response_model=schemas.RoomCreateResponse)
@@ -860,7 +864,7 @@ async def record_page_arrival(
     """
     사용자가 특정 페이지에 도착했음을 기록
     - 프론트엔드에서 페이지 전환 시 호출
-    - 3명 모두 도착하면 three_next 신호 자동 전송
+    - 3명 모두 도착하면 all_arrived = True 반환
     """
     try:
         # 사용자 식별자 생성
@@ -884,26 +888,25 @@ async def record_page_arrival(
         
         total_users = room.current_players
         
-        # WebSocket 매니저에 페이지 도착 기록
-        from app.core.websocket_manager import websocket_manager
-        arrived_count = websocket_manager.record_page_arrival(
-            room_code=arrival_data.room_code,
-            page_number=arrival_data.page_number,
-            user_identifier=user_identifier
-        )
+        # 메모리에 페이지 도착 기록
+        if arrival_data.room_code not in page_sync_status:
+            page_sync_status[arrival_data.room_code] = {}
         
-        # 모든 사용자가 도착했는지 확인하고 필요시 three_next 신호 전송
-        await websocket_manager.check_and_broadcast_page_completion(
-            room_code=arrival_data.room_code,
-            page_number=arrival_data.page_number,
-            total_users=total_users
-        )
+        if arrival_data.page_number not in page_sync_status[arrival_data.room_code]:
+            page_sync_status[arrival_data.room_code][arrival_data.page_number] = set()
+        
+        page_sync_status[arrival_data.room_code][arrival_data.page_number].add(user_identifier)
+        arrived_count = len(page_sync_status[arrival_data.room_code][arrival_data.page_number])
+        
+        # 모든 사용자가 도착했는지 확인
+        all_arrived = arrived_count >= total_users
         
         return schemas.PageArrivalResponse(
             room_code=arrival_data.room_code,
             page_number=arrival_data.page_number,
             arrived_users=arrived_count,
             total_users=total_users,
+            all_arrived=all_arrived,
             message=f"페이지 {arrival_data.page_number}에 도착이 기록되었습니다. ({arrived_count}/{total_users})"
         )
         
@@ -935,11 +938,8 @@ async def get_page_sync_status(
                 detail="존재하지 않는 방 코드입니다."
             )
         
-        # WebSocket 매니저에서 동기화 상태 조회
-        from app.core.websocket_manager import websocket_manager
-        sync_status = websocket_manager.get_page_sync_status(room_code, page_number)
-        
-        if sync_status is None:
+        # 메모리에서 동기화 상태 조회
+        if room_code not in page_sync_status or page_number not in page_sync_status[room_code]:
             # 아직 아무도 도착하지 않음
             return schemas.PageSyncStatus(
                 room_code=room_code,
@@ -951,7 +951,7 @@ async def get_page_sync_status(
                 arrived_user_list=[]
             )
         
-        arrived_users = sync_status["arrived_users"]
+        arrived_users = len(page_sync_status[room_code][page_number])
         total_users = room.current_players
         all_arrived = arrived_users >= total_users
         
@@ -962,7 +962,7 @@ async def get_page_sync_status(
             total_users=total_users,
             all_arrived=all_arrived,
             can_proceed=all_arrived,
-            arrived_user_list=sync_status["arrived_user_list"]
+            arrived_user_list=list(page_sync_status[room_code][page_number])
         )
         
     except HTTPException:
@@ -993,9 +993,10 @@ async def reset_page_sync_status(
                 detail="존재하지 않는 방 코드입니다."
             )
         
-        # WebSocket 매니저에서 동기화 상태 초기화
-        from app.core.websocket_manager import websocket_manager
-        websocket_manager.reset_page_sync_status(room_code, page_number)
+        # 메모리에서 동기화 상태 초기화
+        if room_code in page_sync_status and page_number in page_sync_status[room_code]:
+            del page_sync_status[room_code][page_number]
+            print(f"🔄 페이지 동기화 상태 초기화: 방 {room_code}, 페이지 {page_number}")
         
         return schemas.PageSyncResponse(
             room_code=room_code,
@@ -1033,13 +1034,8 @@ async def manual_page_sync_signal(
                 detail="존재하지 않는 방 코드입니다."
             )
         
-        # WebSocket 매니저에서 동기화 신호 전송
-        from app.core.websocket_manager import websocket_manager
-        await websocket_manager.broadcast_page_sync_signal(
-            room_code=room_code,
-            page_number=page_number,
-            signal_type=signal_type
-        )
+        # 메모리 기반으로 단순 응답만 반환 (WebSocket 신호 전송 없음)
+        print(f"📡 수동 페이지 동기화 신호: 방 {room_code}, 페이지 {page_number}, 신호: {signal_type}")
         
         return schemas.PageSyncResponse(
             room_code=room_code,

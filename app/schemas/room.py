@@ -307,6 +307,7 @@ class PageArrivalResponse(BaseModel):
     page_number: int
     arrived_users: int = Field(..., description="해당 페이지에 도착한 사용자 수")
     total_users: int = Field(..., description="방의 총 사용자 수")
+    all_arrived: bool = Field(..., description="모든 사용자가 도착했는지 여부")
     message: str = "페이지 도착이 기록되었습니다."
 
 
