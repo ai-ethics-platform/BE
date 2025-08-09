@@ -293,3 +293,40 @@ class ConsensusSubmitResponse(BaseModel):
     round_number: int
     choice: int
     message: str = "합의 선택이 성공적으로 제출되었습니다." 
+
+# 페이지 동기화 관련 스키마들
+class PageArrivalRequest(BaseModel):
+    room_code: str = Field(..., description="방 코드")
+    page_number: int = Field(..., ge=1, description="도착한 페이지 번호")
+    user_id: Optional[int] = Field(None, description="사용자 ID (로그인 사용자)")
+    guest_id: Optional[str] = Field(None, description="게스트 ID (게스트 사용자)")
+
+
+class PageArrivalResponse(BaseModel):
+    room_code: str
+    page_number: int
+    arrived_users: int = Field(..., description="해당 페이지에 도착한 사용자 수")
+    total_users: int = Field(..., description="방의 총 사용자 수")
+    message: str = "페이지 도착이 기록되었습니다."
+
+
+class PageSyncStatus(BaseModel):
+    room_code: str
+    page_number: int
+    arrived_users: int = Field(..., description="해당 페이지에 도착한 사용자 수")
+    total_users: int = Field(..., description="방의 총 사용자 수")
+    all_arrived: bool = Field(..., description="모든 사용자가 도착했는지 여부")
+    can_proceed: bool = Field(..., description="다음 단계로 진행 가능한지 여부")
+    arrived_user_list: List[str] = Field(..., description="도착한 사용자들의 닉네임 목록")
+
+
+class PageSyncRequest(BaseModel):
+    room_code: str = Field(..., description="방 코드")
+    page_number: int = Field(..., ge=1, description="동기화할 페이지 번호")
+
+
+class PageSyncResponse(BaseModel):
+    room_code: str
+    page_number: int
+    sync_signal: str = Field(..., description="동기화 신호 타입 (three_next 등)")
+    message: str = "페이지 동기화 신호가 전송되었습니다." 

@@ -19,6 +19,8 @@ class WebSocketManager:
         self.connection_stats: Dict[str, dict] = {}
         # 연결 상태 추적
         self.connection_health: Dict[WebSocket, dict] = {}
+        # 페이지 동기화 상태 추적
+        self.page_sync_status: Dict[str, Dict[int, Set[str]]] = {}  # {room_code: {page_number: set(user_ids)}}
     
     async def connect(self, websocket: WebSocket, session_id: str, user_info: dict):
         """WebSocket 연결 - 동시 접속 제한 없음"""
@@ -241,6 +243,67 @@ class WebSocketManager:
         # 끊어진 연결 정리
         for connection in disconnected:
             self.disconnect(connection)
+
+    # 페이지 동기화 관련 새로운 메서드들
+    def record_page_arrival(self, room_code: str, page_number: int, user_identifier: str):
+        """사용자가 특정 페이지에 도착했음을 기록"""
+        if room_code not in self.page_sync_status:
+            self.page_sync_status[room_code] = {}
+        
+        if page_number not in self.page_sync_status[room_code]:
+            self.page_sync_status[room_code][page_number] = set()
+        
+        self.page_sync_status[room_code][page_number].add(user_identifier)
+        
+        print(f"📄 페이지 도착 기록: 방 {room_code}, 페이지 {page_number}, 사용자 {user_identifier}")
+        print(f"   현재 도착한 사용자: {len(self.page_sync_status[room_code][page_number])}명")
+        
+        return len(self.page_sync_status[room_code][page_number])
+
+    def get_page_sync_status(self, room_code: str, page_number: int) -> Optional[dict]:
+        """특정 방과 페이지의 동기화 상태 조회"""
+        if room_code not in self.page_sync_status or page_number not in self.page_sync_status[room_code]:
+            return None
+        
+        arrived_users = self.page_sync_status[room_code][page_number]
+        return {
+            "arrived_users": len(arrived_users),
+            "arrived_user_list": list(arrived_users)
+        }
+
+    def reset_page_sync_status(self, room_code: str, page_number: int):
+        """특정 방과 페이지의 동기화 상태 초기화"""
+        if room_code in self.page_sync_status and page_number in self.page_sync_status[room_code]:
+            del self.page_sync_status[room_code][page_number]
+            print(f"🔄 페이지 동기화 상태 초기화: 방 {room_code}, 페이지 {page_number}")
+
+    async def broadcast_page_sync_signal(self, room_code: str, page_number: int, signal_type: str = "three_next"):
+        """페이지 동기화 신호를 방의 모든 사용자에게 브로드캐스트"""
+        message = {
+            "type": "page_sync_signal",
+            "room_code": room_code,
+            "page_number": page_number,
+            "signal_type": signal_type,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+        await self.broadcast_to_session(room_code, message)
+        print(f"📡 페이지 동기화 신호 전송: 방 {room_code}, 페이지 {page_number}, 신호: {signal_type}")
+
+    async def check_and_broadcast_page_completion(self, room_code: str, page_number: int, total_users: int):
+        """페이지 완료 상태를 확인하고 필요시 동기화 신호 전송"""
+        if room_code not in self.page_sync_status or page_number not in self.page_sync_status[room_code]:
+            return False
+        
+        arrived_count = len(self.page_sync_status[room_code][page_number])
+        
+        if arrived_count >= total_users:
+            # 모든 사용자가 도착했으면 three_next 신호 전송
+            await self.broadcast_page_sync_signal(room_code, page_number, "three_next")
+            print(f"🎉 모든 사용자 도착 완료: 방 {room_code}, 페이지 {page_number}, 도착자: {arrived_count}/{total_users}")
+            return True
+        
+        return False
 
 
 # 전역 WebSocket 매니저 인스턴스
