@@ -855,9 +855,9 @@ async def ping_websocket_connections(session_id: str):
     } 
 
 # 페이지 동기화 관련 새로운 엔드포인트들
-@router.post("/page-arrival", response_model=schemas.PageArrivalResponse)
+@router.post("/page-arrival", response_model=schemas.room.PageArrivalResponse)
 async def record_page_arrival(
-    arrival_data: schemas.PageArrivalRequest,
+    arrival_data: schemas.room.PageArrivalRequest,
     db: AsyncSession = Depends(get_db),
     current_user: Union[models.User, dict] = Depends(get_current_user_or_guest)
 ) -> Any:
@@ -867,16 +867,8 @@ async def record_page_arrival(
     - 3명 모두 도착하면 all_arrived = True 반환
     """
     try:
-        # 사용자 식별자 생성
-        if isinstance(current_user, models.User):
-            user_identifier = f"user_{current_user.id}"
-        elif current_user is not None:  # dict인 경우
-            user_identifier = f"guest_{current_user.get('guest_id')}"
-        else:  # None인 경우
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="인증이 필요합니다."
-            )
+        # 사용자 식별자 (요청에서 받음)
+        user_identifier = arrival_data.user_identifier
         
         # 방 정보 조회하여 총 사용자 수 확인
         room = await room_service.get_room_by_code(db=db, room_code=arrival_data.room_code)
@@ -901,11 +893,11 @@ async def record_page_arrival(
         # 모든 사용자가 도착했는지 확인
         all_arrived = arrived_count >= total_users
         
-        return schemas.PageArrivalResponse(
+        return schemas.room.PageArrivalResponse(
             room_code=arrival_data.room_code,
             page_number=arrival_data.page_number,
             arrived_users=arrived_count,
-            total_users=total_users,
+            total_required=total_users,
             all_arrived=all_arrived,
             message=f"페이지 {arrival_data.page_number}에 도착이 기록되었습니다. ({arrived_count}/{total_users})"
         )
@@ -919,7 +911,7 @@ async def record_page_arrival(
         )
 
 
-@router.get("/page-sync-status/{room_code}/{page_number}", response_model=schemas.PageSyncStatus)
+@router.get("/page-sync-status/{room_code}/{page_number}", response_model=schemas.room.PageSyncStatus)
 async def get_page_sync_status(
     room_code: str,
     page_number: int,
@@ -941,11 +933,11 @@ async def get_page_sync_status(
         # 메모리에서 동기화 상태 조회
         if room_code not in page_sync_status or page_number not in page_sync_status[room_code]:
             # 아직 아무도 도착하지 않음
-            return schemas.PageSyncStatus(
+            return schemas.room.PageSyncStatus(
                 room_code=room_code,
                 page_number=page_number,
                 arrived_users=0,
-                total_users=room.current_players,
+                total_required=room.current_players,
                 all_arrived=False,
                 can_proceed=False,
                 arrived_user_list=[]
@@ -955,11 +947,11 @@ async def get_page_sync_status(
         total_users = room.current_players
         all_arrived = arrived_users >= total_users
         
-        return schemas.PageSyncStatus(
+        return schemas.room.PageSyncStatus(
             room_code=room_code,
             page_number=page_number,
             arrived_users=arrived_users,
-            total_users=total_users,
+            total_required=total_users,
             all_arrived=all_arrived,
             can_proceed=all_arrived,
             arrived_user_list=list(page_sync_status[room_code][page_number])
@@ -974,7 +966,7 @@ async def get_page_sync_status(
         )
 
 
-@router.post("/page-sync-reset/{room_code}/{page_number}", response_model=schemas.PageSyncResponse)
+@router.post("/page-sync-reset/{room_code}/{page_number}", response_model=schemas.room.PageSyncResponse)
 async def reset_page_sync_status(
     room_code: str,
     page_number: int,
@@ -998,7 +990,7 @@ async def reset_page_sync_status(
             del page_sync_status[room_code][page_number]
             print(f"🔄 페이지 동기화 상태 초기화: 방 {room_code}, 페이지 {page_number}")
         
-        return schemas.PageSyncResponse(
+        return schemas.room.PageSyncResponse(
             room_code=room_code,
             page_number=page_number,
             sync_signal="reset",
@@ -1014,7 +1006,7 @@ async def reset_page_sync_status(
         )
 
 
-@router.post("/page-sync-manual/{room_code}/{page_number}", response_model=schemas.PageSyncResponse)
+@router.post("/page-sync-manual/{room_code}/{page_number}", response_model=schemas.room.PageSyncResponse)
 async def manual_page_sync_signal(
     room_code: str,
     page_number: int,
@@ -1037,7 +1029,7 @@ async def manual_page_sync_signal(
         # 메모리 기반으로 단순 응답만 반환 (WebSocket 신호 전송 없음)
         print(f"📡 수동 페이지 동기화 신호: 방 {room_code}, 페이지 {page_number}, 신호: {signal_type}")
         
-        return schemas.PageSyncResponse(
+        return schemas.room.PageSyncResponse(
             room_code=room_code,
             page_number=page_number,
             sync_signal=signal_type,

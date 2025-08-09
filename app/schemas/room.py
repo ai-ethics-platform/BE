@@ -298,15 +298,14 @@ class ConsensusSubmitResponse(BaseModel):
 class PageArrivalRequest(BaseModel):
     room_code: str = Field(..., description="방 코드")
     page_number: int = Field(..., ge=1, description="도착한 페이지 번호")
-    user_id: Optional[int] = Field(None, description="사용자 ID (로그인 사용자)")
-    guest_id: Optional[str] = Field(None, description="게스트 ID (게스트 사용자)")
+    user_identifier: str = Field(..., description="사용자 식별자 (user_123 또는 guest_abc 형태)")
 
 
 class PageArrivalResponse(BaseModel):
     room_code: str
     page_number: int
     arrived_users: int = Field(..., description="해당 페이지에 도착한 사용자 수")
-    total_users: int = Field(..., description="방의 총 사용자 수")
+    total_required: int = Field(..., description="방의 총 사용자 수")
     all_arrived: bool = Field(..., description="모든 사용자가 도착했는지 여부")
     message: str = "페이지 도착이 기록되었습니다."
 
@@ -315,10 +314,10 @@ class PageSyncStatus(BaseModel):
     room_code: str
     page_number: int
     arrived_users: int = Field(..., description="해당 페이지에 도착한 사용자 수")
-    total_users: int = Field(..., description="방의 총 사용자 수")
+    total_required: int = Field(..., description="방의 총 사용자 수")
     all_arrived: bool = Field(..., description="모든 사용자가 도착했는지 여부")
     can_proceed: bool = Field(..., description="다음 단계로 진행 가능한지 여부")
-    arrived_user_list: List[str] = Field(..., description="도착한 사용자들의 닉네임 목록")
+    arrived_user_list: List[str] = Field(..., description="도착한 사용자들의 식별자 목록")
 
 
 class PageSyncRequest(BaseModel):
