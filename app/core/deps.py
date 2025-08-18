@@ -69,9 +69,7 @@ async def get_current_user_or_guest(
     db: AsyncSession = Depends(get_db),
     token: Optional[str] = Depends(oauth2_scheme)
 ) -> Union[User, dict, None]:
-    """
-    인증된 사용자가 있으면 해당 사용자 반환, 게스트면 dict 반환, 없으면 None 반환
-    """
+    # 인증된 사용자가 있으면 해당 사용자 반환, 게스트면 dict 반환, 없으면 None 반환
     if not token:
         return None
     try:

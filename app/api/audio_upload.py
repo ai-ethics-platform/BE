@@ -1,5 +1,5 @@
 # app/api/audio_upload.py
-from fastapi import APIRouter, UploadFile, File, Depends, HTTPException, status
+from fastapi import APIRouter, UploadFile, File, Depends, HTTPException, status, Form
 from sqlalchemy.ext.asyncio import AsyncSession
 import shutil
 import os
@@ -16,7 +16,7 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 @router.post("/upload_audio")
 async def upload_audio(
-    session_id: str,
+    session_id: str = Form(...),
     file: UploadFile = File(...),
     db: AsyncSession = Depends(get_db),
     current_user=Depends(get_current_user)

@@ -4,6 +4,7 @@ from fastapi import APIRouter
 from app.api.endpoints import auth, users, rooms, voice
 from app.api import voice_ws
 from app.api import voice_signaling_ws  # WebRTC 시그널링 서버 라우터 추가
+from app.api import audio_upload
 
 api_router = APIRouter()
 
@@ -14,3 +15,4 @@ api_router.include_router(rooms.router, prefix="/rooms", tags=["rooms"])
 api_router.include_router(voice.router, prefix="/voice", tags=["voice"])
 api_router.include_router(voice_ws.router, prefix="/ws", tags=["voice_ws"])
 api_router.include_router(voice_signaling_ws.router, tags=["voice_signaling_ws"])
+api_router.include_router(audio_upload.router, tags=["audio_upload"]) 
