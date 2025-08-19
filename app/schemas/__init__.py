@@ -40,6 +40,8 @@ from .room import (
     ConsensusChoiceRequest,
     IndividualConfidenceRequest,
     ConsensusConfidenceRequest,
+    StatisticsResponse,
+    SubtopicStatistic,
     ChoiceStatusResponse,
     ChoiceSubmitResponse,
     ConsensusSubmitResponse,
@@ -131,4 +133,6 @@ __all__ = [
     "ConfidenceSubmitResponse",
     "IndividualConfidenceRequest",
     "ConsensusConfidenceRequest",
+    "StatisticsResponse",
+    "SubtopicStatistic",
 ] 
