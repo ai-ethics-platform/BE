@@ -330,3 +330,18 @@ class PageSyncResponse(BaseModel):
     page_number: int
     sync_signal: str = Field(..., description="동기화 신호 타입 (three_next 등)")
     message: str = "페이지 동기화 신호가 전송되었습니다." 
+
+# 통계 관련 스키마
+class SubtopicStatistic(BaseModel):
+    subtopic: str = Field(..., description="서브토픽")
+    choice_1_count: int = Field(..., description="choice 1 선택 수")
+    choice_2_count: int = Field(..., description="choice 2 선택 수")
+    choice_1_percentage: float = Field(..., description="choice 1 비율 (%)")
+    choice_2_percentage: float = Field(..., description="choice 2 비율 (%)")
+    total_count: int = Field(..., description="총 선택 수")
+
+class StatisticsResponse(BaseModel):
+    statistics: List[SubtopicStatistic] = Field(..., description="각 서브토픽별 통계")
+    total_rooms: int = Field(..., description="총 방 수")
+    total_participants: int = Field(..., description="총 참가자 수")
+    message: str = Field(default="통계 조회 성공", description="응답 메시지") 

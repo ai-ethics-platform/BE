@@ -1,5 +1,5 @@
 from typing import Any, List, Union, Dict, Set
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_
 
@@ -1042,4 +1042,29 @@ async def manual_page_sync_signal(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"수동 동기화 신호 전송 중 오류가 발생했습니다: {str(e)}"
+        ) 
+
+@router.get("/rooms/statistics", response_model=schemas.StatisticsResponse)
+async def get_statistics(
+    exclude_dummy: bool = Query(True, description="더미 데이터 제외 여부"),
+    db: AsyncSession = Depends(get_db)
+) -> Any:
+    """
+    모든 서브토픽에 대한 통계 조회
+    - 각 서브토픽별 choice 1, 2의 비율을 반환
+    - exclude_dummy=True면 더미 데이터 제외, False면 모든 데이터 포함
+    """
+    try:
+        result = await room_service.get_statistics(db=db, exclude_dummy=exclude_dummy)
+        
+        return schemas.StatisticsResponse(
+            statistics=result["statistics"],
+            total_rooms=result["total_rooms"],
+            total_participants=result["total_participants"],
+            message="통계 조회 성공"
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"통계 조회 중 오류가 발생했습니다: {str(e)}"
         ) 

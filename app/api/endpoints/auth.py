@@ -178,7 +178,7 @@ async def refresh_token(
             )
 
         # 사용자 확인
-        user = await user_service.get_user_by_id(db=db, user_id=user_id)
+        user = await user_service.get_user(db=db, user_id=user_id)
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,

@@ -999,6 +999,114 @@ class RoomService:
         result = await db.execute(participant_query)
         return result.scalar_one_or_none()
 
+    @staticmethod
+    async def get_statistics(
+        db: AsyncSession,
+        exclude_dummy: bool = True
+    ) -> dict:
+        """
+        모든 서브토픽에 대한 통계 조회
+        exclude_dummy: True면 더미 데이터 제외, False면 모든 데이터 포함
+        """
+        from sqlalchemy import func, and_
+        
+        # 더미 데이터 제외 조건
+        dummy_condition = ""
+        if exclude_dummy:
+            # 더미 데이터 구분 조건 (예: 특정 패턴의 username이나 email)
+            dummy_condition = """
+                AND u.username NOT LIKE 'test%'
+                AND u.username NOT LIKE 'dummy%'
+                AND u.email NOT LIKE 'test%@%'
+                AND u.email NOT LIKE 'dummy%@%'
+                AND u.is_guest = FALSE
+            """
+        
+        # 각 서브토픽별 통계 쿼리
+        subtopics = [
+            "AI의 개인 정보 수집",
+            "안드로이드의 감정 표현", 
+            "아이들을 위한 서비스",
+            "설명 가능한 AI",
+            "지구, 인간, AI"
+        ]
+        
+        statistics = []
+        
+        for subtopic in subtopics:
+            # 해당 서브토픽의 choice 1, 2 개수 조회
+            query = f"""
+                SELECT 
+                    choice,
+                    COUNT(*) as count
+                FROM consensus_choices cc
+                JOIN rooms r ON cc.room_id = r.id
+                JOIN room_participants rp ON r.id = rp.room_id
+                JOIN users u ON rp.user_id = u.id
+                WHERE cc.subtopic = :subtopic
+                AND cc.choice IN (1, 2)
+                {dummy_condition}
+                GROUP BY choice
+                ORDER BY choice
+            """
+            
+            result = await db.execute(query, {"subtopic": subtopic})
+            rows = result.fetchall()
+            
+            choice_1_count = 0
+            choice_2_count = 0
+            
+            for row in rows:
+                if row.choice == 1:
+                    choice_1_count = row.count
+                elif row.choice == 2:
+                    choice_2_count = row.count
+            
+            total_count = choice_1_count + choice_2_count
+            
+            # 비율 계산
+            choice_1_percentage = round((choice_1_count / total_count * 100), 1) if total_count > 0 else 0
+            choice_2_percentage = round((choice_2_count / total_count * 100), 1) if total_count > 0 else 0
+            
+            statistics.append({
+                "subtopic": subtopic,
+                "choice_1_count": choice_1_count,
+                "choice_2_count": choice_2_count,
+                "choice_1_percentage": choice_1_percentage,
+                "choice_2_percentage": choice_2_percentage,
+                "total_count": total_count
+            })
+        
+        # 전체 방 수와 참가자 수 조회
+        room_count_query = f"""
+            SELECT COUNT(DISTINCT r.id) as room_count
+            FROM rooms r
+            JOIN room_participants rp ON r.id = rp.room_id
+            JOIN users u ON rp.user_id = u.id
+            WHERE r.is_active = TRUE
+            {dummy_condition}
+        """
+        
+        participant_count_query = f"""
+            SELECT COUNT(DISTINCT rp.id) as participant_count
+            FROM room_participants rp
+            JOIN users u ON rp.user_id = u.id
+            WHERE rp.is_host = FALSE
+            {dummy_condition}
+        """
+        
+        room_result = await db.execute(room_count_query)
+        participant_result = await db.execute(participant_count_query)
+        
+        total_rooms = room_result.scalar() or 0
+        total_participants = participant_result.scalar() or 0
+        
+        return {
+            "statistics": statistics,
+            "total_rooms": total_rooms,
+            "total_participants": total_participants
+        }
+
 
 # 서비스 인스턴스
 room_service = RoomService() 
