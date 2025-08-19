@@ -155,45 +155,63 @@ async def refresh_token(
     Refresh token을 사용하여 새로운 access token 발급
     """
     try:
-        # Refresh token 검증
+        # 1) 토큰 검증/디코드
         payload = jwt.decode(
             refresh_token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
         )
-        
-        # Refresh token 타입 확인
-        if payload.get("type") != "refresh":
+    except JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid refresh token"
+        )
+
+    token_type = payload.get("type")
+
+    # 2) 일반 사용자 리프레시 토큰
+    if token_type == "refresh":
+        try:
+            user_id = int(payload.get("sub"))
+        except Exception:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid token type"
+                detail="Invalid token payload"
             )
-        
-        user_id = int(payload.get("sub"))
-        
-        # 사용자 존재 확인
+
+        # 사용자 확인
         user = await user_service.get_user_by_id(db=db, user_id=user_id)
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not found"
             )
-        
-        # 새로운 access token 발급
+
+        # 새 토큰 발급
         new_access_token = auth_service.create_access_token(user.id)
         new_refresh_token = auth_service.create_refresh_token(user.id)
-        
         return {
             "access_token": new_access_token,
             "refresh_token": new_refresh_token,
             "token_type": "bearer"
         }
-        
-    except JWTError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid refresh token"
-        )
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Token refresh failed"
-        ) 
+
+    # 3) 게스트 리프레시 토큰
+    if token_type == "guest_refresh":
+        guest_id = payload.get("guest_id")
+        if not guest_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid token payload"
+            )
+        new_access_token = auth_service.create_access_token_guest(guest_id, expires_minutes=60)
+        new_refresh_token = auth_service.create_refresh_token_guest(guest_id)
+        return {
+            "access_token": new_access_token,
+            "refresh_token": new_refresh_token,
+            "token_type": "bearer"
+        }
+
+    # 4) 그 외 타입은 거부
+    raise HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail="Invalid token type"
+    )
