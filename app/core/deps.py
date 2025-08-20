@@ -116,7 +116,7 @@ async def get_current_user_or_guest(
                 "type": "guest"
             }
         
-        # 일반 사용자 토큰
+        # 일반 사용자 토큰 (type이 없거나 다른 값인 경우)
         token_data = TokenPayload(**payload)
         user = await db.get(User, int(token_data.sub))
         return user
