@@ -31,26 +31,52 @@ async def get_current_user(
     token: str = Depends(oauth2_scheme)
 ) -> User:
     """
-    현재 인증된 사용자 가져오기
+    현재 인증된 사용자 가져오기 (필수 인증)
     """
     try:
         payload = jwt.decode(
             token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
         )
         token_data = TokenPayload(**payload)
-    except (jwt.JWTError, ValidationError):
+    except jwt.ExpiredSignatureError:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token has expired",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    except jwt.JWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    except ValidationError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token format",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    except Exception as e:
+        # 예상치 못한 에러는 500으로 처리
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Token validation error: {str(e)}"
         )
     
-    user = await db.get(User, int(token_data.sub))
-    if not user:
+    try:
+        user = await db.get(User, int(token_data.sub))
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
+        return user
+    except ValueError:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid user ID in token",
+            headers={"WWW-Authenticate": "Bearer"},
         )
-    return user
 
 async def get_current_active_user(
     current_user: User = Depends(get_current_user),
@@ -69,9 +95,15 @@ async def get_current_user_or_guest(
     db: AsyncSession = Depends(get_db),
     token: Optional[str] = Depends(oauth2_scheme)
 ) -> Union[User, dict, None]:
-    # 인증된 사용자가 있으면 해당 사용자 반환, 게스트면 dict 반환, 없으면 None 반환
+    """
+    현재 사용자 또는 게스트 가져오기
+    - 토큰이 없으면 None 반환 (게스트 접근 허용)
+    - 토큰이 있으면 검증 후 사용자 반환
+    - 토큰이 만료되면 401 에러 발생 (refresh 토큰 로직 작동)
+    """
     if not token:
         return None
+    
     try:
         payload = jwt.decode(
             token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
@@ -88,5 +120,24 @@ async def get_current_user_or_guest(
         token_data = TokenPayload(**payload)
         user = await db.get(User, int(token_data.sub))
         return user
-    except Exception:
-        return None
+        
+    except jwt.ExpiredSignatureError:
+        # 토큰이 제공되었지만 만료된 경우 401 에러 발생 (refresh 토큰 로직 작동을 위해)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token has expired",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    except (jwt.JWTError, ValidationError, ValueError):
+        # 토큰이 제공되었지만 유효하지 않은 경우 401 에러 발생
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    except Exception as e:
+        # 예상치 못한 에러는 500으로 처리
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Token validation error: {str(e)}"
+        )
