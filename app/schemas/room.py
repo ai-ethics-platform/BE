@@ -82,7 +82,7 @@ class Room(BaseModel):
     is_active: bool
     is_started: bool
     start_time: Optional[datetime] = None
-    created_by: int
+    created_by: Optional[int] = None  # 게스트의 경우 None 허용
     created_at: datetime
     participants: List[RoomParticipant] = []
 
