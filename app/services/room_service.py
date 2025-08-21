@@ -1,6 +1,6 @@
 from typing import List, Optional, Union
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_, update
+from sqlalchemy import select, and_, update, text
 from sqlalchemy.orm import selectinload
 from datetime import datetime, timedelta
 import random
@@ -1077,7 +1077,7 @@ class RoomService:
                 ORDER BY cc.choice
             """
             qparams = {"subtopic": subtopic, **params}
-            result = await db.execute(query, qparams)
+            result = await db.execute(text(query), qparams)
             rows = result.fetchall()
             
             choice_1_count = 0
@@ -1142,8 +1142,8 @@ class RoomService:
             WHERE {participant_where}
         """
         
-        room_result = await db.execute(room_count_query, room_params)
-        participant_result = await db.execute(participant_count_query, participant_params)
+        room_result = await db.execute(text(room_count_query), room_params)
+        participant_result = await db.execute(text(participant_count_query), participant_params)
         
         total_rooms = room_result.scalar() or 0
         total_participants = participant_result.scalar() or 0
@@ -1229,7 +1229,7 @@ class RoomService:
             HAVING cc.subtopic IS NOT NULL AND cc.subtopic <> ''
             ORDER BY total_count DESC
         """
-        result = await db.execute(query, params)
+        result = await db.execute(text(query), params)
         rows = result.fetchall()
         return [{"name": row.name, "total_count": row.total_count} for row in rows]
 
