@@ -1016,7 +1016,11 @@ class RoomService:
     @staticmethod
     async def get_statistics(
         db: AsyncSession,
-        exclude_dummy: bool = True
+        exclude_dummy: bool = True,
+        from_dt: Optional[datetime] = None,
+        to_dt: Optional[datetime] = None,
+        ai_type: Optional[int] = None,
+        is_public: Optional[bool] = None,
     ) -> dict:
         """
         모든 서브토픽에 대한 통계 조회
@@ -1024,17 +1028,27 @@ class RoomService:
         """
         from sqlalchemy import func, and_
         
-        # 더미 데이터 제외 조건
-        dummy_condition = ""
+        # 동적 조건 구성
+        conditions = [
+            "cc.choice IN (1, 2)"
+        ]
+        params: dict = {}
         if exclude_dummy:
-            # 더미 데이터 구분 조건 (예: 특정 패턴의 username이나 email)
-            dummy_condition = """
-                AND u.username NOT LIKE 'test%'
-                AND u.username NOT LIKE 'dummy%'
-                AND u.email NOT LIKE 'test%@%'
-                AND u.email NOT LIKE 'dummy%@%'
-                AND u.is_guest = FALSE
-            """
+            conditions.append(
+                "u.username NOT LIKE 'test%' AND u.username NOT LIKE 'dummy%' AND u.email NOT LIKE 'test%@%' AND u.email NOT LIKE 'dummy%@%' AND u.is_guest = FALSE"
+            )
+        if from_dt is not None:
+            conditions.append("cc.created_at >= :from_dt")
+            params["from_dt"] = from_dt
+        if to_dt is not None:
+            conditions.append("cc.created_at <= :to_dt")
+            params["to_dt"] = to_dt
+        if ai_type is not None:
+            conditions.append("r.ai_type = :ai_type")
+            params["ai_type"] = ai_type
+        if is_public is not None:
+            conditions.append("r.is_public = :is_public")
+            params["is_public"] = is_public
         
         # 각 서브토픽별 통계 쿼리
         subtopics = [
@@ -1049,22 +1063,21 @@ class RoomService:
         
         for subtopic in subtopics:
             # 해당 서브토픽의 choice 1, 2 개수 조회
+            where_clause = " AND ".join(["cc.subtopic = :subtopic"] + conditions)
             query = f"""
                 SELECT 
-                    choice,
-                    COUNT(*) as count
+                    cc.choice AS choice,
+                    COUNT(*) AS count
                 FROM consensus_choices cc
                 JOIN rooms r ON cc.room_id = r.id
                 JOIN room_participants rp ON r.id = rp.room_id
                 JOIN users u ON rp.user_id = u.id
-                WHERE cc.subtopic = :subtopic
-                AND cc.choice IN (1, 2)
-                {dummy_condition}
-                GROUP BY choice
-                ORDER BY choice
+                WHERE {where_clause}
+                GROUP BY cc.choice
+                ORDER BY cc.choice
             """
-            
-            result = await db.execute(query, {"subtopic": subtopic})
+            qparams = {"subtopic": subtopic, **params}
+            result = await db.execute(query, qparams)
             rows = result.fetchall()
             
             choice_1_count = 0
@@ -1092,25 +1105,45 @@ class RoomService:
             })
         
         # 전체 방 수와 참가자 수 조회
+        room_conditions = ["r.is_active = TRUE"]
+        room_params = {}
+        if exclude_dummy:
+            room_conditions.append("u.username NOT LIKE 'test%' AND u.username NOT LIKE 'dummy%' AND u.email NOT LIKE 'test%@%' AND u.email NOT LIKE 'dummy%@%' AND u.is_guest = FALSE")
+        if ai_type is not None:
+            room_conditions.append("r.ai_type = :ai_type")
+            room_params["ai_type"] = ai_type
+        if is_public is not None:
+            room_conditions.append("r.is_public = :is_public")
+            room_params["is_public"] = is_public
+        if from_dt is not None:
+            room_conditions.append("r.created_at >= :from_dt")
+            room_params["from_dt"] = from_dt
+        if to_dt is not None:
+            room_conditions.append("r.created_at <= :to_dt")
+            room_params["to_dt"] = to_dt
+        room_where = " AND ".join(room_conditions)
         room_count_query = f"""
-            SELECT COUNT(DISTINCT r.id) as room_count
+            SELECT COUNT(DISTINCT r.id) AS room_count
             FROM rooms r
             JOIN room_participants rp ON r.id = rp.room_id
             JOIN users u ON rp.user_id = u.id
-            WHERE r.is_active = TRUE
-            {dummy_condition}
+            WHERE {room_where}
         """
         
+        participant_conditions = ["rp.is_host = FALSE"]
+        participant_params = {}
+        if exclude_dummy:
+            participant_conditions.append("u.username NOT LIKE 'test%' AND u.username NOT LIKE 'dummy%' AND u.email NOT LIKE 'test%@%' AND u.email NOT LIKE 'dummy%@%' AND u.is_guest = FALSE")
+        participant_where = " AND ".join(participant_conditions)
         participant_count_query = f"""
-            SELECT COUNT(DISTINCT rp.id) as participant_count
+            SELECT COUNT(DISTINCT rp.id) AS participant_count
             FROM room_participants rp
             JOIN users u ON rp.user_id = u.id
-            WHERE rp.is_host = FALSE
-            {dummy_condition}
+            WHERE {participant_where}
         """
         
-        room_result = await db.execute(room_count_query)
-        participant_result = await db.execute(participant_count_query)
+        room_result = await db.execute(room_count_query, room_params)
+        participant_result = await db.execute(participant_count_query, participant_params)
         
         total_rooms = room_result.scalar() or 0
         total_participants = participant_result.scalar() or 0
@@ -1120,6 +1153,85 @@ class RoomService:
             "total_rooms": total_rooms,
             "total_participants": total_participants
         }
+
+    @staticmethod
+    async def get_statistics_for_subtopic(
+        db: AsyncSession,
+        subtopic: str,
+        exclude_dummy: bool = True,
+        from_dt: Optional[datetime] = None,
+        to_dt: Optional[datetime] = None,
+        ai_type: Optional[int] = None,
+        is_public: Optional[bool] = None,
+    ) -> dict:
+        """단일 서브토픽 통계 조회"""
+        result = await RoomService.get_statistics(
+            db=db,
+            exclude_dummy=exclude_dummy,
+            from_dt=from_dt,
+            to_dt=to_dt,
+            ai_type=ai_type,
+            is_public=is_public,
+        )
+        # 전체 리스트에서 해당 서브토픽만 추출
+        for item in result["statistics"]:
+            if item["subtopic"] == subtopic:
+                return item
+        # 데이터 없는 경우 기본 0 값 반환
+        return {
+            "subtopic": subtopic,
+            "choice_1_count": 0,
+            "choice_2_count": 0,
+            "choice_1_percentage": 0.0,
+            "choice_2_percentage": 0.0,
+            "total_count": 0,
+        }
+
+    @staticmethod
+    async def list_subtopics(
+        db: AsyncSession,
+        exclude_dummy: bool = True,
+        from_dt: Optional[datetime] = None,
+        to_dt: Optional[datetime] = None,
+        ai_type: Optional[int] = None,
+        is_public: Optional[bool] = None,
+    ) -> List[dict]:
+        """집계 대상 서브토픽 목록과 총 건수 반환"""
+        conditions = []
+        params: dict = {}
+        if exclude_dummy:
+            conditions.append(
+                "u.username NOT LIKE 'test%' AND u.username NOT LIKE 'dummy%' AND u.email NOT LIKE 'test%@%' AND u.email NOT LIKE 'dummy%@%' AND u.is_guest = FALSE"
+            )
+        if from_dt is not None:
+            conditions.append("cc.created_at >= :from_dt")
+            params["from_dt"] = from_dt
+        if to_dt is not None:
+            conditions.append("cc.created_at <= :to_dt")
+            params["to_dt"] = to_dt
+        if ai_type is not None:
+            conditions.append("r.ai_type = :ai_type")
+            params["ai_type"] = ai_type
+        if is_public is not None:
+            conditions.append("r.is_public = :is_public")
+            params["is_public"] = is_public
+
+        where_clause = ("WHERE " + " AND ".join(conditions)) if conditions else ""
+
+        query = f"""
+            SELECT cc.subtopic AS name, COUNT(*) AS total_count
+            FROM consensus_choices cc
+            JOIN rooms r ON cc.room_id = r.id
+            JOIN room_participants rp ON r.id = rp.room_id
+            JOIN users u ON rp.user_id = u.id
+            {where_clause}
+            GROUP BY cc.subtopic
+            HAVING cc.subtopic IS NOT NULL AND cc.subtopic <> ''
+            ORDER BY total_count DESC
+        """
+        result = await db.execute(query, params)
+        rows = result.fetchall()
+        return [{"name": row.name, "total_count": row.total_count} for row in rows]
 
 
 # 서비스 인스턴스

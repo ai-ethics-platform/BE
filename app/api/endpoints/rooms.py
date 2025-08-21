@@ -1061,6 +1061,10 @@ async def manual_page_sync_signal(
 @router.get("/rooms/statistics", response_model=schemas.StatisticsResponse)
 async def get_statistics(
     exclude_dummy: bool = Query(True, description="더미 데이터 제외 여부"),
+    from_dt: Optional[str] = Query(None, description="시작 시각(ISO-8601)"),
+    to_dt: Optional[str] = Query(None, description="종료 시각(ISO-8601)"),
+    ai_type: Optional[int] = Query(None, description="AI 타입(1|2|3)"),
+    is_public: Optional[bool] = Query(None, description="공개 여부"),
     db: AsyncSession = Depends(get_db)
 ) -> Any:
     """
@@ -1069,7 +1073,16 @@ async def get_statistics(
     - exclude_dummy=True면 더미 데이터 제외, False면 모든 데이터 포함
     """
     try:
-        result = await room_service.get_statistics(db=db, exclude_dummy=exclude_dummy)
+        from datetime import datetime
+        parse = lambda s: datetime.fromisoformat(s.replace("Z", "+00:00")) if s else None
+        result = await room_service.get_statistics(
+            db=db,
+            exclude_dummy=exclude_dummy,
+            from_dt=parse(from_dt),
+            to_dt=parse(to_dt),
+            ai_type=ai_type,
+            is_public=is_public,
+        )
         
         return schemas.StatisticsResponse(
             statistics=result["statistics"],
@@ -1082,3 +1095,59 @@ async def get_statistics(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"통계 조회 중 오류가 발생했습니다: {str(e)}"
         ) 
+
+@router.get("/rooms/statistics/subtopic/{subtopic}")
+async def get_statistics_by_subtopic(
+    subtopic: str,
+    exclude_dummy: bool = Query(True, description="더미 데이터 제외 여부"),
+    from_dt: Optional[str] = Query(None, description="시작 시각(ISO-8601)"),
+    to_dt: Optional[str] = Query(None, description="종료 시각(ISO-8601)"),
+    ai_type: Optional[int] = Query(None, description="AI 타입(1|2|3)"),
+    is_public: Optional[bool] = Query(None, description="공개 여부"),
+    db: AsyncSession = Depends(get_db)
+) -> Any:
+    try:
+        from datetime import datetime
+        parse = lambda s: datetime.fromisoformat(s.replace("Z", "+00:00")) if s else None
+        stat = await room_service.get_statistics_for_subtopic(
+            db=db,
+            subtopic=subtopic,
+            exclude_dummy=exclude_dummy,
+            from_dt=parse(from_dt),
+            to_dt=parse(to_dt),
+            ai_type=ai_type,
+            is_public=is_public,
+        )
+        return stat
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"통계 조회 중 오류가 발생했습니다: {str(e)}"
+        )
+
+@router.get("/rooms/statistics/subtopics")
+async def list_statistics_subtopics(
+    exclude_dummy: bool = Query(True, description="더미 데이터 제외 여부"),
+    from_dt: Optional[str] = Query(None, description="시작 시각(ISO-8601)"),
+    to_dt: Optional[str] = Query(None, description="종료 시각(ISO-8601)"),
+    ai_type: Optional[int] = Query(None, description="AI 타입(1|2|3)"),
+    is_public: Optional[bool] = Query(None, description="공개 여부"),
+    db: AsyncSession = Depends(get_db)
+) -> Any:
+    try:
+        from datetime import datetime
+        parse = lambda s: datetime.fromisoformat(s.replace("Z", "+00:00")) if s else None
+        items = await room_service.list_subtopics(
+            db=db,
+            exclude_dummy=exclude_dummy,
+            from_dt=parse(from_dt),
+            to_dt=parse(to_dt),
+            ai_type=ai_type,
+            is_public=is_public,
+        )
+        return {"subtopics": items, "count": len(items)}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"통계 서브토픽 조회 중 오류가 발생했습니다: {str(e)}"
+        )
