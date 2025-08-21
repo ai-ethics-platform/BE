@@ -1,4 +1,4 @@
-from typing import Any, List, Union, Dict, Set
+from typing import Any, List, Union, Dict, Set, Optional
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_
