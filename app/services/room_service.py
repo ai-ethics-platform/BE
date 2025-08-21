@@ -1067,11 +1067,11 @@ class RoomService:
             query = f"""
                 SELECT 
                     cc.choice AS choice,
-                    COUNT(*) AS count
+                    COUNT(DISTINCT cc.id) AS count
                 FROM consensus_choices cc
                 JOIN rooms r ON cc.room_id = r.id
-                JOIN room_participants rp ON r.id = rp.room_id
-                JOIN users u ON rp.user_id = u.id
+                LEFT JOIN room_participants rp ON r.id = rp.room_id
+                LEFT JOIN users u ON rp.user_id = u.id
                 WHERE {where_clause}
                 GROUP BY cc.choice
                 ORDER BY cc.choice
@@ -1125,8 +1125,8 @@ class RoomService:
         room_count_query = f"""
             SELECT COUNT(DISTINCT r.id) AS room_count
             FROM rooms r
-            JOIN room_participants rp ON r.id = rp.room_id
-            JOIN users u ON rp.user_id = u.id
+            LEFT JOIN room_participants rp ON r.id = rp.room_id
+            LEFT JOIN users u ON rp.user_id = u.id
             WHERE {room_where}
         """
         
@@ -1138,7 +1138,7 @@ class RoomService:
         participant_count_query = f"""
             SELECT COUNT(DISTINCT rp.id) AS participant_count
             FROM room_participants rp
-            JOIN users u ON rp.user_id = u.id
+            LEFT JOIN users u ON rp.user_id = u.id
             WHERE {participant_where}
         """
         
@@ -1219,11 +1219,11 @@ class RoomService:
         where_clause = ("WHERE " + " AND ".join(conditions)) if conditions else ""
 
         query = f"""
-            SELECT cc.subtopic AS name, COUNT(*) AS total_count
+            SELECT cc.subtopic AS name, COUNT(DISTINCT cc.id) AS total_count
             FROM consensus_choices cc
             JOIN rooms r ON cc.room_id = r.id
-            JOIN room_participants rp ON r.id = rp.room_id
-            JOIN users u ON rp.user_id = u.id
+            LEFT JOIN room_participants rp ON r.id = rp.room_id
+            LEFT JOIN users u ON rp.user_id = u.id
             {where_clause}
             GROUP BY cc.subtopic
             HAVING cc.subtopic IS NOT NULL AND cc.subtopic <> ''
