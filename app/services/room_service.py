@@ -587,7 +587,8 @@ class RoomService:
         round_number: int,
         choice: int,
         user_id: Optional[int],
-        guest_id: Optional[str]
+        guest_id: Optional[str],
+        subtopic: Optional[str] = None
     ) -> models.RoundChoice:
         """라운드 개인 선택 제출"""
         
@@ -637,6 +638,8 @@ class RoomService:
         if existing_choice:
             # 기존 선택 업데이트
             existing_choice.choice = choice
+            if subtopic is not None:
+                existing_choice.subtopic = subtopic
             await db.commit()
             await db.refresh(existing_choice)
             return existing_choice
@@ -646,7 +649,8 @@ class RoomService:
                 room_id=room.id,
                 round_number=round_number,
                 participant_id=participant.id,
-                choice=choice
+                choice=choice,
+                subtopic=subtopic
             )
             db.add(round_choice)
             await db.commit()
@@ -660,7 +664,8 @@ class RoomService:
         round_number: int,
         confidence: int,
         user_id: Optional[int],
-        guest_id: Optional[str]
+        guest_id: Optional[str],
+        subtopic: Optional[str] = None
     ) -> models.RoundChoice:
         """개별 확신도 제출"""
         
@@ -697,8 +702,10 @@ class RoomService:
         if not round_choice:
             raise ValueError("먼저 개인 선택을 제출해야 합니다.")
         
-        # 확신도 업데이트
+        # 확신도 및 서브토픽 업데이트
         round_choice.confidence = confidence
+        if subtopic is not None:
+            round_choice.subtopic = subtopic
         await db.commit()
         await db.refresh(round_choice)
         return round_choice
@@ -710,7 +717,8 @@ class RoomService:
         round_number: int,
         choice: int,
         user_id: Optional[int],
-        guest_id: Optional[str]
+        guest_id: Optional[str],
+        subtopic: Optional[str] = None
     ) -> models.ConsensusChoice:
         """합의 선택 제출 (방장만 가능)"""
         
@@ -769,6 +777,8 @@ class RoomService:
         if existing_consensus:
             # 기존 합의 선택 업데이트
             existing_consensus.choice = choice
+            if subtopic is not None:
+                existing_consensus.subtopic = subtopic
             await db.commit()
             await db.refresh(existing_consensus)
             return existing_consensus
@@ -777,7 +787,8 @@ class RoomService:
             consensus_choice = models.ConsensusChoice(
                 room_id=room.id,
                 round_number=round_number,
-                choice=choice
+                choice=choice,
+                subtopic=subtopic
             )
             db.add(consensus_choice)
             await db.commit()
@@ -791,7 +802,8 @@ class RoomService:
         round_number: int,
         confidence: int,
         user_id: Optional[int],
-        guest_id: Optional[str]
+        guest_id: Optional[str],
+        subtopic: Optional[str] = None
     ) -> models.ConsensusChoice:
         """합의 선택에 대한 확신도 제출"""
         
@@ -827,8 +839,10 @@ class RoomService:
         if not consensus_choice:
             raise ValueError("먼저 합의 선택이 제출되어야 합니다.")
         
-        # 확신도 업데이트
+        # 확신도 및 서브토픽 업데이트
         consensus_choice.confidence = confidence
+        if subtopic is not None:
+            consensus_choice.subtopic = subtopic
         await db.commit()
         await db.refresh(consensus_choice)
         return consensus_choice

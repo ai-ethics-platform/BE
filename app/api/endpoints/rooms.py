@@ -637,7 +637,8 @@ async def submit_round_choice(
             round_number=choice_data.round_number,
             choice=choice_data.choice,
             user_id=user_id,
-            guest_id=guest_id
+            guest_id=guest_id,
+            subtopic=choice_data.subtopic
         )
         return schemas.ChoiceSubmitResponse(
             room_code=room_code,
@@ -678,7 +679,8 @@ async def submit_individual_confidence(
             round_number=confidence_data.round_number,
             confidence=confidence_data.confidence,
             user_id=user_id,
-            guest_id=guest_id
+            guest_id=guest_id,
+            subtopic=confidence_data.subtopic
         )
         return schemas.ConfidenceSubmitResponse(
             room_code=room_code,
@@ -717,7 +719,8 @@ async def submit_consensus_choice(
             round_number=choice_data.round_number,
             choice=choice_data.choice,
             user_id=user_id,
-            guest_id=guest_id
+            guest_id=guest_id,
+            subtopic=choice_data.subtopic
         )
         return schemas.ConsensusSubmitResponse(
             room_code=room_code,
@@ -758,7 +761,8 @@ async def submit_consensus_confidence(
             round_number=confidence_data.round_number,
             confidence=confidence_data.confidence,
             user_id=user_id,
-            guest_id=guest_id
+            guest_id=guest_id,
+            subtopic=confidence_data.subtopic
         )
         return schemas.ConfidenceSubmitResponse(
             room_code=room_code,
