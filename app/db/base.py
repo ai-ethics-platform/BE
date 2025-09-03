@@ -2,3 +2,4 @@
 from app.db.base_class import Base
 from app.models.user import User
 from app.models.room import Room, RoomParticipant 
+from app.models.custom_game import CustomGame

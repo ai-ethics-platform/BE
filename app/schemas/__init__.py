@@ -68,6 +68,11 @@ from .voice import (
     VoiceStatusBroadcast,
     ParticipantEvent
 )
+from .custom_game import (
+    CustomGameCreate,
+    CustomGame,
+    CustomGameCreateResponse,
+)
 
 __all__ = [
     "User",
@@ -136,3 +141,8 @@ __all__ = [
     "StatisticsResponse",
     "SubtopicStatistic",
 ] 
+__all__ += [
+    "CustomGameCreate",
+    "CustomGame",
+    "CustomGameCreateResponse",
+]

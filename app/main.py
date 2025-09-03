@@ -5,6 +5,7 @@ from datetime import datetime
 from app.api.api import api_router
 from app.core.config import settings
 from app.core.database import create_tables
+from fastapi.staticfiles import StaticFiles
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -29,6 +30,7 @@ app.add_middleware(
 )
 
 app.include_router(api_router)
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 @app.on_event("startup")
 async def startup_event():
