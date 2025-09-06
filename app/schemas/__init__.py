@@ -72,6 +72,17 @@ from .custom_game import (
     CustomGameCreate,
     CustomGame,
     CustomGameCreateResponse,
+    OpeningUpdate,
+    RoleItem,
+    RolesUpdate,
+    DilemmaOptions,
+    DilemmaUpdate,
+    FlipsUpdate,
+    EndingUpdate,
+    TitleUpdate,
+    TitleResponse,
+    RolesResponse,
+    RoleImagesResponse,
 )
 
 __all__ = [
@@ -145,4 +156,15 @@ __all__ += [
     "CustomGameCreate",
     "CustomGame",
     "CustomGameCreateResponse",
+    "OpeningUpdate",
+    "RoleItem",
+    "RolesUpdate",
+    "DilemmaOptions",
+    "DilemmaUpdate",
+    "FlipsUpdate",
+    "EndingUpdate",
+    "TitleUpdate",
+    "TitleResponse",
+    "RolesResponse",
+    "RoleImagesResponse",
 ]
