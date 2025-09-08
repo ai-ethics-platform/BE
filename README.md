@@ -8,8 +8,7 @@ FastAPI를 이용한 AI 윤리게임 백엔드 서버입니다.
 - OpenAI API (GPT playground)
 - Docker
 - GitHub Actions
-- WebSocket
-- Redis
+- WebSocket, Redis
 
 ## 주요 기능
 - 사용자 인증 및 관리
