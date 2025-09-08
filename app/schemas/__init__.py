@@ -86,6 +86,11 @@ from .custom_game import (
     RepresentativeImagesUpdate,
     RepresentativeImagesResponse,
 )
+from .chat import (
+    ChatPromptRef,
+    ChatRequest,
+    ChatResponse,
+)
 
 __all__ = [
     "User",
@@ -171,4 +176,7 @@ __all__ += [
     "RoleImagesResponse",
     "RepresentativeImagesUpdate",
     "RepresentativeImagesResponse",
+    "ChatPromptRef",
+    "ChatRequest",
+    "ChatResponse",
 ]
