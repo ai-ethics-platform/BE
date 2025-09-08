@@ -1,12 +1,11 @@
 # AI 윤리게임 백엔드
-
 FastAPI를 이용한 AI 윤리게임 백엔드 서버입니다.
 
 ## 기술 스택
 - Python 3.9+
 - FastAPI
 - MySQL
-- OpenAI API (GPT)
+- OpenAI API (GPT playground)
 - Docker
 - GitHub Actions
 - WebSocket, Redis
