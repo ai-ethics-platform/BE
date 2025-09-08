@@ -83,6 +83,8 @@ from .custom_game import (
     TitleResponse,
     RolesResponse,
     RoleImagesResponse,
+    RepresentativeImagesUpdate,
+    RepresentativeImagesResponse,
 )
 
 __all__ = [
@@ -167,4 +169,6 @@ __all__ += [
     "TitleResponse",
     "RolesResponse",
     "RoleImagesResponse",
+    "RepresentativeImagesUpdate",
+    "RepresentativeImagesResponse",
 ]

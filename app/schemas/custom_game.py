@@ -24,6 +24,7 @@ class CustomGame(BaseModel):
 
     title: str
     representative_image_url: Optional[str]
+    representative_images: Optional[Dict[str, str]] = None
     data: Dict[str, Any]
 
     class Config:
@@ -65,6 +66,14 @@ class RolesResponse(BaseModel):
 
 class RoleImagesResponse(BaseModel):
     urls: dict
+
+
+class RepresentativeImagesUpdate(BaseModel):
+    images: Dict[str, str] = Field(default_factory=dict, description="이름->URL 매핑")
+
+
+class RepresentativeImagesResponse(BaseModel):
+    images: Dict[str, str]
 
 
 class DilemmaOptions(BaseModel):

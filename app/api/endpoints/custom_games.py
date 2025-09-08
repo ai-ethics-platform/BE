@@ -43,6 +43,10 @@ async def get_custom_game(code: str, db: AsyncSession = Depends(get_db)) -> Any:
     # Convert JSON string to dict for response schema
     import json
     game.data = json.loads(game.data) if isinstance(game.data, str) else game.data
+    # expose representative_images from data if present
+    rep_images = game.data.get("representativeImages") if isinstance(game.data, dict) else None
+    if rep_images:
+        game.representative_images = rep_images
     return game
 
 
@@ -64,6 +68,30 @@ async def upload_representative_image(
         shutil.copyfileobj(file.file, buffer)
     url_path = f"/static/images/{filename}"
     return {"url": url_path}
+
+
+# Representative images mapping (multiple named images)
+@router.put("/custom-games/{code}/representative-images")
+async def update_representative_images(
+    code: str,
+    payload: schemas.RepresentativeImagesUpdate,
+    db: AsyncSession = Depends(get_db)
+) -> Any:
+    game = await custom_game_service.get_by_code(db, code)
+    if not game:
+        raise HTTPException(status_code=404, detail="커스텀 게임을 찾을 수 없습니다.")
+    await _merge_and_save(db, game, {"representativeImages": payload.images})
+    return {"message": "updated"}
+
+
+@router.get("/custom-games/{code}/representative-images", response_model=schemas.RepresentativeImagesResponse)
+async def get_representative_images(code: str, db: AsyncSession = Depends(get_db)) -> Any:
+    game = await custom_game_service.get_by_code(db, code)
+    if not game:
+        raise HTTPException(status_code=404, detail="커스텀 게임을 찾을 수 없습니다.")
+    data = _load_data(game)
+    images = data.get("representativeImages", {})
+    return {"images": images}
 
 
 # --- Sectional updates ---
