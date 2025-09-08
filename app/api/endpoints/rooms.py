@@ -28,19 +28,19 @@ async def create_public_room(
     
     try:
         # 사용자 정보 추출
-        print(f"🔍 [공개방] current_user 타입: {type(current_user)}")
-        print(f"🔍 [공개방] current_user 값: {current_user}")
+        print(f"[공개방] current_user 타입: {type(current_user)}")
+        print(f"[공개방] current_user 값: {current_user}")
         
         if isinstance(current_user, models.User):
             creator_id = current_user.id
             creator_nickname = current_user.username
-            print(f"🔍 [공개방] 일반 사용자: creator_id={creator_id}, creator_nickname={creator_nickname}")
+            print(f"[공개방] 일반 사용자: creator_id={creator_id}, creator_nickname={creator_nickname}")
         elif current_user is not None and isinstance(current_user, dict):  # 게스트 사용자
             creator_id = None
             creator_nickname = f"게스트_{current_user.get('guest_id', 'unknown')}"
-            print(f"🔍 [공개방] 게스트 사용자: creator_id={creator_id}, creator_nickname={creator_nickname}")
+            print(f"[공개방] 게스트 사용자: creator_id={creator_id}, creator_nickname={creator_nickname}")
         else:  # None인 경우
-            print(f"🔍 [공개방] 인증 실패: current_user={current_user}")
+            print(f"[공개방] 인증 실패: current_user={current_user}")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="인증이 필요합니다."
