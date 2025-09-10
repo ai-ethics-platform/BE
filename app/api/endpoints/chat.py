@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 import os
 
 from app.core.deps import get_db
-from app.schemas.chat import ChatRequest, ChatResponse
+from app.schemas.chat import ChatRequest, ChatResponse, ImageRequest, ImageResponse
 from app.schemas.chat_session import MultiStepChatRequest, MultiStepChatResponse
 from app.services.chat_service import chat_service
 
@@ -27,11 +27,25 @@ async def chat_with_prompt(payload: ChatRequest, db: AsyncSession = Depends(get_
 
     client = OpenAI(api_key=api_key)
 
+    # Resolve variables: prefer prompt.variables > context > {}
+    prompt_obj = None
+    if payload.prompt:
+        prompt_obj = {"id": payload.prompt.id}
+        if payload.prompt.version:
+            prompt_obj["version"] = payload.prompt.version
+        variables = payload.prompt.variables or payload.context or {}
+        if variables:
+            prompt_obj["variables"] = variables
+    else:
+        # Backward compatibility: allow server-side mapping via step + context
+        if not payload.step:
+            raise HTTPException(status_code=400, detail="Either prompt or step must be provided")
+        prompt_obj = {"id": None}
+
     try:
         resp = client.responses.create(
-            prompt={"id": payload.prompt.id, "version": payload.prompt.version},
+            prompt=prompt_obj,
             input=payload.input,
-            input_variables=payload.context or {},
         )
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"OpenAI call failed: {e}")
@@ -51,6 +65,39 @@ async def chat_with_prompt(payload: ChatRequest, db: AsyncSession = Depends(get_
         text = ""
 
     return ChatResponse(step=payload.step, text=text, raw=getattr(resp, "model_dump", lambda: None)())
+
+
+@router.post("/chat/image", response_model=ImageResponse)
+async def generate_image(payload: ImageRequest) -> Any:
+    try:
+        from openai import OpenAI
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"OpenAI SDK import error: {e}")
+
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        raise HTTPException(status_code=500, detail="OPENAI_API_KEY is not configured")
+
+    client = OpenAI(api_key=api_key)
+
+    size = payload.size or "1024x1024"
+    try:
+        img = client.images.generate(
+            model="gpt-image-1",
+            prompt=payload.input,
+            size=size,
+            response_format="b64_json",
+        )
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"OpenAI image call failed: {e}")
+
+    try:
+        b64 = img.data[0].b64_json
+    except Exception:
+        raise HTTPException(status_code=502, detail="Invalid image response from OpenAI")
+
+    data_url = f"data:image/png;base64,{b64}"
+    return ImageResponse(step=payload.step, image_data_url=data_url, model="gpt-image-1", size=size)
 
 
 @router.post("/chat/multi-step", response_model=MultiStepChatResponse)
