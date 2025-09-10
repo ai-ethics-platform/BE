@@ -52,6 +52,30 @@ class Settings(BaseSettings):
     # OpenAI API 설정
     OPENAI_API_KEY: str = ""
     
+    # 챗봇 단계별 프롬프트 매핑 설정
+    CHATBOT_PROMPTS: Dict[str, Dict[str, str]] = {
+        "topic": {
+            "id": "pmpt_topic_selection",
+            "version": "1.0"
+        },
+        "question": {
+            "id": "pmpt_question_generation", 
+            "version": "1.0"
+        },
+        "situation": {
+            "id": "pmpt_situation_analysis",
+            "version": "1.0"
+        },
+        "discussion": {
+            "id": "pmpt_discussion_facilitation",
+            "version": "1.0"
+        },
+        "conclusion": {
+            "id": "pmpt_conclusion_synthesis",
+            "version": "1.0"
+        }
+    }
+    
     # 음성 처리 관련 설정
     AUDIO_UPLOAD_DIR: str = "static/audio"
     MAX_AUDIO_SIZE_MB: int = 10
