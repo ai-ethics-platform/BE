@@ -31,7 +31,7 @@ class ChatResponse(BaseModel):
 class ImageResponse(BaseModel):
     step: Optional[str] = Field(default="image")
     image_data_url: str
-    model: str = Field(default="gpt-image-1")
+    model: str = Field(default="dall-e-3")
     size: str = Field(default="1024x1024")
 
 
