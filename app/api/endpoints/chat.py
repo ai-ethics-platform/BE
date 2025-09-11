@@ -86,18 +86,16 @@ async def generate_image(payload: ImageRequest) -> Any:
             model="dall-e-3",
             prompt=payload.input,
             size=size,
-            response_format="b64_json",
         )
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"OpenAI image call failed: {e}")
 
     try:
-        b64 = img.data[0].b64_json
+        image_url = img.data[0].url
     except Exception:
         raise HTTPException(status_code=502, detail="Invalid image response from OpenAI")
 
-    data_url = f"data:image/png;base64,{b64}"
-    return ImageResponse(step=payload.step, image_data_url=data_url, model="dall-e-3", size=size)
+    return ImageResponse(step=payload.step, image_data_url=image_url, model="dall-e-3", size=size)
 
 
 @router.post("/chat/multi-step", response_model=MultiStepChatResponse)
