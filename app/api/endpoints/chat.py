@@ -83,7 +83,7 @@ async def generate_image(payload: ImageRequest) -> Any:
     size = payload.size or "1024x1024"
     try:
         img = client.images.generate(
-            model="dall-e-3",
+            model="gpt-image-1",
             prompt=payload.input,
             size=size,
         )
@@ -95,7 +95,7 @@ async def generate_image(payload: ImageRequest) -> Any:
     except Exception:
         raise HTTPException(status_code=502, detail="Invalid image response from OpenAI")
 
-    return ImageResponse(step=payload.step, image_data_url=image_url, model="dall-e-3", size=size)
+    return ImageResponse(step=payload.step, image_data_url=image_url, model="gpt-image-1", size=size)
 
 
 @router.post("/chat/multi-step", response_model=MultiStepChatResponse)
