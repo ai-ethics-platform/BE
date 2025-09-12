@@ -80,11 +80,48 @@ async def generate_image(payload: ImageRequest) -> Any:
 
     client = OpenAI(api_key=api_key)
 
+    # Process prompt if provided
+    final_prompt = payload.input
+    if payload.prompt:
+        # Resolve variables: prefer prompt.variables > context > {}
+        variables = payload.prompt.variables or payload.context or {}
+        
+        prompt_obj = {"id": payload.prompt.id}
+        if payload.prompt.version:
+            prompt_obj["version"] = payload.prompt.version
+        if variables:
+            prompt_obj["variables"] = variables
+
+        try:
+            # Get the processed prompt from OpenAI Playground
+            resp = client.responses.create(
+                prompt=prompt_obj,
+                input=payload.input,
+            )
+            
+            # Extract the processed prompt text
+            processed_parts = []
+            try:
+                for item in getattr(resp, "output", []) or []:
+                    for c in getattr(item, "content", []) or []:
+                        if getattr(c, "type", "") == "output_text":
+                            processed_parts.append(getattr(c, "text", ""))
+            except Exception:
+                pass
+            
+            processed_text = "".join(processed_parts).strip()
+            if processed_text:
+                final_prompt = processed_text
+                
+        except Exception as e:
+            # If prompt processing fails, fall back to direct input
+            pass
+
     size = payload.size or "1024x1024"
     try:
         img = client.images.generate(
-            model="gpt-image-1",
-            prompt=payload.input,
+            model="dall-e-3",
+            prompt=final_prompt,
             size=size,
         )
     except Exception as e:
@@ -92,10 +129,12 @@ async def generate_image(payload: ImageRequest) -> Any:
 
     try:
         image_url = img.data[0].url
-    except Exception:
-        raise HTTPException(status_code=502, detail="Invalid image response from OpenAI")
+        if not image_url:
+            raise HTTPException(status_code=502, detail="Empty image URL from OpenAI")
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Invalid image response from OpenAI: {e}")
 
-    return ImageResponse(step=payload.step, image_data_url=image_url, model="gpt-image-1", size=size)
+    return ImageResponse(step=payload.step, image_data_url=image_url, model="dall-e-3", size=size)
 
 
 @router.post("/chat/multi-step", response_model=MultiStepChatResponse)

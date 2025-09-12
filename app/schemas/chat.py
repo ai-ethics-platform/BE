@@ -18,7 +18,8 @@ class ChatRequest(BaseModel):
 class ImageRequest(BaseModel):
     step: Optional[str] = Field(default="image", description="Image step identifier")
     input: str = Field(..., description="Image prompt text")
-    context: Optional[Dict[str, Any]] = Field(default=None, description="Optional context to persist or audit")
+    context: Optional[Dict[str, Any]] = Field(default=None, description="Variables to fill prompt (fallback if prompt.variables absent)")
+    prompt: Optional[ChatPromptRef] = Field(default=None, description="Saved prompt reference from Playground (optional if using direct input)")
     size: Optional[str] = Field(default="1024x1024", description="Image size, e.g., 512x512, 1024x1024")
 
 
@@ -31,7 +32,7 @@ class ChatResponse(BaseModel):
 class ImageResponse(BaseModel):
     step: Optional[str] = Field(default="image")
     image_data_url: str  # Can be either data URL or image URL
-    model: str = Field(default="gpt-image-1")
+    model: str = Field(default="dall-e-3")
     size: str = Field(default="1024x1024")
 
 
