@@ -32,7 +32,7 @@ async def create_custom_game(
         data=payload.data,
     )
     base_url = os.getenv("FRONTEND_BASE_URL", "https://www.dilemmai-idl.com")
-    return {"code": game.code, "url": f"{base_url}/game/{game.code}"}
+    return {"code": game.code, "url": f"{base_url}/?code={game.code}"}
 
 
 @router.get("/custom-games/{code}", response_model=schemas.CustomGame)
@@ -233,8 +233,12 @@ async def get_roles(code: str, db: AsyncSession = Depends(get_db)) -> Any:
 ROLE_IMAGE_DIR = os.path.join(IMAGE_DIR, "roles")
 os.makedirs(ROLE_IMAGE_DIR, exist_ok=True)
 
+# Per-slot dilemma image upload and list
+DILEMMA_IMAGE_DIR = os.path.join(IMAGE_DIR, "dilemmas")
+os.makedirs(DILEMMA_IMAGE_DIR, exist_ok=True)
 
-@router.post("/custom-games/{code}/role-images/{slot}")
+
+@router.put("/custom-games/{code}/role-images/{slot}")
 async def upload_role_image(
     code: str,
     slot: int,
@@ -271,10 +275,47 @@ async def get_role_images(code: str, db: AsyncSession = Depends(get_db)) -> Any:
     return {"urls": urls}
 
 
+@router.put("/custom-games/{code}/dilemma-images/{slot}")
+async def upload_dilemma_image(
+    code: str,
+    slot: str,
+    file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db),
+) -> Any:
+    if slot not in ["dilemma_image_1", "dilemma_image_3", "dilemma_image_4_1", "dilemma_image_4_2"]:
+        raise HTTPException(status_code=400, detail="slot은 dilemma_image_1, dilemma_image_3, dilemma_image_4_1, dilemma_image_4_2만 허용됩니다.")
+    ext = os.path.splitext(file.filename)[1].lower()
+    if ext not in [".jpg", ".jpeg", ".png"]:
+        raise HTTPException(status_code=400, detail="JPG 또는 PNG 파일만 허용됩니다.")
+    filename = f"cg_{slot}_{os.urandom(8).hex()}{ext}"
+    path = os.path.join(DILEMMA_IMAGE_DIR, filename)
+    with open(path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+    url_path = f"/static/images/dilemmas/{filename}"
+    # store into game.data.representativeImages[slot]
+    game = await custom_game_service.get_by_code(db, code)
+    if not game:
+        raise HTTPException(status_code=404, detail="커스텀 게임을 찾을 수 없습니다.")
+    current = _load_data(game).get("representativeImages", {})
+    current[slot] = url_path
+    await _merge_and_save(db, game, {"representativeImages": current})
+    return {"url": url_path}
+
+
+@router.get("/custom-games/{code}/dilemma-images", response_model=schemas.RepresentativeImagesResponse)
+async def get_dilemma_images(code: str, db: AsyncSession = Depends(get_db)) -> Any:
+    game = await custom_game_service.get_by_code(db, code)
+    if not game:
+        raise HTTPException(status_code=404, detail="커스텀 게임을 찾을 수 없습니다.")
+    data = _load_data(game)
+    images = data.get("representativeImages", {})
+    return {"images": images}
+
+
 @router.post("/custom-games/{code}/send-email")
 async def send_custom_game_email(code: str, to_email: str = Form(...)) -> Any:
     frontend_base = os.getenv("FRONTEND_BASE_URL", "https://www.dilemmai-idl.com")
-    game_url = f"{frontend_base}/game/{code}"
+    game_url = f"{frontend_base}/?code={code}"
     subject = "딜레마 게임 링크"
     body = f"안녕하세요, 요청하신 커스텀 딜레마 게임 링크입니다: {game_url}"
 
