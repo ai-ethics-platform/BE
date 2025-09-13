@@ -31,7 +31,7 @@ async def create_custom_game(
         representative_image_url=payload.representative_image_url,
         data=payload.data,
     )
-    base_url = os.getenv("FRONTEND_BASE_URL", "https://dilemmai.org")
+    base_url = os.getenv("FRONTEND_BASE_URL", "https://www.dilemmai-idl.com")
     return {"code": game.code, "url": f"{base_url}/game/{game.code}"}
 
 
@@ -273,7 +273,7 @@ async def get_role_images(code: str, db: AsyncSession = Depends(get_db)) -> Any:
 
 @router.post("/custom-games/{code}/send-email")
 async def send_custom_game_email(code: str, to_email: str = Form(...)) -> Any:
-    frontend_base = os.getenv("FRONTEND_BASE_URL", "https://dilemmai.org")
+    frontend_base = os.getenv("FRONTEND_BASE_URL", "https://www.dilemmai-idl.com")
     game_url = f"{frontend_base}/game/{code}"
     subject = "딜레마 게임 링크"
     body = f"안녕하세요, 요청하신 커스텀 딜레마 게임 링크입니다: {game_url}"
