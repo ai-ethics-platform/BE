@@ -136,7 +136,6 @@ async def generate_image(payload: ImageRequest) -> Any:
 
     # OpenAI 이미지를 로컬에 다운로드해서 저장 (만료 방지)
     import httpx
-    import os
     from datetime import datetime
     
     try:
