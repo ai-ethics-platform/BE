@@ -134,7 +134,35 @@ async def generate_image(payload: ImageRequest) -> Any:
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"Invalid image response from OpenAI: {e}")
 
-    return ImageResponse(step=payload.step, image_data_url=image_url, model="dall-e-3", size=size)
+    # OpenAI 이미지를 로컬에 다운로드해서 저장 (만료 방지)
+    import httpx
+    import os
+    from datetime import datetime
+    
+    try:
+        # 이미지 다운로드
+        async with httpx.AsyncClient() as client:
+            response = await client.get(image_url)
+            response.raise_for_status()
+            image_data = response.content
+        
+        # 로컬 저장소에 저장
+        os.makedirs("static/generated_images", exist_ok=True)
+        timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        filename = f"dalle_{timestamp}_{os.urandom(4).hex()}.png"
+        file_path = os.path.join("static/generated_images", filename)
+        
+        with open(file_path, "wb") as f:
+            f.write(image_data)
+        
+        # 로컬 URL로 반환
+        local_url = f"/static/generated_images/{filename}"
+        
+    except Exception as e:
+        # 다운로드 실패 시 원본 URL 사용
+        local_url = image_url
+
+    return ImageResponse(step=payload.step, image_data_url=local_url, model="dall-e-3", size=size)
 
 
 @router.post("/chat/multi-step", response_model=MultiStepChatResponse)
