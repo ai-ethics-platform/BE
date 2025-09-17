@@ -576,9 +576,8 @@ class RoomService:
         room = await RoomService.get_room_by_code(db, room_code)
         if not room:
             raise ValueError("존재하지 않는 방입니다.")
-        if not room.ai_name:
-            raise ValueError("아직 AI 이름이 저장되지 않았습니다.")
-        return room.ai_name
+        # AI 이름이 없을 때는 빈 문자열 반환 (400 오류 대신)
+        return room.ai_name or ""
 
     @staticmethod
     async def submit_round_choice(
