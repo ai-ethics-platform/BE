@@ -7,6 +7,7 @@ app/api/voice_ws.py
 
 # app/api/voice_ws.py
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, status
+import asyncio
 from typing import Dict, List, Optional
 import json
 from datetime import datetime
@@ -49,6 +50,8 @@ async def voice_session_ws(
 
     # 3. 메시지 수신 루프
     try:
+        # 세션 heartbeat 태스크 시작 (연결 유휴 시 끊김 완화)
+        heartbeat_task = asyncio.create_task(_heartbeat_session(session_id))
         while True:
             raw = await websocket.receive_text()
             msg = json.loads(raw)
@@ -193,6 +196,12 @@ async def voice_session_ws(
             session_id,
             ParticipantEvent(type="leave", participant_id=None, nickname="-").model_dump()
         )
+    finally:
+        # heartbeat 태스크 정리
+        try:
+            heartbeat_task.cancel()
+        except Exception:
+            pass
 
 async def _handle_init(db: AsyncSession, session_id: str, data: dict):
     """초기 접속 시 DB 참가자 존재 여부를 확인하고 없으면 join."""
@@ -214,3 +223,12 @@ async def _handle_init(db: AsyncSession, session_id: str, data: dict):
             guest_id=guest_id,
             nickname=nickname,
         )
+
+async def _heartbeat_session(session_id: str) -> None:
+    """세션 내 연결에 주기적으로 ping을 보내 idle timeout을 완화합니다."""
+    try:
+        while True:
+            await asyncio.sleep(15)
+            await manager.ping_connections(session_id)
+    except asyncio.CancelledError:
+        return
