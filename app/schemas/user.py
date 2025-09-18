@@ -34,7 +34,7 @@ class UserBase(BaseModel):
     birthdate: str = Field(pattern=BIRTHDATE_PATTERN)
     gender: str = Field(pattern=f"^({'|'.join(GENDER_OPTIONS)})$")
     education_level: str = Field(pattern=f"^({'|'.join(EDUCATION_OPTIONS)})$")
-    major: str = Field(pattern=f"^({'|'.join(MAJOR_OPTIONS)})$")
+    major: Optional[str] = Field(default=None, description="전공 계열 (대학생/대학원생만 필수)")
     is_active: Optional[bool] = True
 
     @field_validator('gender')
@@ -52,8 +52,10 @@ class UserBase(BaseModel):
     @field_validator('major')
     def validate_major(cls, v, info):
         values = info.data
+        # 대학생/대학원생만 전공 필수
         if values.get('education_level') in ['대학생', '대학원생'] and not v:
             raise ValueError('대학생/대학원생은 전공을 선택해야 합니다')
+        # 그 외에는 미선택 허용. 선택했다면 유효값만 허용
         if v and v not in MAJOR_CATEGORIES:
             raise ValueError(f'전공은 {", ".join(MAJOR_CATEGORIES)} 중 하나여야 합니다')
         return v

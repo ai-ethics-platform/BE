@@ -40,7 +40,7 @@ async def create_user(db: AsyncSession, user_in: schemas.UserCreate) -> models.U
         birthdate=user_in.birthdate,
         gender=user_in.gender,
         education_level=user_in.education_level,
-        major=user_in.major,
+        major=user_in.major or "기타",
         is_active=True,
         is_guest=False,
         data_consent=user_in.data_consent,
