@@ -25,6 +25,7 @@ class ChatSessionResponse(ChatSessionBase):
 
     class Config:
         from_attributes = True
+        extra = "forbid"
 
 
 class MultiStepChatRequest(BaseModel):

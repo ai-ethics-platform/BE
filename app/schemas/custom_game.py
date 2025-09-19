@@ -29,6 +29,7 @@ class CustomGame(BaseModel):
 
     class Config:
         from_attributes = True
+        extra = "forbid"
 
 
 class CustomGameCreateResponse(BaseModel):

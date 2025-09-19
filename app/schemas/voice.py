@@ -20,6 +20,7 @@ class VoiceSession(BaseModel):
 
     class Config:
         from_attributes = True
+        extra = "forbid"
 
 
 # 음성 참가자 상태 스키마
@@ -40,6 +41,7 @@ class VoiceParticipant(BaseModel):
 
     class Config:
         from_attributes = True
+        extra = "forbid"
 
 
 # 음성 상태 업데이트 요청 스키마

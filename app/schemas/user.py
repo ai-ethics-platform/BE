@@ -124,6 +124,7 @@ class UserInDB(UserBase):
 
     class Config:
         from_attributes = True
+        extra = "forbid"
 
 
 # API 응답용 사용자 정보
@@ -137,6 +138,7 @@ class UserStats(BaseModel):
     
     class Config:
         from_attributes = True
+        extra = "forbid"
 
 
 # 아이디 중복 확인

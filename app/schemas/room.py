@@ -44,6 +44,7 @@ class RoomParticipant(BaseModel):
 
     class Config:
         from_attributes = True
+        extra = "forbid"
 
 
 # 역할 배정 응답 스키마
@@ -88,6 +89,7 @@ class Room(BaseModel):
 
     class Config:
         from_attributes = True
+        extra = "forbid"
 
 
 # Room 생성 응답 스키마
@@ -109,6 +111,7 @@ class RoomSummary(BaseModel):
 
     class Config:
         from_attributes = True
+        extra = "forbid"
 
 
 # Room 입장 요청 스키마
