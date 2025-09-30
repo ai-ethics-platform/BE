@@ -12,6 +12,32 @@ from app.core.deps import get_db
 class RoomService:
     
     @staticmethod
+    def normalize_subtopic(subtopic: str) -> str:
+        """
+        subtopic 문자열을 정규화하여 유니코드 공백/특수문자 문제를 해결
+        """
+        if not subtopic:
+            return ""
+        
+        # 앞뒤 공백 제거
+        normalized = subtopic.strip()
+        
+        # 다양한 유니코드 공백 문자들을 일반 공백으로 변환
+        # \u00A0: non-breaking space
+        # \u3000: ideographic space (전각 공백)
+        # \u2000-\u200F: 다양한 공백 문자들
+        # \u202F: narrow no-break space
+        # \u205F: medium mathematical space
+        # \u3000: ideographic space
+        import re
+        normalized = re.sub(r'[\u00A0\u2000-\u200F\u202F\u205F\u3000]', ' ', normalized)
+        
+        # 연속된 공백을 하나로 변환
+        normalized = re.sub(r'\s+', ' ', normalized)
+        
+        return normalized.strip()
+    
+    @staticmethod
     async def create_public_room(
         db: AsyncSession,
         room_data: schemas.RoomCreatePublic,
@@ -1049,14 +1075,33 @@ class RoomService:
             conditions.append("r.is_public = :is_public")
             params["is_public"] = is_public
         
-        # 각 서브토픽별 통계 쿼리
-        subtopics = [
-            "AI의 개인 정보 수집",
-            "안드로이드의 감정 표현", 
-            "아이들을 위한 서비스",
-            "설명 가능한 AI",
-            "지구, 인간, AI"
-        ]
+        # DB에서 실제 존재하는 서브토픽 목록을 동적으로 조회
+        subtopic_query = """
+            SELECT DISTINCT cc.subtopic
+            FROM consensus_choices cc
+            JOIN rooms r ON cc.room_id = r.id
+            LEFT JOIN room_participants rp ON r.id = rp.room_id
+            LEFT JOIN users u ON rp.user_id = u.id
+            WHERE cc.subtopic IS NOT NULL AND cc.subtopic != ''
+        """
+        
+        # 동적 조건 추가
+        if exclude_dummy:
+            subtopic_query += " AND u.username NOT LIKE 'test%' AND u.username NOT LIKE 'dummy%' AND u.email NOT LIKE 'test%@%' AND u.email NOT LIKE 'dummy%@%' AND u.is_guest = FALSE"
+        if from_dt is not None:
+            subtopic_query += " AND cc.created_at >= :from_dt"
+        if to_dt is not None:
+            subtopic_query += " AND cc.created_at <= :to_dt"
+        if ai_type is not None:
+            subtopic_query += " AND r.ai_type = :ai_type"
+        if is_public is not None:
+            subtopic_query += " AND r.is_public = :is_public"
+        
+        subtopic_query += " ORDER BY cc.subtopic"
+        
+        subtopic_result = await db.execute(text(subtopic_query), params)
+        subtopic_rows = subtopic_result.fetchall()
+        subtopics = [row.subtopic for row in subtopic_rows]
         
         statistics = []
         
@@ -1164,6 +1209,9 @@ class RoomService:
         is_public: Optional[bool] = None,
     ) -> dict:
         """단일 서브토픽 통계 조회"""
+        # 요청된 subtopic을 정규화
+        normalized_subtopic = RoomService.normalize_subtopic(subtopic)
+        
         result = await RoomService.get_statistics(
             db=db,
             exclude_dummy=exclude_dummy,
@@ -1172,9 +1220,9 @@ class RoomService:
             ai_type=ai_type,
             is_public=is_public,
         )
-        # 전체 리스트에서 해당 서브토픽만 추출
+        # 전체 리스트에서 해당 서브토픽만 추출 (정규화된 문자열로 비교)
         for item in result["statistics"]:
-            if item["subtopic"] == subtopic:
+            if RoomService.normalize_subtopic(item["subtopic"]) == normalized_subtopic:
                 return item
         # 데이터 없는 경우 기본 0 값 반환
         return {
