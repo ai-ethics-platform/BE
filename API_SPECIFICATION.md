@@ -3,13 +3,6 @@
 ## 개요
 AI 윤리 토론을 위한 다단계 챗봇 시스템 API입니다. LangChain을 사용하여 구조화된 JSON 응답을 제공합니다.
 
-## Base URL
-```
-http://localhost:8000/api/v1
-```
-
----
-
 ## 1. 이미지 생성 API
 
 ### `POST /chat/image`
@@ -122,11 +115,11 @@ curl -X POST "http://localhost:8000/api/v1/chat/image" \
 
 #### 단계 순서
 
-1. **opening** - 시작 단계 (변수 불필요)
-2. **dilemma** - 딜레마 제시 (다음 단계에 `topic` 변수 전달)
-3. **flip** - 선택지 제시 (다음 단계에 `question`, `choice1`, `choice2` 변수 전달)
-4. **roles** - 역할 할당 (다음 단계에 `structure` 변수 전달)
-5. **ending** - 종료 단계 (`structure`, `role` 변수 필요)
+1. **opening** - 시작 단계 (다음 단계에 `topic` 변수 전달)
+2. **dilemma** - 딜레마 제시 (다음 단계에 `question`, `choice1`, `choice2` 변수 전달)
+3. **flip** - 선택지 제시 (다음 단계에 `structure` 변수 전달)
+4. **roles** - 역할 할당 (다음 단계에 `structure`, `role` 변수 전달)
+5. **ending** - 종료 단계 (마지막 단계, 변수 불필요)
 
 #### Response Schema
 
@@ -159,25 +152,14 @@ curl -X POST "http://localhost:8000/api/v1/chat/image" \
 
 **opening 단계:**
 ```json
-{}
-```
-또는
-```json
-null
-```
-- 변수 불필요 (다음 단계로 넘어갈 때 변수 전달 안 함)
-- LangChain 파싱 실패 시 `null` 반환 가능
-
-**dilemma 단계:**
-```json
 {
   "topic": "AI 윤리"
 }
 ```
-- 다음 단계(flip)에 `topic` 변수 전달
+- 다음 단계(dilemma)에 `topic` 변수 전달
 - LangChain 파싱 실패 시 `null` 반환 가능
 
-**flip 단계:**
+**dilemma 단계:**
 ```json
 {
   "question": "생성된 질문",
@@ -185,24 +167,35 @@ null
   "choice2": "두 번째 선택지"
 }
 ```
-- 다음 단계(roles)에 `question`, `choice1`, `choice2` 변수 전달
+- 다음 단계(flip)에 `question`, `choice1`, `choice2` 변수 전달
 - LangChain 파싱 실패 시 `null` 반환 가능
 
-**roles 단계:**
+**flip 단계:**
 ```json
 {
   "structure": "역할 구조 정보"
 }
 ```
-- 다음 단계(ending)에 `structure` 변수 전달
+- 다음 단계(roles)에 `structure` 변수 전달
 - LangChain 파싱 실패 시 `null` 반환 가능
 
-**ending 단계:**
+**roles 단계:**
 ```json
 {
   "structure": "역할 구조 정보",
   "role": "할당된 역할"
 }
+```
+- 다음 단계(ending)에 `structure`, `role` 변수 전달
+- LangChain 파싱 실패 시 `null` 반환 가능
+
+**ending 단계:**
+```json
+{}
+```
+또는
+```json
+null
 ```
 - 마지막 단계 (다음 단계 없음)
 - LangChain 파싱 실패 시 `null` 반환 가능
