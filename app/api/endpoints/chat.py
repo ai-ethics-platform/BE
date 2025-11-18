@@ -69,56 +69,80 @@ async def chat_with_prompt(payload: ChatRequest, db: AsyncSession = Depends(get_
 
 @router.post("/chat/image", response_model=ImageResponse)
 async def generate_image(payload: ImageRequest) -> Any:
-    try:
-        from openai import OpenAI
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"OpenAI SDK import error: {e}")
-
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
         raise HTTPException(status_code=500, detail="OPENAI_API_KEY is not configured")
 
-    client = OpenAI(api_key=api_key)
-
-    # Process prompt if provided
-    final_prompt = payload.input
-    if payload.prompt:
-        # Resolve variables: prefer prompt.variables > context > {}
-        variables = payload.prompt.variables or payload.context or {}
-        
-        prompt_obj = {"id": payload.prompt.id}
-        if payload.prompt.version:
-            prompt_obj["version"] = payload.prompt.version
-        if variables:
-            prompt_obj["variables"] = variables
-
-        try:
-            # Get the processed prompt from OpenAI Playground
-            resp = client.responses.create(
-                prompt=prompt_obj,
-                input=payload.input,
-            )
-            
-            # Extract the processed prompt text
-            processed_parts = []
-            try:
-                for item in getattr(resp, "output", []) or []:
-                    for c in getattr(item, "content", []) or []:
-                        if getattr(c, "type", "") == "output_text":
-                            processed_parts.append(getattr(c, "text", ""))
-            except Exception:
-                pass
-            
-            processed_text = "".join(processed_parts).strip()
-            if processed_text:
-                final_prompt = processed_text
-                
-        except Exception as e:
-            # If prompt processing fails, fall back to direct input
-            pass
-
-    size = payload.size or "1024x1024"
     try:
+        from langchain_openai import ChatOpenAI
+        from langchain.prompts import ChatPromptTemplate
+        from langchain.schema.output_parser import PydanticOutputParser
+        from app.schemas.chat import GeneratedImage
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"LangChain import error: {e}")
+
+    try:
+        llm = ChatOpenAI(
+            model="gpt-4o-mini",
+            temperature=0.7,
+            api_key=api_key,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"LangChain LLM init error: {e}")
+
+    # 변수 처리: prefer prompt.variables > context > {}
+    variables = {}
+    if payload.prompt and payload.prompt.variables:
+        variables = payload.prompt.variables
+    elif payload.context:
+        variables = payload.context
+
+    # LangChain으로 JSON 구조화된 이미지 생성 프롬프트 생성
+    parsed_result = None
+    final_prompt = payload.input
+    
+    try:
+        # 프롬프트 템플릿 구성
+        prompt_template = ChatPromptTemplate.from_template(
+            """You are an image generation assistant.
+User input: {input}
+Variables (context): {variables}
+
+Return a JSON object describing the intended image:
+{{
+  "description": "detailed content of the image",
+  "style": "art style or tone",
+  "size": "image size",
+  "reasoning": "brief reasoning why this fits the user's intent"
+}}"""
+        )
+
+        # JSON 포맷 파서 준비
+        parser = PydanticOutputParser(pydantic_object=GeneratedImage)
+
+        # LangChain 체인 실행
+        chain = prompt_template | llm | parser
+        parsed_result = await chain.ainvoke({
+            "input": payload.input,
+            "variables": variables
+        })
+        
+        # 파싱된 결과에서 description을 최종 프롬프트로 사용
+        if isinstance(parsed_result, GeneratedImage):
+            final_prompt = parsed_result.description
+            parsed_result = parsed_result.model_dump()
+        
+    except Exception as e:
+        # LangChain 파싱 실패 시 원본 input 사용
+        # 에러를 발생시키지 않고 계속 진행
+        pass
+
+    # DALL-E로 이미지 생성
+    try:
+        from openai import OpenAI
+        client = OpenAI(api_key=api_key)
+        
+        size = payload.size or "1024x1024"
         img = client.images.generate(
             model="dall-e-3",
             prompt=final_prompt,
@@ -161,7 +185,13 @@ async def generate_image(payload: ImageRequest) -> Any:
         # 다운로드 실패 시 원본 URL 사용
         local_url = image_url
 
-    return ImageResponse(step=payload.step, image_data_url=local_url, model="dall-e-3", size=size)
+    return ImageResponse(
+        step=payload.step, 
+        image_data_url=local_url, 
+        model="dall-e-3", 
+        size=size,
+        parsed_result=parsed_result
+    )
 
 
 @router.post("/chat/multi-step", response_model=MultiStepChatResponse)

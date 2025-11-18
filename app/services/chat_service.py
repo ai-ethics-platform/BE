@@ -2,12 +2,15 @@ from typing import Any, Dict, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from openai import OpenAI
+from pydantic import BaseModel
 import os
 import uuid
+import json
 
 from app.core.config import settings
 from app.models.chat_session import ChatSession
 from app.schemas.chat_session import ChatSessionCreate, ChatSessionUpdate, MultiStepChatRequest, MultiStepChatResponse
+from app.schemas.step_responses import STEP_RESPONSE_MODELS
 
 
 class ChatService:
@@ -17,7 +20,7 @@ class ChatService:
             self.openai_client = OpenAI(api_key=settings.OPENAI_API_KEY)
         
         # 단계별 순서 정의
-        self.step_order = ["topic", "question", "situation", "discussion", "conclusion"]
+        self.step_order = ["opening", "dilemma", "flip", "roles", "ending"]
     
     async def get_or_create_session(self, db: AsyncSession, session_id: str) -> ChatSession:
         """세션을 가져오거나 새로 생성"""
@@ -29,7 +32,7 @@ class ChatService:
         if not session:
             session = ChatSession(
                 session_id=session_id,
-                current_step="topic",
+                current_step="opening",
                 context={}
             )
             db.add(session)
@@ -71,8 +74,13 @@ class ChatService:
         """마지막 단계인지 확인"""
         return current_step == self.step_order[-1]
     
-    async def call_openai_response(self, step: str, user_input: str, context: Dict[str, Any]) -> str:
-        """OpenAI Responses API 호출"""
+    async def call_openai_response(self, step: str, user_input: str, context: Dict[str, Any]) -> tuple[str, Dict[str, Any]]:
+        """
+        OpenAI Responses API 호출 후 LangChain으로 JSON 파싱
+        
+        Returns:
+            tuple[str, Dict[str, Any]]: (response_text, parsed_variables)
+        """
         if not self.openai_client:
             raise ValueError("OpenAI client not initialized")
         
@@ -86,6 +94,7 @@ class ChatService:
         input_variables["user_input"] = user_input
         
         try:
+            # 1. OpenAI Playground API로 프롬프트 처리
             response = self.openai_client.responses.create(
                 prompt={
                     "id": prompt_config["id"],
@@ -102,7 +111,62 @@ class ChatService:
                     if getattr(c, "type", "") == "output_text":
                         text_parts.append(getattr(c, "text", ""))
             
-            return "".join(text_parts).strip()
+            raw_response_text = "".join(text_parts).strip()
+            
+            # 2. LangChain으로 JSON 파싱 시도
+            parsed_variables = {}
+            try:
+                from langchain_openai import ChatOpenAI
+                from langchain.prompts import ChatPromptTemplate
+                from langchain.schema.output_parser import PydanticOutputParser
+                
+                # 단계별 응답 모델 가져오기
+                response_model = STEP_RESPONSE_MODELS.get(step)
+                if response_model:
+                    llm = ChatOpenAI(
+                        model="gpt-4o-mini",
+                        temperature=0.7,
+                        api_key=settings.OPENAI_API_KEY,
+                    )
+                    
+                    # PydanticOutputParser 생성
+                    parser = PydanticOutputParser(pydantic_object=response_model)
+                    
+                    # JSON 형식으로 출력하도록 지시하는 프롬프트
+                    format_instructions = parser.get_format_instructions()
+                    
+                    prompt_template = ChatPromptTemplate.from_template(
+                        """다음 응답을 JSON 형식으로 변환해주세요. 
+응답 텍스트: {raw_response}
+
+{format_instructions}
+
+원본 응답의 내용을 유지하면서, 위 JSON 스키마에 맞춰서 구조화해주세요.
+response_text 필드에는 사용자에게 보여줄 원본 응답 텍스트를 넣어주세요."""
+                    )
+                    
+                    # 체인 실행
+                    chain = prompt_template | llm | parser
+                    parsed_result = await chain.ainvoke({
+                        "raw_response": raw_response_text,
+                        "format_instructions": format_instructions
+                    })
+                    
+                    # 파싱된 결과에서 변수 추출
+                    if isinstance(parsed_result, BaseModel):
+                        parsed_dict = parsed_result.model_dump()
+                        # response_text는 제외하고 나머지를 variables로
+                        parsed_variables = {k: v for k, v in parsed_dict.items() if k != "response_text"}
+                        # response_text가 있으면 그것을 사용
+                        if "response_text" in parsed_dict and parsed_dict["response_text"]:
+                            raw_response_text = parsed_dict["response_text"]
+                    
+            except Exception as parse_error:
+                # JSON 파싱 실패 시 원본 텍스트 사용
+                # 로깅할 수 있지만 에러를 발생시키지는 않음
+                pass
+            
+            return raw_response_text, parsed_variables
             
         except Exception as e:
             raise ValueError(f"OpenAI API call failed: {e}")
@@ -119,8 +183,8 @@ class ChatService:
         # 실행할 단계 결정
         current_step = request.step or session.current_step
         
-        # OpenAI API 호출
-        response_text = await self.call_openai_response(
+        # OpenAI API 호출 (JSON 파싱 포함)
+        response_text, parsed_variables = await self.call_openai_response(
             current_step, 
             request.user_input, 
             session.context or {}
@@ -130,6 +194,11 @@ class ChatService:
         updated_context = session.context.copy() if session.context else {}
         updated_context[f"{current_step}_result"] = response_text
         updated_context[f"{current_step}_user_input"] = request.user_input
+        
+        # 파싱된 변수들을 컨텍스트에 추가
+        if parsed_variables:
+            for key, value in parsed_variables.items():
+                updated_context[f"{current_step}_{key}"] = value
         
         # 다음 단계 결정
         next_step = self.get_next_step(current_step)
@@ -149,6 +218,7 @@ class ChatService:
             session_id=request.session_id,
             current_step=current_step,
             response_text=response_text,
+            parsed_variables=parsed_variables,
             context=updated_context,
             next_step=next_step,
             is_complete=is_complete

@@ -1,7 +1,7 @@
 """add_chat_session_table
 
 Revision ID: chat_session_001
-Revises: f661ecf3115a
+Revises: 1835a67cf28d
 Create Date: 2025-01-27 12:00:00.000000
 
 """
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision: str = 'chat_session_001'
-down_revision: Union[str, None] = 'f661ecf3115a'
+down_revision: Union[str, None] = '1835a67cf28d'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

@@ -10,6 +10,9 @@ httpx==0.25.1
 aiomysql==0.2.0
 alembic==1.12.1
 openai>=1.40.0
+langchain>=0.1.0
+langchain-openai>=0.1.0
+langchain-core>=0.1.0
 python-dotenv==1.0.0
 websockets==11.0.3
 pytest==7.4.3

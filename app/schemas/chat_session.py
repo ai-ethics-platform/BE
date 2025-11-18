@@ -5,7 +5,7 @@ from datetime import datetime
 
 class ChatSessionBase(BaseModel):
     session_id: str = Field(..., description="Unique session identifier")
-    current_step: str = Field(default="topic", description="Current step in the conversation flow")
+    current_step: str = Field(default="opening", description="Current step in the conversation flow")
     context: Optional[Dict[str, Any]] = Field(default=None, description="Context data from previous steps")
 
 
@@ -38,6 +38,7 @@ class MultiStepChatResponse(BaseModel):
     session_id: str
     current_step: str
     response_text: str
+    parsed_variables: Optional[Dict[str, Any]] = Field(None, description="파싱된 변수들 (JSON에서 추출)")
     context: Optional[Dict[str, Any]] = None
     next_step: Optional[str] = None
     is_complete: bool = False

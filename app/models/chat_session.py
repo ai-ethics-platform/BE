@@ -8,7 +8,7 @@ class ChatSession(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     session_id = Column(String(255), unique=True, index=True, nullable=False)
-    current_step = Column(String(50), nullable=False, default="topic")
+    current_step = Column(String(50), nullable=False, default="opening")
     context = Column(JSON, nullable=True)  # 이전 단계들의 결과를 저장
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())

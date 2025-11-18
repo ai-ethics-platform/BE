@@ -3,9 +3,10 @@ from pydantic import BaseModel, Field
 
 
 class ChatPromptRef(BaseModel):
-    id: str = Field(..., description="Playground Prompt ID (pmpt_...)" )
+    id: Optional[str] = Field(default=None, description="Playground Prompt ID (pmpt_...) - optional if template provided")
     version: Optional[str] = Field(default=None, description="Published prompt version string (optional: latest if omitted)")
     variables: Optional[Dict[str, Any]] = Field(default=None, description="Variables required by the saved prompt")
+    template: Optional[str] = Field(default=None, description="Prompt template string (managed by frontend) - use {variable_name} for variables")
 
 
 class ChatRequest(BaseModel):
@@ -29,10 +30,19 @@ class ChatResponse(BaseModel):
     raw: Optional[Dict[str, Any]] = None
 
 
+class GeneratedImage(BaseModel):
+    """LangChain으로 파싱된 이미지 생성 정보"""
+    description: str = Field(..., description="상세한 이미지 설명")
+    style: Optional[str] = Field(None, description="예술 스타일이나 톤")
+    size: Optional[str] = Field(None, description="이미지 크기")
+    reasoning: Optional[str] = Field(None, description="이미지가 사용자 의도에 맞는 이유")
+
+
 class ImageResponse(BaseModel):
     step: Optional[str] = Field(default="image")
-    image_data_url: str  # Can be either data URL or image URL
+    image_data_url: str = Field(..., description="생성된 이미지 URL (로컬 또는 원격)")
     model: str = Field(default="dall-e-3")
     size: str = Field(default="1024x1024")
+    parsed_result: Optional[Dict[str, Any]] = Field(None, description="LangChain으로 파싱된 이미지 생성 정보 (description, style, reasoning 등)")
 
 
