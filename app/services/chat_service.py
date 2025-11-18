@@ -125,8 +125,8 @@ class ChatService:
             parsed_variables = {}
             try:
                 from langchain_openai import ChatOpenAI
-                from langchain.prompts import ChatPromptTemplate
-                from langchain.schema.output_parser import PydanticOutputParser
+                from langchain_core.prompts import ChatPromptTemplate
+                from langchain_core.output_parsers import PydanticOutputParser
                 
                 # 단계별 응답 모델 가져오기
                 response_model = STEP_RESPONSE_MODELS.get(step)

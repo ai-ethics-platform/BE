@@ -75,8 +75,8 @@ async def generate_image(payload: ImageRequest) -> Any:
 
     try:
         from langchain_openai import ChatOpenAI
-        from langchain.prompts import ChatPromptTemplate
-        from langchain.schema.output_parser import PydanticOutputParser
+        from langchain_core.prompts import ChatPromptTemplate
+        from langchain_core.output_parsers import PydanticOutputParser
         from app.schemas.chat import GeneratedImage
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"LangChain import error: {e}")
