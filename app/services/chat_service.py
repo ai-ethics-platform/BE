@@ -163,15 +163,24 @@ response_text 필드에는 사용자에게 보여줄 원본 응답 텍스트를 
                     # 파싱된 결과에서 변수 추출
                     if isinstance(parsed_result, BaseModel):
                         parsed_dict = parsed_result.model_dump()
-                        # response_text는 제외하고 나머지를 variables로
-                        parsed_variables = {k: v for k, v in parsed_dict.items() if k != "response_text"}
+                        print(f"[DEBUG] Parsed dict: {parsed_dict}")
+                        
+                        # response_text는 제외하고, None이 아닌 값만 variables로
+                        parsed_variables = {
+                            k: v for k, v in parsed_dict.items() 
+                            if k != "response_text" and v is not None
+                        }
+                        print(f"[DEBUG] Extracted variables: {parsed_variables}")
+                        
                         # response_text가 있으면 그것을 사용
                         if "response_text" in parsed_dict and parsed_dict["response_text"]:
                             raw_response_text = parsed_dict["response_text"]
                     
             except Exception as parse_error:
                 # JSON 파싱 실패 시 원본 텍스트 사용
-                # 로깅할 수 있지만 에러를 발생시키지는 않음
+                print(f"[DEBUG] LangChain parsing failed: {parse_error}")
+                import traceback
+                traceback.print_exc()
                 pass
             
             return raw_response_text, parsed_variables
