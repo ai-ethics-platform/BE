@@ -95,13 +95,18 @@ class ChatService:
         
         try:
             # 1. OpenAI Playground API로 프롬프트 처리
+            prompt_obj = {
+                "id": prompt_config["id"],
+                "version": prompt_config["version"]
+            }
+            
+            # variables가 있으면 prompt 객체 안에 포함
+            if input_variables:
+                prompt_obj["variables"] = input_variables
+            
             response = self.openai_client.responses.create(
-                prompt={
-                    "id": prompt_config["id"],
-                    "version": prompt_config["version"]
-                },
-                input=user_input,
-                variables=input_variables
+                prompt=prompt_obj,
+                input=user_input
             )
             
             # 응답 텍스트 추출
