@@ -150,7 +150,7 @@ curl -X POST "http://localhost:8000/api/v1/chat/image" \
 | `session_id` | string | 세션 식별자 |
 | `current_step` | string | 현재 실행된 단계 |
 | `response_text` | string | 사용자에게 보여줄 응답 텍스트 |
-| `parsed_variables` | object | LangChain으로 파싱된 변수들 (단계별로 다름) |
+| `parsed_variables` | object \| null | LangChain으로 파싱된 변수들 (단계별로 다름, 파싱 실패 시 null) |
 | `context` | object | 전체 컨텍스트 (이전 단계 결과 포함) |
 | `next_step` | string | 다음 단계 (없으면 null) |
 | `is_complete` | boolean | 마지막 단계 여부 |
@@ -159,9 +159,14 @@ curl -X POST "http://localhost:8000/api/v1/chat/image" \
 
 **opening 단계:**
 ```json
+{}
+```
+또는
+```json
 null
 ```
 - 변수 불필요 (다음 단계로 넘어갈 때 변수 전달 안 함)
+- LangChain 파싱 실패 시 `null` 반환 가능
 
 **dilemma 단계:**
 ```json
@@ -170,6 +175,7 @@ null
 }
 ```
 - 다음 단계(flip)에 `topic` 변수 전달
+- LangChain 파싱 실패 시 `null` 반환 가능
 
 **flip 단계:**
 ```json
@@ -180,6 +186,7 @@ null
 }
 ```
 - 다음 단계(roles)에 `question`, `choice1`, `choice2` 변수 전달
+- LangChain 파싱 실패 시 `null` 반환 가능
 
 **roles 단계:**
 ```json
@@ -188,6 +195,7 @@ null
 }
 ```
 - 다음 단계(ending)에 `structure` 변수 전달
+- LangChain 파싱 실패 시 `null` 반환 가능
 
 **ending 단계:**
 ```json
@@ -197,6 +205,13 @@ null
 }
 ```
 - 마지막 단계 (다음 단계 없음)
+- LangChain 파싱 실패 시 `null` 반환 가능
+
+#### parsed_variables 동작 방식
+
+1. **LangChain 파싱 성공 시**: 각 단계별로 위 예시와 같은 변수들이 포함된 객체 반환
+2. **LangChain 파싱 실패 시**: `null` 반환 (이 경우 `response_text`만 사용)
+3. **변수 저장**: `parsed_variables`의 값들은 자동으로 `context`에 저장되어 다음 단계에서 사용됨
 
 ---
 
