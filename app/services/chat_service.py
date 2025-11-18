@@ -89,9 +89,8 @@ class ChatService:
         if not prompt_config:
             raise ValueError(f"No prompt configuration found for step: {step}")
         
-        # input_variables 구성 (이전 단계 결과들 + 현재 사용자 입력)
-        input_variables = context.copy()
-        input_variables["user_input"] = user_input
+        # input_variables 구성 (이전 단계 결과들만, user_input은 input 파라미터로 전달됨)
+        input_variables = context.copy() if context else {}
         
         try:
             # 1. OpenAI Playground API로 프롬프트 처리
@@ -100,9 +99,13 @@ class ChatService:
                 "version": prompt_config["version"]
             }
             
-            # variables가 있으면 prompt 객체 안에 포함
+            # variables가 있고 비어있지 않으면 prompt 객체 안에 포함
             if input_variables:
                 prompt_obj["variables"] = input_variables
+            
+            # 디버깅: prompt 객체 로깅
+            print(f"[DEBUG] Calling OpenAI with prompt_obj: {prompt_obj}")
+            print(f"[DEBUG] Input: {user_input[:50]}...")
             
             response = self.openai_client.responses.create(
                 prompt=prompt_obj,
