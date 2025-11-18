@@ -3,12 +3,6 @@
 ## 개요
 AI 윤리 토론을 위한 다단계 챗봇 시스템 API입니다. LangChain을 사용하여 구조화된 JSON 응답을 제공합니다.
 
-## Base URL
-```
-http://localhost:8000/api/v1
-```
-
----
 
 ## 1. 이미지 생성 API
 
