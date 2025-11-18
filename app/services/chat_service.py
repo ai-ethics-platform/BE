@@ -101,7 +101,7 @@ class ChatService:
                     "version": prompt_config["version"]
                 },
                 input=user_input,
-                input_variables=input_variables
+                variables=input_variables
             )
             
             # 응답 텍스트 추출
