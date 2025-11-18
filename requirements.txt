@@ -6,8 +6,7 @@ pydantic-settings==2.2.1
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]
 python-multipart==0.0.6
-httpx==0.25.1
-aiomysql==0.2.0
+httpx>=0.25.2,<1
 alembic==1.12.1
 openai>=1.40.0
 langchain==1.0.7
@@ -21,13 +20,11 @@ pytest-cov==4.1.0
 speechrecognition==3.10.0
 pydub==0.25.1
 boto3==1.28.64
-redis==5.0.1
 pydantic[email]
-aiomysql
+aiomysql==0.2.0
 pymysql
 celery
-redis
+redis==5.0.1
 aioredis
 ffmpeg-python
 bcrypt==4.0.1
-httpx==0.25.1
