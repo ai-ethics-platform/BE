@@ -21,6 +21,27 @@ class ChatService:
         
         # 단계별 순서 정의
         self.step_order = ["opening", "dilemma", "flip", "roles", "ending"]
+        
+        # 각 단계별로 OpenAI Playground 프롬프트에 전달할 변수 매핑
+        # context에서 가져올 키 -> OpenAI 프롬프트 variable 이름
+        self.step_variable_mapping = {
+            "opening": {},  # 첫 단계는 변수 불필요
+            "dilemma": {
+                "opening_topic": "topic"  # context의 opening_topic -> 프롬프트의 topic
+            },
+            "flip": {
+                "dilemma_question": "question",  # context의 dilemma_question -> 프롬프트의 question
+                "dilemma_choice1": "choice1",
+                "dilemma_choice2": "choice2"
+            },
+            "roles": {
+                "flip_structure": "structure"  # context의 flip_structure -> 프롬프트의 structure
+            },
+            "ending": {
+                "roles_structure": "structure",  # context의 roles_structure -> 프롬프트의 structure
+                "roles_role": "role"
+            }
+        }
     
     async def get_or_create_session(self, db: AsyncSession, session_id: str) -> ChatSession:
         """세션을 가져오거나 새로 생성"""
@@ -89,8 +110,15 @@ class ChatService:
         if not prompt_config:
             raise ValueError(f"No prompt configuration found for step: {step}")
         
-        # input_variables 구성 (이전 단계 결과들만, user_input은 input 파라미터로 전달됨)
-        input_variables = context.copy() if context else {}
+        # 현재 단계에 필요한 변수만 필터링 및 매핑
+        variable_mapping = self.step_variable_mapping.get(step, {})
+        input_variables = {}
+        
+        if context and variable_mapping:
+            # context에서 가져와서 OpenAI 프롬프트 variable 이름으로 매핑
+            for context_key, prompt_var_name in variable_mapping.items():
+                if context_key in context:
+                    input_variables[prompt_var_name] = context[context_key]
         
         try:
             # 1. OpenAI Playground API로 프롬프트 처리
@@ -104,8 +132,11 @@ class ChatService:
                 prompt_obj["variables"] = input_variables
             
             # 디버깅: prompt 객체 로깅
+            print(f"[DEBUG] Step: {step}")
+            print(f"[DEBUG] Context keys: {list(context.keys()) if context else []}")
+            print(f"[DEBUG] Mapped variables: {input_variables}")
             print(f"[DEBUG] Calling OpenAI with prompt_obj: {prompt_obj}")
-            print(f"[DEBUG] Input: {user_input[:50]}...")
+            print(f"[DEBUG] Input: {user_input[:50] if len(user_input) > 50 else user_input}...")
             
             response = self.openai_client.responses.create(
                 prompt=prompt_obj,
