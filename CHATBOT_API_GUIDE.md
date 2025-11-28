@@ -45,11 +45,11 @@ DELETE /chat/session/{session_id}
 ```
 
 ## 단계 순서
-1. **topic** - 주제 선택
+1. **opening** - 주제 선택
 2. **question** - 질문 생성
-3. **situation** - 상황 분석
-4. **discussion** - 토론 진행
-5. **conclusion** - 결론 도출
+3. **flip** - 플립 상황 제시
+4. **roles** - 역할 분배
+5. **ending** - 템플릿 완성
 
 ## 설정 방법
 
@@ -64,15 +64,26 @@ OPENAI_API_KEY=your_openai_api_key_here
 
 ```python
 CHATBOT_PROMPTS: Dict[str, Dict[str, str]] = {
-    "topic": {
-        "id": "pmpt_topic_selection",  # Playground에서 발급받은 실제 ID로 변경
+    "opening": {
+        "id": "pmpt_opening",  # Playground에서 발급받은 실제 ID로 변경
         "version": "1.0"
     },
     "question": {
         "id": "pmpt_question_generation", 
         "version": "1.0"
     },
-    # ... 다른 단계들
+    "flip": {
+        "id": "pmpt_flip_situation",
+        "version": "1.0"
+    },
+    "roles": {
+        "id": "pmpt_roles_assignment",
+        "version": "1.0"
+    },
+    "ending": {
+        "id": "pmpt_ending_template",
+        "version": "1.0"
+    }
 }
 ```
 

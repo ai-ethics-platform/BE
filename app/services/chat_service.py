@@ -20,26 +20,43 @@ class ChatService:
             self.openai_client = OpenAI(api_key=settings.OPENAI_API_KEY)
         
         # 단계별 순서 정의
-        self.step_order = ["opening", "dilemma", "flip", "roles", "ending"]
+        self.step_order = ["opening", "question", "flip", "roles", "ending"]
         
         # 각 단계별로 OpenAI Playground 프롬프트에 전달할 변수 매핑
         # context에서 가져올 키 -> OpenAI 프롬프트 variable 이름
         self.step_variable_mapping = {
             "opening": {},  # 첫 단계는 변수 불필요
-            "dilemma": {
+            "question": {
                 "opening_topic": "topic"  # context의 opening_topic -> 프롬프트의 topic
             },
             "flip": {
-                "dilemma_question": "question",  # context의 dilemma_question -> 프롬프트의 question
-                "dilemma_choice1": "choice1",
-                "dilemma_choice2": "choice2"
+                "question_question": "question",  # context의 question_question -> 프롬프트의 question
+                "question_choice1": "choice1",
+                "question_choice2": "choice2"
             },
             "roles": {
-                "flip_structure": "structure"  # context의 flip_structure -> 프롬프트의 structure
+                "flip_dilemma_situation": "dilemma_situation",
+                "flip_question": "question",
+                "flip_choice1": "choice1",
+                "flip_flips_agree_texts": "flips_agree_texts",
+                "flip_choice2": "choice2",
+                "flip_flips_disagree_texts": "flips_disagree_texts"
             },
             "ending": {
-                "roles_structure": "structure",  # context의 roles_structure -> 프롬프트의 structure
-                "roles_role": "role"
+                # flip의 자료
+                "flip_dilemma_situation": "dilemma_situation",
+                "flip_question": "question",
+                "flip_choice1": "choice1",
+                "flip_flips_agree_texts": "flips_agree_texts",
+                "flip_choice2": "choice2",
+                "flip_flips_disagree_texts": "flips_disagree_texts",
+                # roles의 자료
+                "roles_char1": "char1",
+                "roles_charDes1": "charDes1",
+                "roles_char2": "char2",
+                "roles_charDes2": "charDes2",
+                "roles_char3": "char3",
+                "roles_charDes3": "charDes3"
             }
         }
     
