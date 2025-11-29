@@ -31,9 +31,21 @@
 {
   "session_id": "unique-session-id",
   "user_input": "사용자 입력 텍스트",
-  "step": "opening"  // 선택사항 (첫 요청에만 명시, 이후는 자동 진행)
+  "step": "opening",  // 선택사항 (첫 요청에만 명시, 이후는 자동 진행)
+  "variable": {       // 선택사항 (테스트용 또는 특정 변수를 직접 전달할 때)
+    "topic": "AI 윤리",
+    "question": "...",
+    "choice1": "...",
+    "choice2": "..."
+  }
 }
 ```
+
+**파라미터 설명**:
+- `session_id` (필수): 세션 고유 ID
+- `user_input` (필수): 사용자 입력 텍스트
+- `step` (선택): 실행할 단계 지정 (첫 요청에만 사용)
+- `variable` (선택): OpenAI 프롬프트에 직접 전달할 변수들 (테스트 또는 디버깅용)
 
 #### Response
 
@@ -66,8 +78,8 @@ opening → question → flip → roles → ending
 | **opening** | 없음 | `topic` |
 | **question** | `topic` | `question`, `choice1`, `choice2` |
 | **flip** | `question`, `choice1`, `choice2` | `dilemma_situation`, `question`, `choice1`, `flips_agree_texts`, `choice2`, `flips_disagree_texts` |
-| **roles** | flip의 6개 변수 | `char1`, `charDes1`, `char2`, `charDes2`, `char3`, `charDes3` |
-| **ending** | flip의 6개 + roles의 6개 | `opening`, `char1~3`, `charDes1~3`, `dilemma_situation`, `question`, `agree_label`, `disagree_label`, `flips_agree_texts`, `flips_disagree_texts`, `agreeEnding`, `disagreeEnding` |
+| **roles** | flip의 6개 변수 | `char1`, `chardes1`, `char2`, `chardes2`, `char3`, `chardes3` |
+| **ending** | flip의 6개 + roles의 6개 | `opening`, `char1~3`, `chardes1~3`, `dilemma_situation`, `question`, `agree_label`, `disagree_label`, `flips_agree_texts`, `flips_disagree_texts`, `agreeEnding`, `disagreeEnding` |
 
 ### 변수 전달 방식
 
@@ -221,11 +233,11 @@ opening → question → flip → roles → ending
 ```typescript
 {
   char1: string      // 역할 1 이름
-  charDes1: string   // 역할 1 배경 설명
+  chardes1: string   // 역할 1 배경 설명
   char2: string      // 역할 2 이름
-  charDes2: string   // 역할 2 배경 설명
+  chardes2: string   // 역할 2 배경 설명
   char3: string      // 역할 3 이름
-  charDes3: string   // 역할 3 배경 설명
+  chardes3: string   // 역할 3 배경 설명
 }
 ```
 
@@ -238,11 +250,11 @@ opening → question → flip → roles → ending
   "response_text": "[챗봇이 생성한 역할 제안 텍스트]",
   "parsed_variables": {
     "char1": "학생",
-    "charDes1": "당신은 중학교 3학년 학생이며, AI 시스템의 성적 예측 방식에 대해 잘 알고 있습니다...",
+    "chardes1": "당신은 중학교 3학년 학생이며, AI 시스템의 성적 예측 방식에 대해 잘 알고 있습니다...",
     "char2": "교사",
-    "charDes2": "당신은 10년 경력의 고등학교 교사입니다...",
+    "chardes2": "당신은 10년 경력의 고등학교 교사입니다...",
     "char3": "학부모",
-    "charDes3": "당신은 중학교 1학년 자녀를 둔 학부모로..."
+    "chardes3": "당신은 중학교 1학년 자녀를 둔 학부모로..."
   },
   "next_step": "ending",
   "is_complete": false
@@ -267,11 +279,11 @@ opening → question → flip → roles → ending
 {
   opening: string[]            // 오프닝 멘트 (문장 배열)
   char1: string                // 역할 1 이름
-  charDes1: string             // 역할 1 배경 설명
+  chardes1: string             // 역할 1 배경 설명
   char2: string                // 역할 2 이름
-  charDes2: string             // 역할 2 배경 설명
+  chardes2: string             // 역할 2 배경 설명
   char3: string                // 역할 3 이름
-  charDes3: string             // 역할 3 배경 설명
+  chardes3: string             // 역할 3 배경 설명
   dilemma_situation: string[]  // 상황 시나리오 (문장 배열)
   question: string             // 딜레마 질문
   agree_label: string          // 선택지 1 라벨
@@ -298,11 +310,11 @@ opening → question → flip → roles → ending
       "여러분은 각자의 입장에서 이 신기술의 윤리적 문제를 토론하게 될 것입니다."
     ],
     "char1": "AI 시스템 개발자",
-    "charDes1": "당신은 한 대학교의 컴퓨터 공학과에서 AI 시스템을 연구하는 교수입니다...",
+    "chardes1": "당신은 한 대학교의 컴퓨터 공학과에서 AI 시스템을 연구하는 교수입니다...",
     "char2": "학생 대표",
-    "charDes2": "당신은 고등학교 3학년 학생으로, 학교의 학생회에서 활동하고 있습니다...",
+    "chardes2": "당신은 고등학교 3학년 학생으로, 학교의 학생회에서 활동하고 있습니다...",
     "char3": "학부모",
-    "charDes3": "당신은 중학생을 둔 부모로, 자녀의 교육과 안전에 관심이 많습니다...",
+    "chardes3": "당신은 중학생을 둔 부모로, 자녀의 교육과 안전에 관심이 많습니다...",
     "dilemma_situation": [
       "AI 시스템이 학교에서 학생들의 성적을 예측하는 데 사용되고 있습니다.",
       "이 시스템은 처음 도입될 때 학생들의 개인적인 성향과 반응을 고려하지 않고, 객관적인 데이터를 기반으로 결과를 도출하기 위해 설계되었습니다.",
@@ -376,6 +388,29 @@ if (data.parsed_variables && Object.keys(data.parsed_variables).length > 0) {
 }
 ```
 
+### variable 필드 사용 (테스트/디버깅)
+
+```javascript
+// 특정 단계를 바로 테스트하고 싶을 때 (이전 단계 없이)
+const response = await fetch('/chat/multi-step', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    session_id: sessionId,
+    user_input: "시작",
+    step: "flip",
+    variable: {
+      question: "AI가 학생 성적을 예측하는 상황에서 어떤 선택을 해야 할까요?",
+      choice1: "정확성을 위해 특정 집단의 데이터를 우선 사용한다",
+      choice2: "공정성을 위해 모든 집단에 균형 잡힌 결과를 제공한다"
+    }
+  })
+});
+// variable로 전달한 값이 프롬프트에 직접 전달됨
+```
+
+**주의**: `variable` 필드는 주로 개발/테스트 용도입니다. 프로덕션에서는 일반적으로 사용하지 않으며, 백엔드가 자동으로 context에서 필요한 변수를 가져옵니다.
+
 ### ending 단계 처리 예시
 
 ```javascript
@@ -383,9 +418,9 @@ if (data.is_complete && data.parsed_variables) {
   const template = {
     opening: data.parsed_variables.opening,
     roles: [
-      { name: data.parsed_variables.char1, description: data.parsed_variables.charDes1 },
-      { name: data.parsed_variables.char2, description: data.parsed_variables.charDes2 },
-      { name: data.parsed_variables.char3, description: data.parsed_variables.charDes3 }
+      { name: data.parsed_variables.char1, description: data.parsed_variables.chardes1 },
+      { name: data.parsed_variables.char2, description: data.parsed_variables.chardes2 },
+      { name: data.parsed_variables.char3, description: data.parsed_variables.chardes3 }
     ],
     scenario: data.parsed_variables.dilemma_situation,
     question: data.parsed_variables.question,

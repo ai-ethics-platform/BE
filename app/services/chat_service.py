@@ -52,11 +52,11 @@ class ChatService:
                 "flip_flips_disagree_texts": "flips_disagree_texts",
                 # roles의 자료
                 "roles_char1": "char1",
-                "roles_charDes1": "charDes1",
+                "roles_chardes1": "chardes1",
                 "roles_char2": "char2",
-                "roles_charDes2": "charDes2",
+                "roles_chardes2": "chardes2",
                 "roles_char3": "char3",
-                "roles_charDes3": "charDes3"
+                "roles_chardes3": "chardes3"
             }
         }
     
@@ -112,9 +112,15 @@ class ChatService:
         """마지막 단계인지 확인"""
         return current_step == self.step_order[-1]
     
-    async def call_openai_response(self, step: str, user_input: str, context: Dict[str, Any]) -> tuple[str, Dict[str, Any]]:
+    async def call_openai_response(self, step: str, user_input: str, context: Dict[str, Any], manual_variables: Optional[Dict[str, Any]] = None) -> tuple[str, Dict[str, Any]]:
         """
         OpenAI Responses API 호출 후 LangChain으로 JSON 파싱
+        
+        Args:
+            step: 현재 단계
+            user_input: 사용자 입력
+            context: 세션 컨텍스트
+            manual_variables: 수동으로 전달할 변수들 (선택사항)
         
         Returns:
             tuple[str, Dict[str, Any]]: (response_text, parsed_variables)
@@ -136,6 +142,10 @@ class ChatService:
             for context_key, prompt_var_name in variable_mapping.items():
                 if context_key in context:
                     input_variables[prompt_var_name] = context[context_key]
+        
+        # 수동으로 전달된 변수가 있으면 병합 (우선순위: manual_variables > context)
+        if manual_variables:
+            input_variables.update(manual_variables)
         
         try:
             # 1. OpenAI Playground API로 프롬프트 처리
@@ -252,7 +262,8 @@ response_text 필드에는 사용자에게 보여줄 원본 응답 텍스트를 
         response_text, parsed_variables = await self.call_openai_response(
             current_step, 
             request.user_input, 
-            session.context or {}
+            session.context or {},
+            request.variable  # 수동 변수 전달
         )
         
         # 컨텍스트 업데이트 (현재 단계 결과 저장)

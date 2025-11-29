@@ -37,11 +37,11 @@ class RolesResponse(BaseModel):
     """roles 단계 응답 모델 - 역할 캐릭터 변수 추출 (ending 단계에 전달)"""
     response_text: str = Field(..., description="사용자에게 보여줄 응답 텍스트")
     char1: Optional[str] = Field(None, description="역할 1 이름")
-    charDes1: Optional[str] = Field(None, description="역할 1 배경 설명")
+    chardes1: Optional[str] = Field(None, description="역할 1 배경 설명")
     char2: Optional[str] = Field(None, description="역할 2 이름")
-    charDes2: Optional[str] = Field(None, description="역할 2 배경 설명")
+    chardes2: Optional[str] = Field(None, description="역할 2 배경 설명")
     char3: Optional[str] = Field(None, description="역할 3 이름")
-    charDes3: Optional[str] = Field(None, description="역할 3 배경 설명")
+    chardes3: Optional[str] = Field(None, description="역할 3 배경 설명")
     # roles → ending: 역할 자료 전달
 
 
@@ -50,11 +50,11 @@ class EndingResponse(BaseModel):
     response_text: str = Field(..., description="사용자에게 보여줄 응답 텍스트")
     opening: Optional[List[str]] = Field(None, description="오프닝 멘트 (문장 배열)")
     char1: Optional[str] = Field(None, description="역할 1 이름")
-    charDes1: Optional[str] = Field(None, description="역할 1 배경 설명")
+    chardes1: Optional[str] = Field(None, description="역할 1 배경 설명")
     char2: Optional[str] = Field(None, description="역할 2 이름")
-    charDes2: Optional[str] = Field(None, description="역할 2 배경 설명")
+    chardes2: Optional[str] = Field(None, description="역할 2 배경 설명")
     char3: Optional[str] = Field(None, description="역할 3 이름")
-    charDes3: Optional[str] = Field(None, description="역할 3 배경 설명")
+    chardes3: Optional[str] = Field(None, description="역할 3 배경 설명")
     dilemma_situation: Optional[List[str]] = Field(None, description="상황 시나리오 (문장 배열)")
     question: Optional[str] = Field(None, description="딜레마 질문")
     agree_label: Optional[str] = Field(None, description="선택지 1 라벨")

@@ -32,6 +32,7 @@ class MultiStepChatRequest(BaseModel):
     session_id: str = Field(..., description="Session identifier")
     user_input: str = Field(..., description="User's input text")
     step: Optional[str] = Field(default=None, description="Specific step to execute (optional)")
+    variable: Optional[Dict[str, Any]] = Field(default=None, description="Manual variables to pass to the prompt (optional)")
 
 
 class MultiStepChatResponse(BaseModel):
