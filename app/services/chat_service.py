@@ -114,7 +114,7 @@ class ChatService:
     
     async def call_openai_response(self, step: str, user_input: str, context: Dict[str, Any], manual_variables: Optional[Dict[str, Any]] = None) -> tuple[str, Dict[str, Any]]:
         """
-        OpenAI Responses API 호출 후 LangChain으로 JSON 파싱
+        OpenAI Responses API 호출 후 LangChain으로 변수만 추출
         
         Args:
             step: 현재 단계
@@ -178,8 +178,9 @@ class ChatService:
                         text_parts.append(getattr(c, "text", ""))
             
             raw_response_text = "".join(text_parts).strip()
+            print(f"[DEBUG] Raw response_text (first 300 chars): {raw_response_text[:300]}")
             
-            # 2. LangChain으로 JSON 파싱 시도
+            # 2. LangChain으로 변수만 추출 (response_text는 raw_response_text 그대로 사용!)
             parsed_variables = {}
             try:
                 from langchain_openai import ChatOpenAI
@@ -191,24 +192,25 @@ class ChatService:
                 if response_model:
                     llm = ChatOpenAI(
                         model="gpt-4o-mini",
-                        temperature=0.7,
+                        temperature=0,  # 변수 추출은 deterministic하게
                         api_key=settings.OPENAI_API_KEY,
                     )
                     
                     # PydanticOutputParser 생성
                     parser = PydanticOutputParser(pydantic_object=response_model)
                     
-                    # JSON 형식으로 출력하도록 지시하는 프롬프트
+                    # 변수만 추출하는 프롬프트 (response_text 제외)
                     format_instructions = parser.get_format_instructions()
                     
                     prompt_template = ChatPromptTemplate.from_template(
-                        """다음 응답을 JSON 형식으로 변환해주세요. 
-응답 텍스트: {raw_response}
+                        """다음 텍스트에서 필요한 정보를 추출하여 JSON으로 반환하세요.
+
+텍스트:
+{raw_response}
 
 {format_instructions}
 
-원본 응답의 내용을 유지하면서, 위 JSON 스키마에 맞춰서 구조화해주세요.
-response_text 필드에는 사용자에게 보여줄 원본 응답 텍스트를 넣어주세요."""
+중요: response_text 필드는 비워두고, 다른 필드만 추출하세요."""
                     )
                     
                     # 체인 실행
@@ -218,29 +220,26 @@ response_text 필드에는 사용자에게 보여줄 원본 응답 텍스트를 
                         "format_instructions": format_instructions
                     })
                     
-                    # 파싱된 결과에서 변수 추출
+                    # 파싱된 결과에서 변수만 추출 (response_text 제외!)
                     if isinstance(parsed_result, BaseModel):
                         parsed_dict = parsed_result.model_dump()
                         print(f"[DEBUG] Parsed dict: {parsed_dict}")
                         
-                        # response_text는 제외하고, None이 아닌 값만 variables로
+                        # response_text는 무시하고, None이 아닌 값만 variables로
                         parsed_variables = {
                             k: v for k, v in parsed_dict.items() 
                             if k != "response_text" and v is not None
                         }
                         print(f"[DEBUG] Extracted variables: {parsed_variables}")
-                        
-                        # response_text가 있으면 그것을 사용
-                        if "response_text" in parsed_dict and parsed_dict["response_text"]:
-                            raw_response_text = parsed_dict["response_text"]
                     
             except Exception as parse_error:
-                # JSON 파싱 실패 시 원본 텍스트 사용
+                # JSON 파싱 실패 시에도 원본 텍스트는 유지
                 print(f"[DEBUG] LangChain parsing failed: {parse_error}")
                 import traceback
                 traceback.print_exc()
                 pass
             
+            # response_text는 항상 원본 사용! (LangChain 결과 무시)
             return raw_response_text, parsed_variables
             
         except Exception as e:
