@@ -19,10 +19,11 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
-        "https://www.dilemmai-idl.com",
         "http://localhost:3000",
         "http://localhost:8000",
-        "https://dilemmai.org"
+        # 프론트엔드 도메인 (dilemmai.org)
+        "https://dilemmai.org",
+        "https://www.dilemmai.org",
     ],
     allow_credentials=True,
     allow_methods=["*"],
