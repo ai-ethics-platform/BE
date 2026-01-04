@@ -37,4 +37,4 @@ uvicorn app.main:app --reload
 Docker와 GitHub Actions를 통해 자동 배포됩니다. 
 
 # URL !
-https://www.dilemmai-idl.com/
+https://www.dilemmai.org/
