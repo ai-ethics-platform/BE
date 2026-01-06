@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime
+import os
 
 from app.api.api import api_router
 from app.core.config import settings
@@ -21,7 +22,6 @@ app.add_middleware(
         "http://localhost:5173",
         "http://localhost:3000",
         "http://localhost:8000",
-        # 프론트엔드 도메인 (dilemmai.org)
         "https://dilemmai.org",
         "https://www.dilemmai.org",
     ],
@@ -31,7 +31,14 @@ app.add_middleware(
 )
 
 app.include_router(api_router)
+
+# 정적 파일 디렉토리 생성 (존재하지 않을 경우)
+os.makedirs("static", exist_ok=True)
+os.makedirs("recordings", exist_ok=True)
+
+# 정적 파일 마운트
 app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/recordings", StaticFiles(directory="recordings"), name="recordings")
 
 @app.on_event("startup")
 async def startup_event():
