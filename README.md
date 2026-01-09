@@ -15,6 +15,7 @@ FastAPI를 이용한 AI 윤리게임 백엔드 서버입니다.
 - 실시간 게임 세션 관리
 - 음성 데이터 처리 및 분석
 - AI 피드백 생성
+- 연구 데이터 분석 API (실험 데이터 export 및 분석)
 
 ## 설치 및 실행 방법
 ```bash
@@ -31,6 +32,28 @@ cp .env.example .env
 
 # 서버 실행
 uvicorn app.main:app --reload
+```
+
+## API 문서
+- **메인 API 문서**: http://localhost:8000/docs (FastAPI Swagger UI)
+- **연구 데이터 분석 API**: [RESEARCH_API_GUIDE.md](./RESEARCH_API_GUIDE.md)
+- **챗봇 API**: [CHATBOT_API_GUIDE.md](./CHATBOT_API_GUIDE.md)
+- **GPT Playground API**: [GPT_PLAYGROUND_API_SPECIFICATION.md](./GPT_PLAYGROUND_API_SPECIFICATION.md)
+
+## Docker 실행
+```bash
+# 환경 변수 파일 설정
+cp .env.example .env
+# .env 파일 수정
+
+# Docker Compose로 실행
+docker-compose up -d
+
+# 로그 확인
+docker-compose logs -f
+
+# 중지
+docker-compose down
 ```
 
 ## 배포
