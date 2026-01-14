@@ -565,8 +565,8 @@ async def analyze_choices(
 
 @router.get("/experiments/export/excel")
 async def export_experiment_data_to_excel(
-    started_only: bool = Query(True, description="시작된 게임만 포함"),
-    with_consent_only: bool = Query(True, description="동의한 사용자만 포함"),
+    started_only: bool = Query(False, description="시작된 게임만 포함"),
+    with_consent_only: bool = Query(False, description="동의한 사용자만 포함"),
     topic: Optional[str] = Query(None, description="특정 주제 필터링"),
     db: AsyncSession = Depends(get_db)
 ):
@@ -585,18 +585,16 @@ async def export_experiment_data_to_excel(
     - R1~R5 각각: role, individual_choice, individual_confidence, group_choice, group_confidence
     """
     # 방 쿼리 (AsyncSession에 맞게 수정)
-    stmt = select(Room).options(
-        joinedload(Room.participants).joinedload(RoomParticipant.user)
-    )
+    stmt = select(Room)
     
     if started_only:
-        stmt = stmt.filter(Room.is_started == True)
+        stmt = stmt.where(Room.is_started == True)
     
     if topic:
-        stmt = stmt.filter(Room.topic == topic)
+        stmt = stmt.where(Room.topic == topic)
     
     result = await db.execute(stmt)
-    rooms = result.unique().scalars().all()
+    rooms = result.scalars().all()
     
     # 엑셀 워크북 생성
     wb = Workbook()
@@ -635,8 +633,13 @@ async def export_experiment_data_to_excel(
     current_row = 2
     
     for room in rooms:
+        # 참가자 조회
+        participant_stmt = select(RoomParticipant).where(RoomParticipant.room_id == room.id)
+        participant_result = await db.execute(participant_stmt)
+        participants = participant_result.scalars().all()
+        
         # 라운드별 합의 선택 미리 조회
-        consensus_stmt = select(ConsensusChoice).filter(
+        consensus_stmt = select(ConsensusChoice).where(
             ConsensusChoice.room_id == room.id
         ).order_by(ConsensusChoice.round_number)
         
@@ -644,14 +647,20 @@ async def export_experiment_data_to_excel(
         consensus_choices = consensus_result.scalars().all()
         consensus_map = {cc.round_number: cc for cc in consensus_choices}
         
-        for participant in room.participants:
+        for participant in participants:
+            # 사용자 정보 조회
+            user = None
+            if participant.user_id:
+                user_result = await db.get(User, participant.user_id)
+                user = user_result
+            
             # 동의 체크
-            if with_consent_only and participant.user:
-                if not (participant.user.data_consent and participant.user.voice_consent):
+            if with_consent_only and user:
+                if not (user.data_consent and user.voice_consent):
                     continue
             
             # 라운드별 개인 선택 조회
-            round_choice_stmt = select(RoundChoice).filter(
+            round_choice_stmt = select(RoundChoice).where(
                 RoundChoice.participant_id == participant.id
             ).order_by(RoundChoice.round_number)
             
@@ -663,12 +672,12 @@ async def export_experiment_data_to_excel(
             row_data = [
                 room.room_code,  # episode_code
                 participant.id,  # participant_id
-                participant.user.created_at.strftime("%Y-%m-%d %H:%M:%S") if participant.user else "",  # signup_date
-                participant.user.username if participant.user else participant.nickname,  # username
-                participant.user.email if participant.user else "",  # email
-                participant.user.birthdate if participant.user else "",  # date_of_birth
-                participant.user.gender if participant.user else "",  # gender
-                participant.user.education_level if participant.user else ""  # education_level
+                user.created_at.strftime("%Y-%m-%d %H:%M:%S") if user else "",  # signup_date
+                user.username if user else participant.nickname,  # username
+                user.email if user else "",  # email
+                user.birthdate if user else "",  # date_of_birth
+                user.gender if user else "",  # gender
+                user.education_level if user else ""  # education_level
             ]
             
             # 라운드 1~5 데이터 추가
@@ -744,3 +753,56 @@ def _get_role_string(role_id: Optional[int]) -> str:
         3: "DEV"   # Developer (AI 개발자)
     }
     return role_map.get(role_id, "") if role_id else ""
+
+
+@router.get("/experiments/debug/counts")
+async def get_data_counts(db: AsyncSession = Depends(get_db)):
+    """
+    디버깅용: 데이터베이스에 실제로 데이터가 몇 개나 있는지 확인
+    """
+    # Room 개수
+    room_stmt = select(func.count()).select_from(Room)
+    room_result = await db.execute(room_stmt)
+    total_rooms = room_result.scalar()
+    
+    # RoomParticipant 개수
+    participant_stmt = select(func.count()).select_from(RoomParticipant)
+    participant_result = await db.execute(participant_stmt)
+    total_participants = participant_result.scalar()
+    
+    # User 개수
+    user_stmt = select(func.count()).select_from(User)
+    user_result = await db.execute(user_stmt)
+    total_users = user_result.scalar()
+    
+    # RoundChoice 개수
+    round_choice_stmt = select(func.count()).select_from(RoundChoice)
+    round_choice_result = await db.execute(round_choice_stmt)
+    total_round_choices = round_choice_result.scalar()
+    
+    # ConsensusChoice 개수
+    consensus_stmt = select(func.count()).select_from(ConsensusChoice)
+    consensus_result = await db.execute(consensus_stmt)
+    total_consensus = consensus_result.scalar()
+    
+    # 샘플 Room 데이터 (첫 5개)
+    sample_rooms_stmt = select(Room).limit(5)
+    sample_rooms_result = await db.execute(sample_rooms_stmt)
+    sample_rooms = sample_rooms_result.scalars().all()
+    
+    return {
+        "total_rooms": total_rooms,
+        "total_participants": total_participants,
+        "total_users": total_users,
+        "total_round_choices": total_round_choices,
+        "total_consensus_choices": total_consensus,
+        "sample_rooms": [
+            {
+                "id": r.id,
+                "room_code": r.room_code,
+                "topic": r.topic,
+                "is_started": r.is_started
+            }
+            for r in sample_rooms
+        ]
+    }
