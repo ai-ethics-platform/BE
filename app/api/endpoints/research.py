@@ -9,7 +9,8 @@ import io
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import and_, or_, func
+from sqlalchemy import and_, or_, func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment
 
@@ -567,7 +568,7 @@ async def export_experiment_data_to_excel(
     started_only: bool = Query(True, description="시작된 게임만 포함"),
     with_consent_only: bool = Query(True, description="동의한 사용자만 포함"),
     topic: Optional[str] = Query(None, description="특정 주제 필터링"),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ):
     """
     실험 데이터를 엑셀 파일로 export
@@ -583,18 +584,19 @@ async def export_experiment_data_to_excel(
     - education_level: 교육 수준
     - R1~R5 각각: role, individual_choice, individual_confidence, group_choice, group_confidence
     """
-    # 방 쿼리
-    rooms_query = db.query(Room).options(
+    # 방 쿼리 (AsyncSession에 맞게 수정)
+    stmt = select(Room).options(
         joinedload(Room.participants).joinedload(RoomParticipant.user)
     )
     
     if started_only:
-        rooms_query = rooms_query.filter(Room.is_started == True)
+        stmt = stmt.filter(Room.is_started == True)
     
     if topic:
-        rooms_query = rooms_query.filter(Room.topic == topic)
+        stmt = stmt.filter(Room.topic == topic)
     
-    rooms = rooms_query.all()
+    result = await db.execute(stmt)
+    rooms = result.unique().scalars().all()
     
     # 엑셀 워크북 생성
     wb = Workbook()
@@ -634,10 +636,12 @@ async def export_experiment_data_to_excel(
     
     for room in rooms:
         # 라운드별 합의 선택 미리 조회
-        consensus_choices = db.query(ConsensusChoice).filter(
+        consensus_stmt = select(ConsensusChoice).filter(
             ConsensusChoice.room_id == room.id
-        ).order_by(ConsensusChoice.round_number).all()
+        ).order_by(ConsensusChoice.round_number)
         
+        consensus_result = await db.execute(consensus_stmt)
+        consensus_choices = consensus_result.scalars().all()
         consensus_map = {cc.round_number: cc for cc in consensus_choices}
         
         for participant in room.participants:
@@ -647,10 +651,12 @@ async def export_experiment_data_to_excel(
                     continue
             
             # 라운드별 개인 선택 조회
-            round_choices = db.query(RoundChoice).filter(
+            round_choice_stmt = select(RoundChoice).filter(
                 RoundChoice.participant_id == participant.id
-            ).order_by(RoundChoice.round_number).all()
+            ).order_by(RoundChoice.round_number)
             
+            round_choice_result = await db.execute(round_choice_stmt)
+            round_choices = round_choice_result.scalars().all()
             round_choice_map = {rc.round_number: rc for rc in round_choices}
             
             # 기본 정보
