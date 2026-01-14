@@ -4,10 +4,14 @@
 """
 from typing import Any, List, Optional
 from datetime import datetime
+import io
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import and_, or_, func
+from openpyxl import Workbook
+from openpyxl.styles import Font, PatternFill, Alignment
 
 from app.core.deps import get_db
 from app.models import (
@@ -556,3 +560,181 @@ async def analyze_choices(
             for r in role_analysis
         ]
     }
+
+
+@router.get("/experiments/export/excel")
+async def export_experiment_data_to_excel(
+    started_only: bool = Query(True, description="시작된 게임만 포함"),
+    with_consent_only: bool = Query(True, description="동의한 사용자만 포함"),
+    topic: Optional[str] = Query(None, description="특정 주제 필터링"),
+    db: Session = Depends(get_db)
+):
+    """
+    실험 데이터를 엑셀 파일로 export
+    
+    형식:
+    - episode_code: 게임 방 코드
+    - participant_id: 참가자 ID
+    - signup_date: 가입 날짜
+    - username: 사용자 이름
+    - email: 이메일
+    - date_of_birth: 생년월일
+    - gender: 성별
+    - education_level: 교육 수준
+    - R1~R5 각각: role, individual_choice, individual_confidence, group_choice, group_confidence
+    """
+    # 방 쿼리
+    rooms_query = db.query(Room).options(
+        joinedload(Room.participants).joinedload(RoomParticipant.user)
+    )
+    
+    if started_only:
+        rooms_query = rooms_query.filter(Room.is_started == True)
+    
+    if topic:
+        rooms_query = rooms_query.filter(Room.topic == topic)
+    
+    rooms = rooms_query.all()
+    
+    # 엑셀 워크북 생성
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Experiment Data"
+    
+    # 헤더 스타일 설정
+    header_fill = PatternFill(start_color="FFD966", end_color="FFD966", fill_type="solid")
+    header_font = Font(bold=True)
+    header_alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+    
+    # 헤더 정의
+    headers = [
+        "episode_code", "participant_id", "signup_date", "username", "email",
+        "date_of_birth", "gender", "education_level"
+    ]
+    
+    # 라운드 1~5 헤더 추가
+    for round_num in range(1, 6):
+        headers.extend([
+            f"R{round_num}_role",
+            f"R{round_num}_individual_choice",
+            f"R{round_num}_individual_confidence",
+            f"R{round_num}_group_choice",
+            f"R{round_num}_group_confidence"
+        ])
+    
+    # 헤더 작성
+    for col_idx, header in enumerate(headers, start=1):
+        cell = ws.cell(row=1, column=col_idx, value=header)
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.alignment = header_alignment
+    
+    # 데이터 작성
+    current_row = 2
+    
+    for room in rooms:
+        # 라운드별 합의 선택 미리 조회
+        consensus_choices = db.query(ConsensusChoice).filter(
+            ConsensusChoice.room_id == room.id
+        ).order_by(ConsensusChoice.round_number).all()
+        
+        consensus_map = {cc.round_number: cc for cc in consensus_choices}
+        
+        for participant in room.participants:
+            # 동의 체크
+            if with_consent_only and participant.user:
+                if not (participant.user.data_consent and participant.user.voice_consent):
+                    continue
+            
+            # 라운드별 개인 선택 조회
+            round_choices = db.query(RoundChoice).filter(
+                RoundChoice.participant_id == participant.id
+            ).order_by(RoundChoice.round_number).all()
+            
+            round_choice_map = {rc.round_number: rc for rc in round_choices}
+            
+            # 기본 정보
+            row_data = [
+                room.room_code,  # episode_code
+                participant.id,  # participant_id
+                participant.user.created_at.strftime("%Y-%m-%d %H:%M:%S") if participant.user else "",  # signup_date
+                participant.user.username if participant.user else participant.nickname,  # username
+                participant.user.email if participant.user else "",  # email
+                participant.user.birthdate if participant.user else "",  # date_of_birth
+                participant.user.gender if participant.user else "",  # gender
+                participant.user.education_level if participant.user else ""  # education_level
+            ]
+            
+            # 라운드 1~5 데이터 추가
+            for round_num in range(1, 6):
+                # 역할 정보 (모든 라운드에 동일하게 표시)
+                role_str = _get_role_string(participant.role_id)
+                
+                # 개인 선택 정보
+                individual_choice = ""
+                individual_confidence = ""
+                if round_num in round_choice_map:
+                    rc = round_choice_map[round_num]
+                    individual_choice = rc.choice if rc.choice is not None else ""
+                    individual_confidence = rc.confidence if rc.confidence is not None else ""
+                
+                # 그룹 합의 정보
+                group_choice = ""
+                group_confidence = ""
+                if round_num in consensus_map:
+                    cc = consensus_map[round_num]
+                    group_choice = cc.choice if cc.choice is not None else ""
+                    group_confidence = cc.confidence if cc.confidence is not None else ""
+                
+                row_data.extend([
+                    role_str,
+                    individual_choice,
+                    individual_confidence,
+                    group_choice,
+                    group_confidence
+                ])
+            
+            # 행 작성
+            for col_idx, value in enumerate(row_data, start=1):
+                ws.cell(row=current_row, column=col_idx, value=value)
+            
+            current_row += 1
+    
+    # 컬럼 너비 자동 조정
+    for column in ws.columns:
+        max_length = 0
+        column_letter = column[0].column_letter
+        for cell in column:
+            try:
+                if len(str(cell.value)) > max_length:
+                    max_length = len(str(cell.value))
+            except:
+                pass
+        adjusted_width = min(max_length + 2, 50)
+        ws.column_dimensions[column_letter].width = adjusted_width
+    
+    # 메모리에 엑셀 파일 저장
+    excel_file = io.BytesIO()
+    wb.save(excel_file)
+    excel_file.seek(0)
+    
+    # 파일명 생성
+    timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    filename = f"experiment_data_{timestamp}.xlsx"
+    
+    # StreamingResponse로 반환
+    return StreamingResponse(
+        excel_file,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
+
+def _get_role_string(role_id: Optional[int]) -> str:
+    """역할 ID를 문자열로 변환"""
+    role_map = {
+        1: "CG",   # Caregiver (요양보호사)
+        2: "FAM",  # Family (가족)
+        3: "DEV"   # Developer (AI 개발자)
+    }
+    return role_map.get(role_id, "") if role_id else ""
