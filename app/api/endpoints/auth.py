@@ -110,7 +110,8 @@ async def guest_login(
     return {
         "access_token": access_token,
         "refresh_token": refresh_token,
-        "token_type": "bearer"
+        "token_type": "bearer",
+        "guest_id": guest_id  # 게스트 ID 포함
     }
 
 
