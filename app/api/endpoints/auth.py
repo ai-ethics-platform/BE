@@ -102,16 +102,32 @@ async def register_user(
 
 @router.post("/guest")
 async def guest_login(
-    guest_id: str = Body(..., embed=True)
+    guest_id: str = Body(..., embed=True),
+    db: AsyncSession = Depends(get_db)
 ):
-    # DB 저장 없이 토큰만 발급
-    access_token = auth_service.create_access_token_guest(guest_id, expires_minutes=60)
-    refresh_token = auth_service.create_refresh_token_guest(guest_id)
+    """
+    게스트 로그인 - DB에 user row 생성 후 user_id 반환
+    
+    Returns:
+        - user_id: 생성된 user의 ID
+        - access_token, refresh_token: 일반 사용자와 동일한 형식
+    """
+    # 1. DB에 게스트 사용자 생성
+    guest_user = await user_service.create_guest(db=db, guest_id=guest_id)
+    
+    # 2. 일반 사용자와 동일한 형식의 토큰 발급 (user_id 기반)
+    access_token = auth_service.create_access_token(
+        user_id=guest_user.id,
+        expires_minutes=60
+    )
+    refresh_token = auth_service.create_refresh_token(user_id=guest_user.id)
+    
     return {
+        "user_id": guest_user.id,  # ✅ user_id 반환!
         "access_token": access_token,
         "refresh_token": refresh_token,
         "token_type": "bearer",
-        "guest_id": guest_id  # 게스트 ID 포함
+        "is_guest": True  # 게스트 여부 표시
     }
 
 
