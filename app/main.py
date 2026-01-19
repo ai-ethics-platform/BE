@@ -51,7 +51,7 @@ async def root():
 
 @app.get("/health")
 async def health_check():
-    """헬스 체크 엔드포인트"""
+    """헬스 체크"""
     return {
         "status": "healthy",
         "timestamp": datetime.utcnow().isoformat(),
