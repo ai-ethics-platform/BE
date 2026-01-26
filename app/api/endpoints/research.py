@@ -7,7 +7,7 @@ from datetime import datetime
 import io
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, RedirectResponse
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import and_, or_, func, select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -31,6 +31,14 @@ from app.schemas.research import (
 
 
 router = APIRouter()
+
+
+@router.get("/dashboard")
+async def research_dashboard():
+    """
+    연구 데이터 조회 대시보드로 리다이렉트
+    """
+    return RedirectResponse(url="/static/research_dashboard.html")
 
 
 @router.get("/experiments/summary", response_model=DataStatisticsResponse)

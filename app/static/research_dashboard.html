@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Ethics 실험 데이터 조회 대시보드</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            margin-bottom: 20px;
+        }
+
+        .card h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin: 5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-box h3 {
+            font-size: 2em;
+            margin-bottom: 5px;
+        }
+
+        .stat-box p {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .loading {
+            text-align: center;
+            color: #667eea;
+            padding: 20px;
+            font-weight: 600;
+        }
+
+        .error {
+            background: #fee;
+            color: #c00;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #c00;
+        }
+
+        .success {
+            background: #efe;
+            color: #060;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #060;
+        }
+
+        .data-display {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .data-display pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+
+        .info-box h4 {
+            color: #1976D2;
+            margin-bottom: 10px;
+        }
+
+        .info-box ul {
+            margin-left: 20px;
+        }
+
+        .info-box li {
+            margin: 5px 0;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔬 AI Ethics 실험 데이터 대시보드</h1>
+            <p>연구 데이터 조회 및 분석 도구</p>
+        </div>
+
+        <!-- 통계 요약 -->
+        <div class="card">
+            <h2>📊 전체 통계 요약</h2>
+            <button class="btn" onclick="loadStats()">통계 불러오기</button>
+            <div id="statsContainer"></div>
+        </div>
+
+        <!-- 엑셀 다운로드 -->
+        <div class="card">
+            <h2>📥 데이터 다운로드</h2>
+            <div class="info-box">
+                <h4>💡 다운로드 옵션</h4>
+                <ul>
+                    <li><strong>엑셀 (Excel):</strong> 모든 실험 데이터를 스프레드시트로 다운로드</li>
+                    <li><strong>JSON:</strong> 프로그래밍 분석용 원시 데이터</li>
+                </ul>
+            </div>
+            <div class="button-group">
+                <button class="btn btn-success" onclick="downloadExcel()">📊 엑셀 다운로드 (Excel)</button>
+                <button class="btn btn-secondary" onclick="downloadJSON()">📄 JSON 다운로드</button>
+            </div>
+        </div>
+
+        <!-- 특정 방 조회 -->
+        <div class="card">
+            <h2>🏠 특정 방(Room) 조회</h2>
+            <div class="input-group">
+                <label for="roomId">Room ID:</label>
+                <input type="number" id="roomId" placeholder="예: 123">
+            </div>
+            <button class="btn" onclick="loadRoom()">방 데이터 조회</button>
+            <div id="roomContainer"></div>
+        </div>
+
+        <!-- 특정 사용자 조회 -->
+        <div class="card">
+            <h2>👤 특정 사용자 조회</h2>
+            <div class="input-group">
+                <label for="userId">User ID:</label>
+                <input type="number" id="userId" placeholder="예: 456">
+            </div>
+            <button class="btn" onclick="loadUser()">사용자 데이터 조회</button>
+            <div id="userContainer"></div>
+        </div>
+
+        <!-- 선택 데이터 분석 -->
+        <div class="card">
+            <h2>📈 선택 데이터 분석</h2>
+            <div class="input-group">
+                <label for="topic">주제 필터 (선택사항):</label>
+                <input type="text" id="topic" placeholder="예: 자율주행">
+            </div>
+            <button class="btn" onclick="loadAnalysis()">분석 데이터 조회</button>
+            <div id="analysisContainer"></div>
+        </div>
+
+        <!-- 디버깅 정보 -->
+        <div class="card">
+            <h2>🔍 디버깅 정보</h2>
+            <button class="btn btn-danger" onclick="loadDebug()">디버깅 정보 확인</button>
+            <div id="debugContainer"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+
+        // 통계 불러오기
+        async function loadStats() {
+            const container = document.getElementById('statsContainer');
+            container.innerHTML = '<div class="loading">로딩 중...</div>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/research/experiments/summary`);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                
+                const data = await response.json();
+                container.innerHTML = `
+                    <div class="stats-grid">
+                        <div class="stat-box">
+                            <h3>${data.total_users || 0}</h3>
+                            <p>총 사용자</p>
+                        </div>
+                        <div class="stat-box">
+                            <h3>${data.users_with_full_consent || 0}</h3>
+                            <p>동의한 사용자</p>
+                        </div>
+                        <div class="stat-box">
+                            <h3>${data.total_rooms || 0}</h3>
+                            <p>총 방</p>
+                        </div>
+                        <div class="stat-box">
+                            <h3>${data.total_started_rooms || 0}</h3>
+                            <p>시작된 방</p>
+                        </div>
+                        <div class="stat-box">
+                            <h3>${data.total_round_choices || 0}</h3>
+                            <p>라운드 선택</p>
+                        </div>
+                        <div class="stat-box">
+                            <h3>${data.total_voice_recordings || 0}</h3>
+                            <p>음성 녹음</p>
+                        </div>
+                    </div>
+                `;
+            } catch (error) {
+                container.innerHTML = `<div class="error">❌ 오류: ${error.message}</div>`;
+            }
+        }
+
+        // 엑셀 다운로드
+        function downloadExcel() {
+            window.location.href = `${API_BASE}/research/experiments/export/excel`;
+        }
+
+        // JSON 다운로드
+        async function downloadJSON() {
+            try {
+                const response = await fetch(`${API_BASE}/research/experiments/export?limit=1000`);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                
+                const data = await response.json();
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `experiment_data_${new Date().toISOString().split('T')[0]}.json`;
+                a.click();
+            } catch (error) {
+                alert(`다운로드 실패: ${error.message}`);
+            }
+        }
+
+        // 방 데이터 조회
+        async function loadRoom() {
+            const roomId = document.getElementById('roomId').value;
+            const container = document.getElementById('roomContainer');
+            
+            if (!roomId) {
+                container.innerHTML = '<div class="error">Room ID를 입력하세요</div>';
+                return;
+            }
+            
+            container.innerHTML = '<div class="loading">로딩 중...</div>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/research/experiments/rooms/${roomId}`);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                
+                const data = await response.json();
+                container.innerHTML = `
+                    <div class="success">✅ 데이터 조회 성공</div>
+                    <div class="data-display">
+                        <h3>${data.title || '제목 없음'}</h3>
+                        <p><strong>주제:</strong> ${data.topic || 'N/A'}</p>
+                        <p><strong>참가자 수:</strong> ${data.participants?.length || 0}</p>
+                        <p><strong>시작 여부:</strong> ${data.is_started ? '시작됨' : '대기 중'}</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    </div>
+                `;
+            } catch (error) {
+                container.innerHTML = `<div class="error">❌ 오류: ${error.message}</div>`;
+            }
+        }
+
+        // 사용자 데이터 조회
+        async function loadUser() {
+            const userId = document.getElementById('userId').value;
+            const container = document.getElementById('userContainer');
+            
+            if (!userId) {
+                container.innerHTML = '<div class="error">User ID를 입력하세요</div>';
+                return;
+            }
+            
+            container.innerHTML = '<div class="loading">로딩 중...</div>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/research/experiments/users/${userId}`);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                
+                const data = await response.json();
+                container.innerHTML = `
+                    <div class="success">✅ 데이터 조회 성공</div>
+                    <div class="data-display">
+                        <h3>${data.username || '사용자'}</h3>
+                        <p><strong>이메일:</strong> ${data.email || 'N/A'}</p>
+                        <p><strong>참여한 방:</strong> ${data.rooms_participated?.length || 0}개</p>
+                        <p><strong>음성 녹음:</strong> ${data.voice_recordings?.length || 0}개</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    </div>
+                `;
+            } catch (error) {
+                container.innerHTML = `<div class="error">❌ 오류: ${error.message}</div>`;
+            }
+        }
+
+        // 선택 분석 조회
+        async function loadAnalysis() {
+            const topic = document.getElementById('topic').value;
+            const container = document.getElementById('analysisContainer');
+            
+            container.innerHTML = '<div class="loading">로딩 중...</div>';
+            
+            try {
+                const url = topic 
+                    ? `${API_BASE}/research/experiments/choices/analysis?topic=${encodeURIComponent(topic)}`
+                    : `${API_BASE}/research/experiments/choices/analysis`;
+                    
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                
+                const data = await response.json();
+                container.innerHTML = `
+                    <div class="success">✅ 분석 데이터 조회 성공</div>
+                    <div class="data-display">
+                        <h3>라운드별 선택 분석</h3>
+                        <p><strong>총 데이터:</strong> ${data.round_choices?.length || 0}개</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    </div>
+                `;
+            } catch (error) {
+                container.innerHTML = `<div class="error">❌ 오류: ${error.message}</div>`;
+            }
+        }
+
+        // 디버깅 정보
+        async function loadDebug() {
+            const container = document.getElementById('debugContainer');
+            container.innerHTML = '<div class="loading">로딩 중...</div>';
+            
+            try {
+                const response = await fetch(`${API_BASE}/research/experiments/debug/counts`);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                
+                const data = await response.json();
+                container.innerHTML = `
+                    <div class="success">✅ 디버깅 정보 조회 성공</div>
+                    <div class="data-display">
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    </div>
+                `;
+            } catch (error) {
+                container.innerHTML = `<div class="error">❌ 오류: ${error.message}</div>`;
+            }
+        }
+
+        // 페이지 로드 시 자동으로 통계 불러오기
+        window.addEventListener('load', () => {
+            loadStats();
+        });
+    </script>
+</body>
+</html>

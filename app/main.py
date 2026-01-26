@@ -33,11 +33,11 @@ app.add_middleware(
 app.include_router(api_router)
 
 # 정적 파일 디렉토리 생성 (존재하지 않을 경우)
-os.makedirs("static", exist_ok=True)
+os.makedirs("app/static", exist_ok=True)
 os.makedirs("recordings", exist_ok=True)
 
 # 정적 파일 마운트
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
 app.mount("/recordings", StaticFiles(directory="recordings"), name="recordings")
 
 @app.on_event("startup")
