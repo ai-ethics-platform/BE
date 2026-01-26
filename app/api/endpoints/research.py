@@ -9,7 +9,7 @@ import io
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import and_, or_, func, select
+from sqlalchemy import and_, or_, func, select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment
@@ -76,7 +76,7 @@ async def export_experiment_data(
     with_consent_only: bool = Query(True, description="동의한 사용자만 포함"),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ) -> Any:
     """
     전체 실험 데이터 export
@@ -85,46 +85,58 @@ async def export_experiment_data(
     - 라운드별 선택 데이터
     - 음성 녹음 데이터
     """
-    # Room 쿼리 구성
-    rooms_query = db.query(Room).options(
-        joinedload(Room.creator),
-        joinedload(Room.participants).joinedload(RoomParticipant.user),
-        joinedload(Room.voice_sessions).joinedload(VoiceSession.participants)
-    )
-    
+    # Room 쿼리 구성 (AsyncSession)
+    rooms_query = select(Room)
     if started_only:
-        rooms_query = rooms_query.filter(Room.is_started == True)
+        rooms_query = rooms_query.where(Room.is_started == True)
     
-    rooms = rooms_query.offset(skip).limit(limit).all()
+    rooms_query = rooms_query.offset(skip).limit(limit)
+    result = await db.execute(rooms_query)
+    rooms = result.scalars().all()
     
     room_data_list = []
     for room in rooms:
-        # 참가자 데이터
+        # 참가자 조회
+        participants_result = await db.execute(
+            select(RoomParticipant).where(RoomParticipant.room_id == room.id)
+        )
+        participants = participants_result.scalars().all()
+        
         participants_data = []
-        for participant in room.participants:
+        for participant in participants:
             user_data = None
-            if participant.user:
-                # 동의 체크
-                if with_consent_only and not (participant.user.data_consent and participant.user.voice_consent):
-                    continue
+            if participant.user_id:
+                # User 조회
+                user_result = await db.execute(
+                    select(User).where(User.id == participant.user_id)
+                )
+                user = user_result.scalar_one_or_none()
                 
-                user_data = {
-                    "user_id": participant.user.id,
-                    "username": participant.user.username,
-                    "email": participant.user.email,
-                    "birthdate": participant.user.birthdate,
-                    "gender": participant.user.gender,
-                    "education_level": participant.user.education_level,
-                    "major": participant.user.major,
-                    "data_consent": participant.user.data_consent,
-                    "voice_consent": participant.user.voice_consent,
-                    "created_at": participant.user.created_at
-                }
+                if user:
+                    # 동의 체크
+                    if with_consent_only and not (user.data_consent and user.voice_consent):
+                        continue
+                    
+                    user_data = {
+                        "user_id": user.id,
+                        "username": user.username,
+                        "email": user.email,
+                        "birthdate": user.birthdate,
+                        "gender": user.gender,
+                        "education_level": user.education_level,
+                        "major": user.major,
+                        "data_consent": user.data_consent,
+                        "voice_consent": user.voice_consent,
+                        "created_at": user.created_at
+                    }
             
             # 참가자의 라운드별 선택
-            round_choices = db.query(RoundChoice).filter(
-                RoundChoice.participant_id == participant.id
-            ).order_by(RoundChoice.round_number).all()
+            round_choices_result = await db.execute(
+                select(RoundChoice)
+                .where(RoundChoice.participant_id == participant.id)
+                .order_by(RoundChoice.round_number)
+            )
+            round_choices = round_choices_result.scalars().all()
             
             participants_data.append({
                 "participant_id": participant.id,
@@ -145,17 +157,26 @@ async def export_experiment_data(
             })
         
         # 합의 선택 데이터
-        consensus_choices = db.query(ConsensusChoice).filter(
-            ConsensusChoice.room_id == room.id
-        ).order_by(ConsensusChoice.round_number).all()
+        consensus_result = await db.execute(
+            select(ConsensusChoice)
+            .where(ConsensusChoice.room_id == room.id)
+            .order_by(ConsensusChoice.round_number)
+        )
+        consensus_choices = consensus_result.scalars().all()
         
         # 음성 세션 데이터
+        voice_sessions_result = await db.execute(
+            select(VoiceSession).where(VoiceSession.room_id == room.id)
+        )
+        voice_sessions = voice_sessions_result.scalars().all()
+        
         voice_sessions_data = []
-        for vs in room.voice_sessions:
+        for vs in voice_sessions:
             # 음성 녹음 파일
-            voice_recordings = db.query(VoiceRecording).filter(
-                VoiceRecording.voice_session_id == vs.id
-            ).all()
+            recordings_result = await db.execute(
+                select(VoiceRecording).where(VoiceRecording.voice_session_id == vs.id)
+            )
+            voice_recordings = recordings_result.scalars().all()
             
             voice_sessions_data.append({
                 "session_id": vs.session_id,
@@ -201,9 +222,11 @@ async def export_experiment_data(
             "voice_sessions": voice_sessions_data
         })
     
-    total_count = db.query(func.count(Room.id)).scalar()
+    # Total count
+    total_count_query = select(func.count()).select_from(Room)
     if started_only:
-        total_count = db.query(func.count(Room.id)).filter(Room.is_started == True).scalar()
+        total_count_query = total_count_query.where(Room.is_started == True)
+    total_count = (await db.execute(total_count_query)).scalar()
     
     return {
         "rooms": room_data_list,
@@ -217,7 +240,7 @@ async def export_experiment_data(
 @router.get("/experiments/rooms/{room_id}", response_model=RoomDetailResponse)
 async def get_room_detail(
     room_id: int,
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ) -> Any:
     """
     특정 room의 상세 데이터 조회
@@ -226,36 +249,46 @@ async def get_room_detail(
     - 라운드별 합의 선택
     - 음성 녹음 파일 정보
     """
-    room = db.query(Room).options(
-        joinedload(Room.creator),
-        joinedload(Room.participants).joinedload(RoomParticipant.user),
-        joinedload(Room.voice_sessions)
-    ).filter(Room.id == room_id).first()
+    # Room 조회
+    room_result = await db.execute(select(Room).where(Room.id == room_id))
+    room = room_result.scalar_one_or_none()
     
     if not room:
         raise HTTPException(status_code=404, detail="Room not found")
     
+    # 참가자 조회
+    participants_result = await db.execute(
+        select(RoomParticipant).where(RoomParticipant.room_id == room_id)
+    )
+    participants = participants_result.scalars().all()
+    
     # 참가자 상세 정보
     participants_detail = []
-    for participant in room.participants:
+    for participant in participants:
         user_info = None
-        if participant.user:
-            user_info = {
-                "user_id": participant.user.id,
-                "username": participant.user.username,
-                "email": participant.user.email,
-                "birthdate": participant.user.birthdate,
-                "gender": participant.user.gender,
-                "education_level": participant.user.education_level,
-                "major": participant.user.major,
-                "data_consent": participant.user.data_consent,
-                "voice_consent": participant.user.voice_consent
-            }
+        if participant.user_id:
+            user_result = await db.execute(select(User).where(User.id == participant.user_id))
+            user = user_result.scalar_one_or_none()
+            if user:
+                user_info = {
+                    "user_id": user.id,
+                    "username": user.username,
+                    "email": user.email,
+                    "birthdate": user.birthdate,
+                    "gender": user.gender,
+                    "education_level": user.education_level,
+                    "major": user.major,
+                    "data_consent": user.data_consent,
+                    "voice_consent": user.voice_consent
+                }
         
         # 라운드 선택
-        round_choices = db.query(RoundChoice).filter(
-            RoundChoice.participant_id == participant.id
-        ).order_by(RoundChoice.round_number).all()
+        round_choices_result = await db.execute(
+            select(RoundChoice)
+            .where(RoundChoice.participant_id == participant.id)
+            .order_by(RoundChoice.round_number)
+        )
+        round_choices = round_choices_result.scalars().all()
         
         participants_detail.append({
             "participant_id": participant.id,
@@ -277,16 +310,25 @@ async def get_room_detail(
         })
     
     # 합의 선택
-    consensus_choices = db.query(ConsensusChoice).filter(
-        ConsensusChoice.room_id == room_id
-    ).order_by(ConsensusChoice.round_number).all()
+    consensus_result = await db.execute(
+        select(ConsensusChoice)
+        .where(ConsensusChoice.room_id == room_id)
+        .order_by(ConsensusChoice.round_number)
+    )
+    consensus_choices = consensus_result.scalars().all()
     
     # 음성 세션
+    voice_sessions_result = await db.execute(
+        select(VoiceSession).where(VoiceSession.room_id == room_id)
+    )
+    voice_sessions_list = voice_sessions_result.scalars().all()
+    
     voice_sessions = []
-    for vs in room.voice_sessions:
-        recordings = db.query(VoiceRecording).filter(
-            VoiceRecording.voice_session_id == vs.id
-        ).all()
+    for vs in voice_sessions_list:
+        recordings_result = await db.execute(
+            select(VoiceRecording).where(VoiceRecording.voice_session_id == vs.id)
+        )
+        recordings = recordings_result.scalars().all()
         
         voice_sessions.append({
             "session_id": vs.session_id,
@@ -334,28 +376,39 @@ async def get_room_detail(
 @router.get("/experiments/users/{user_id}")
 async def get_user_experiment_data(
     user_id: int,
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ) -> Any:
     """
     특정 사용자의 모든 실험 참여 데이터
     """
-    user = db.query(User).filter(User.id == user_id).first()
+    # User 조회
+    user_result = await db.execute(select(User).where(User.id == user_id))
+    user = user_result.scalar_one_or_none()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
     # 참여한 방들
-    participations = db.query(RoomParticipant).options(
-        joinedload(RoomParticipant.room)
-    ).filter(RoomParticipant.user_id == user_id).all()
+    participations_result = await db.execute(
+        select(RoomParticipant).where(RoomParticipant.user_id == user_id)
+    )
+    participations = participations_result.scalars().all()
     
     rooms_participated = []
     for participation in participations:
-        room = participation.room
+        # Room 조회
+        room_result = await db.execute(select(Room).where(Room.id == participation.room_id))
+        room = room_result.scalar_one_or_none()
+        
+        if not room:
+            continue
         
         # 해당 방에서의 선택들
-        choices = db.query(RoundChoice).filter(
-            RoundChoice.participant_id == participation.id
-        ).order_by(RoundChoice.round_number).all()
+        choices_result = await db.execute(
+            select(RoundChoice)
+            .where(RoundChoice.participant_id == participation.id)
+            .order_by(RoundChoice.round_number)
+        )
+        choices = choices_result.scalars().all()
         
         rooms_participated.append({
             "room_id": room.id,
@@ -376,9 +429,10 @@ async def get_user_experiment_data(
         })
     
     # 음성 녹음들
-    voice_recordings = db.query(VoiceRecording).filter(
-        VoiceRecording.user_id == user_id
-    ).all()
+    recordings_result = await db.execute(
+        select(VoiceRecording).where(VoiceRecording.user_id == user_id)
+    )
+    voice_recordings = recordings_result.scalars().all()
     
     return {
         "user_id": user.id,
@@ -408,7 +462,7 @@ async def get_user_experiment_data(
 @router.post("/experiments/cleanup", response_model=DeleteTestDataResponse)
 async def delete_test_data(
     request: DeleteTestDataRequest,
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ) -> Any:
     """
     테스트 데이터 삭제
@@ -423,68 +477,82 @@ async def delete_test_data(
     # Room 삭제 (관련 데이터 cascade 삭제)
     if request.room_ids:
         for room_id in request.room_ids:
-            room = db.query(Room).filter(Room.id == room_id).first()
+            room_result = await db.execute(select(Room).where(Room.id == room_id))
+            room = room_result.scalar_one_or_none()
             if room:
                 # 관련 음성 녹음 파일 경로 수집
                 if request.delete_voice_files:
-                    voice_sessions = db.query(VoiceSession).filter(
-                        VoiceSession.room_id == room_id
-                    ).all()
+                    voice_sessions_result = await db.execute(
+                        select(VoiceSession).where(VoiceSession.room_id == room_id)
+                    )
+                    voice_sessions = voice_sessions_result.scalars().all()
                     for vs in voice_sessions:
-                        recordings = db.query(VoiceRecording).filter(
-                            VoiceRecording.voice_session_id == vs.id
-                        ).all()
+                        recordings_result = await db.execute(
+                            select(VoiceRecording).where(VoiceRecording.voice_session_id == vs.id)
+                        )
+                        recordings = recordings_result.scalars().all()
                         deleted_voice_recordings += len(recordings)
                 
-                # RoundChoice 삭제
-                db.query(RoundChoice).filter(RoundChoice.room_id == room_id).delete()
+                # RoundChoice 삭제 (room_id로 직접 삭제하는 대신 participant를 통해)
+                participants_result = await db.execute(
+                    select(RoomParticipant).where(RoomParticipant.room_id == room_id)
+                )
+                participants = participants_result.scalars().all()
+                for p in participants:
+                    await db.execute(
+                        delete(RoundChoice).where(RoundChoice.participant_id == p.id)
+                    )
                 
                 # ConsensusChoice 삭제
-                db.query(ConsensusChoice).filter(ConsensusChoice.room_id == room_id).delete()
+                await db.execute(delete(ConsensusChoice).where(ConsensusChoice.room_id == room_id))
                 
                 # VoiceRecording 삭제
-                for vs in db.query(VoiceSession).filter(VoiceSession.room_id == room_id).all():
-                    db.query(VoiceRecording).filter(VoiceRecording.voice_session_id == vs.id).delete()
-                    db.query(VoiceParticipant).filter(VoiceParticipant.voice_session_id == vs.id).delete()
+                voice_sessions_result = await db.execute(
+                    select(VoiceSession).where(VoiceSession.room_id == room_id)
+                )
+                voice_sessions = voice_sessions_result.scalars().all()
+                for vs in voice_sessions:
+                    await db.execute(delete(VoiceRecording).where(VoiceRecording.voice_session_id == vs.id))
+                    await db.execute(delete(VoiceParticipant).where(VoiceParticipant.voice_session_id == vs.id))
                 
                 # VoiceSession 삭제
-                db.query(VoiceSession).filter(VoiceSession.room_id == room_id).delete()
+                await db.execute(delete(VoiceSession).where(VoiceSession.room_id == room_id))
                 
                 # RoomParticipant 삭제
-                db.query(RoomParticipant).filter(RoomParticipant.room_id == room_id).delete()
+                await db.execute(delete(RoomParticipant).where(RoomParticipant.room_id == room_id))
                 
                 # Room 삭제
-                db.delete(room)
+                await db.delete(room)
                 deleted_rooms += 1
     
     # User 삭제 (선택사항 - 조심해서 사용)
     if request.user_ids:
         for user_id in request.user_ids:
             # 먼저 해당 유저의 모든 참여 기록 삭제
-            participations = db.query(RoomParticipant).filter(
-                RoomParticipant.user_id == user_id
-            ).all()
+            participations_result = await db.execute(
+                select(RoomParticipant).where(RoomParticipant.user_id == user_id)
+            )
+            participations = participations_result.scalars().all()
             
             for participation in participations:
-                db.query(RoundChoice).filter(
-                    RoundChoice.participant_id == participation.id
-                ).delete()
+                await db.execute(
+                    delete(RoundChoice).where(RoundChoice.participant_id == participation.id)
+                )
             
-            db.query(RoomParticipant).filter(
-                RoomParticipant.user_id == user_id
-            ).delete()
+            await db.execute(delete(RoomParticipant).where(RoomParticipant.user_id == user_id))
             
             # 음성 관련 삭제
-            db.query(VoiceRecording).filter(VoiceRecording.user_id == user_id).delete()
-            db.query(VoiceParticipant).filter(VoiceParticipant.user_id == user_id).delete()
+            await db.execute(delete(VoiceRecording).where(VoiceRecording.user_id == user_id))
+            await db.execute(delete(VoiceParticipant).where(VoiceParticipant.user_id == user_id))
             
             # User 삭제
-            user = db.query(User).filter(User.id == user_id).first()
+            user_result = await db.execute(select(User).where(User.id == user_id))
+            user = user_result.scalar_one_or_none()
             if user:
-                db.delete(user)
+                await db.delete(user)
                 deleted_users += 1
     
-    db.commit()
+    await db.commit()
     
     return {
         "deleted_rooms": deleted_rooms,
@@ -497,7 +565,7 @@ async def delete_test_data(
 @router.get("/experiments/choices/analysis")
 async def analyze_choices(
     topic: Optional[str] = None,
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ) -> Any:
     """
     선택 데이터 분석
@@ -505,42 +573,53 @@ async def analyze_choices(
     - 역할별 선택 경향
     - 확신도 분석
     """
-    query = db.query(
+    # 라운드별 선택 분석 쿼리
+    round_query = select(
         RoundChoice.round_number,
         RoundChoice.choice,
         func.count(RoundChoice.id).label('count'),
         func.avg(RoundChoice.confidence).label('avg_confidence')
-    )
+    ).select_from(RoundChoice)
     
     if topic:
-        # topic으로 필터링
-        query = query.join(Room).filter(Room.topic == topic)
+        # topic으로 필터링 (RoomParticipant를 통해 Room과 조인)
+        round_query = round_query.join(
+            RoomParticipant, RoundChoice.participant_id == RoomParticipant.id
+        ).join(
+            Room, RoomParticipant.room_id == Room.id
+        ).where(Room.topic == topic)
     
-    round_analysis = query.group_by(
+    round_query = round_query.group_by(
         RoundChoice.round_number,
         RoundChoice.choice
     ).order_by(
         RoundChoice.round_number,
         RoundChoice.choice
-    ).all()
+    )
+    
+    round_result = await db.execute(round_query)
+    round_analysis = round_result.all()
     
     # 역할별 선택 분석
-    role_analysis = db.query(
+    role_query = select(
         RoomParticipant.role_id,
         RoundChoice.choice,
         func.count(RoundChoice.id).label('count')
-    ).join(
+    ).select_from(RoundChoice).join(
         RoomParticipant,
         RoundChoice.participant_id == RoomParticipant.id
     )
     
     if topic:
-        role_analysis = role_analysis.join(Room).filter(Room.topic == topic)
+        role_query = role_query.join(Room, RoomParticipant.room_id == Room.id).where(Room.topic == topic)
     
-    role_analysis = role_analysis.group_by(
+    role_query = role_query.group_by(
         RoomParticipant.role_id,
         RoundChoice.choice
-    ).all()
+    )
+    
+    role_result = await db.execute(role_query)
+    role_analysis = role_result.all()
     
     return {
         "round_choices": [
