@@ -215,36 +215,36 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🔬 AI Ethics 실험 데이터 대시보드</h1>
+            <h1>AI Ethics 실험 데이터 대시보드</h1>
             <p>연구 데이터 조회 및 분석 도구</p>
         </div>
 
         <!-- 통계 요약 -->
         <div class="card">
-            <h2>📊 전체 통계 요약</h2>
+            <h2>전체 통계 요약</h2>
             <button class="btn" onclick="loadStats()">통계 불러오기</button>
             <div id="statsContainer"></div>
         </div>
 
         <!-- 엑셀 다운로드 -->
         <div class="card">
-            <h2>📥 데이터 다운로드</h2>
+            <h2>데이터 다운로드</h2>
             <div class="info-box">
-                <h4>💡 다운로드 옵션</h4>
+                <h4>다운로드 옵션</h4>
                 <ul>
                     <li><strong>엑셀 (Excel):</strong> 모든 실험 데이터를 스프레드시트로 다운로드</li>
                     <li><strong>JSON:</strong> 프로그래밍 분석용 원시 데이터</li>
                 </ul>
             </div>
             <div class="button-group">
-                <button class="btn btn-success" onclick="downloadExcel()">📊 엑셀 다운로드 (Excel)</button>
-                <button class="btn btn-secondary" onclick="downloadJSON()">📄 JSON 다운로드</button>
+                <button class="btn btn-success" onclick="downloadExcel()">엑셀 다운로드 (Excel)</button>
+                <button class="btn btn-secondary" onclick="downloadJSON()">JSON 다운로드</button>
             </div>
         </div>
 
         <!-- 특정 방 조회 -->
         <div class="card">
-            <h2>🏠 특정 방(Room) 조회</h2>
+            <h2>특정 방(Room) 조회</h2>
             <div class="input-group">
                 <label for="roomId">Room ID:</label>
                 <input type="number" id="roomId" placeholder="예: 123">
@@ -255,7 +255,7 @@
 
         <!-- 특정 사용자 조회 -->
         <div class="card">
-            <h2>👤 특정 사용자 조회</h2>
+            <h2>특정 사용자 조회</h2>
             <div class="input-group">
                 <label for="userId">User ID:</label>
                 <input type="number" id="userId" placeholder="예: 456">
@@ -266,7 +266,7 @@
 
         <!-- 선택 데이터 분석 -->
         <div class="card">
-            <h2>📈 선택 데이터 분석</h2>
+            <h2>선택 데이터 분석</h2>
             <div class="input-group">
                 <label for="topic">주제 필터 (선택사항):</label>
                 <input type="text" id="topic" placeholder="예: 자율주행">
@@ -277,7 +277,7 @@
 
         <!-- 디버깅 정보 -->
         <div class="card">
-            <h2>🔍 디버깅 정보</h2>
+            <h2>디버깅 정보</h2>
             <button class="btn btn-danger" onclick="loadDebug()">디버깅 정보 확인</button>
             <div id="debugContainer"></div>
         </div>
@@ -325,7 +325,7 @@
                     </div>
                 `;
             } catch (error) {
-                container.innerHTML = `<div class="error">❌ 오류: ${error.message}</div>`;
+                container.innerHTML = `<div class="error">오류: ${error.message}</div>`;
             }
         }
 
@@ -370,7 +370,7 @@
                 
                 const data = await response.json();
                 container.innerHTML = `
-                    <div class="success">✅ 데이터 조회 성공</div>
+                    <div class="success">데이터 조회 성공</div>
                     <div class="data-display">
                         <h3>${data.title || '제목 없음'}</h3>
                         <p><strong>주제:</strong> ${data.topic || 'N/A'}</p>
@@ -380,7 +380,7 @@
                     </div>
                 `;
             } catch (error) {
-                container.innerHTML = `<div class="error">❌ 오류: ${error.message}</div>`;
+                container.innerHTML = `<div class="error">오류: ${error.message}</div>`;
             }
         }
 
@@ -402,7 +402,7 @@
                 
                 const data = await response.json();
                 container.innerHTML = `
-                    <div class="success">✅ 데이터 조회 성공</div>
+                    <div class="success">데이터 조회 성공</div>
                     <div class="data-display">
                         <h3>${data.username || '사용자'}</h3>
                         <p><strong>이메일:</strong> ${data.email || 'N/A'}</p>
@@ -412,7 +412,7 @@
                     </div>
                 `;
             } catch (error) {
-                container.innerHTML = `<div class="error">❌ 오류: ${error.message}</div>`;
+                container.innerHTML = `<div class="error">오류: ${error.message}</div>`;
             }
         }
 
@@ -433,7 +433,7 @@
                 
                 const data = await response.json();
                 container.innerHTML = `
-                    <div class="success">✅ 분석 데이터 조회 성공</div>
+                    <div class="success">분석 데이터 조회 성공</div>
                     <div class="data-display">
                         <h3>라운드별 선택 분석</h3>
                         <p><strong>총 데이터:</strong> ${data.round_choices?.length || 0}개</p>
@@ -441,7 +441,7 @@
                     </div>
                 `;
             } catch (error) {
-                container.innerHTML = `<div class="error">❌ 오류: ${error.message}</div>`;
+                container.innerHTML = `<div class="error">오류: ${error.message}</div>`;
             }
         }
 
@@ -456,13 +456,13 @@
                 
                 const data = await response.json();
                 container.innerHTML = `
-                    <div class="success">✅ 디버깅 정보 조회 성공</div>
+                    <div class="success">디버깅 정보 조회 성공</div>
                     <div class="data-display">
                         <pre>${JSON.stringify(data, null, 2)}</pre>
                     </div>
                 `;
             } catch (error) {
-                container.innerHTML = `<div class="error">❌ 오류: ${error.message}</div>`;
+                container.innerHTML = `<div class="error">오류: ${error.message}</div>`;
             }
         }
 

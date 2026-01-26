@@ -43,7 +43,7 @@ async def research_dashboard():
 
 @router.get("/experiments/summary", response_model=DataStatisticsResponse)
 async def get_experiment_summary(
-    db: Session = Depends(get_db)
+    db: AsyncSession = Depends(get_db)
 ) -> Any:
     """
     전체 실험 데이터 통계 요약
@@ -52,19 +52,22 @@ async def get_experiment_summary(
     - 총 음성 녹음 수
     - 완료된 게임 수
     """
-    total_users = db.query(func.count(User.id)).filter(User.is_guest == False).scalar()
-    total_rooms = db.query(func.count(Room.id)).scalar()
-    total_started_rooms = db.query(func.count(Room.id)).filter(Room.is_started == True).scalar()
-    total_voice_recordings = db.query(func.count(VoiceRecording.id)).scalar()
+    # AsyncSession 방식으로 수정
+    total_users = (await db.execute(select(func.count()).select_from(User).where(User.is_guest == False))).scalar()
+    total_rooms = (await db.execute(select(func.count()).select_from(Room))).scalar()
+    total_started_rooms = (await db.execute(select(func.count()).select_from(Room).where(Room.is_started == True))).scalar()
+    total_voice_recordings = (await db.execute(select(func.count()).select_from(VoiceRecording))).scalar()
     
     # 라운드 선택 통계
-    total_round_choices = db.query(func.count(RoundChoice.id)).scalar()
-    total_consensus_choices = db.query(func.count(ConsensusChoice.id)).scalar()
+    total_round_choices = (await db.execute(select(func.count()).select_from(RoundChoice))).scalar()
+    total_consensus_choices = (await db.execute(select(func.count()).select_from(ConsensusChoice))).scalar()
     
     # 동의 통계
-    users_with_consent = db.query(func.count(User.id)).filter(
-        and_(User.data_consent == True, User.voice_consent == True, User.is_guest == False)
-    ).scalar()
+    users_with_consent = (await db.execute(
+        select(func.count()).select_from(User).where(
+            and_(User.data_consent == True, User.voice_consent == True, User.is_guest == False)
+        )
+    )).scalar()
     
     return {
         "total_users": total_users,
