@@ -191,3 +191,33 @@ class ChoiceAnalysisResponse(BaseModel):
     """선택 데이터 분석 응답"""
     round_choices: List[RoundChoiceAnalysis]
     role_choices: List[RoleChoiceAnalysis]
+
+
+# ============================================
+# 음성 파일 조회 모델
+# ============================================
+
+class VoiceRecordingItem(BaseModel):
+    """음성 녹음 항목"""
+    recording_id: int
+    room_code: str
+    room_topic: str
+    room_id: int
+    session_id: str
+    user_id: Optional[int] = None
+    guest_id: Optional[str] = None
+    username: Optional[str] = None
+    file_path: str  # S3 URL
+    file_size: Optional[int] = None
+    duration: Optional[int] = None
+    created_at: datetime
+    is_processed: bool
+
+
+class VoiceRecordingsResponse(BaseModel):
+    """음성 녹음 목록 응답"""
+    recordings: List[VoiceRecordingItem]
+    total_count: int
+    page: int
+    page_size: int
+    filters_applied: Dict[str, Any]

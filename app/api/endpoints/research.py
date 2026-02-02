@@ -26,7 +26,9 @@ from app.schemas.research import (
     DeleteTestDataRequest,
     DeleteTestDataResponse,
     UserDataExport,
-    RoomDataExport
+    RoomDataExport,
+    VoiceRecordingsResponse,
+    VoiceRecordingItem
 )
 
 
@@ -895,4 +897,125 @@ async def get_data_counts(db: AsyncSession = Depends(get_db)):
             }
             for r in sample_rooms
         ]
+    }
+
+
+@router.get("/voice-recordings", response_model=VoiceRecordingsResponse)
+async def get_voice_recordings(
+    room_code: Optional[str] = Query(None, description="방 코드로 필터링 (6자리)"),
+    room_id: Optional[int] = Query(None, description="방 ID로 필터링"),
+    creator_id: Optional[int] = Query(None, description="방장(생성자) ID로 필터링"),
+    user_id: Optional[int] = Query(None, description="특정 사용자 ID로 필터링"),
+    start_date: Optional[datetime] = Query(None, description="시작 날짜 (YYYY-MM-DD)"),
+    end_date: Optional[datetime] = Query(None, description="종료 날짜 (YYYY-MM-DD)"),
+    skip: int = Query(0, ge=0, description="페이지네이션 오프셋"),
+    limit: int = Query(100, ge=1, le=500, description="가져올 개수"),
+    db: AsyncSession = Depends(get_db)
+) -> Any:
+    """
+    음성 녹음 파일 목록 조회
+    
+    **필터 옵션:**
+    - room_code: 방 입장 코드 (6자리)
+    - room_id: 방 ID
+    - creator_id: 방장(생성자) ID
+    - user_id: 특정 사용자 ID
+    - start_date/end_date: 날짜 범위
+    
+    **응답:**
+    - 음성 녹음 파일의 S3 URL 목록
+    - 방 정보, 사용자 정보 포함
+    """
+    # 기본 쿼리: VoiceRecording + VoiceSession + Room + User 조인
+    query = select(VoiceRecording).join(
+        VoiceSession, VoiceRecording.voice_session_id == VoiceSession.id
+    ).join(
+        Room, VoiceSession.room_id == Room.id
+    ).outerjoin(
+        User, VoiceRecording.user_id == User.id
+    )
+    
+    # 필터 적용
+    filters = []
+    filters_applied = {}
+    
+    if room_code:
+        filters.append(Room.room_code == room_code)
+        filters_applied["room_code"] = room_code
+    
+    if room_id:
+        filters.append(Room.id == room_id)
+        filters_applied["room_id"] = room_id
+    
+    if creator_id:
+        filters.append(Room.created_by == creator_id)
+        filters_applied["creator_id"] = creator_id
+    
+    if user_id:
+        filters.append(VoiceRecording.user_id == user_id)
+        filters_applied["user_id"] = user_id
+    
+    if start_date:
+        filters.append(VoiceRecording.created_at >= start_date)
+        filters_applied["start_date"] = start_date.isoformat()
+    
+    if end_date:
+        filters.append(VoiceRecording.created_at <= end_date)
+        filters_applied["end_date"] = end_date.isoformat()
+    
+    if filters:
+        query = query.where(and_(*filters))
+    
+    # 정렬: 최신순
+    query = query.order_by(VoiceRecording.created_at.desc())
+    
+    # 총 개수 조회
+    count_query = select(func.count()).select_from(VoiceRecording).join(
+        VoiceSession, VoiceRecording.voice_session_id == VoiceSession.id
+    ).join(
+        Room, VoiceSession.room_id == Room.id
+    )
+    if filters:
+        count_query = count_query.where(and_(*filters))
+    
+    total_count = (await db.execute(count_query)).scalar()
+    
+    # 페이지네이션 적용
+    query = query.offset(skip).limit(limit)
+    
+    # 데이터 가져오기
+    result = await db.execute(query.options(
+        joinedload(VoiceRecording.voice_session).joinedload(VoiceSession.room),
+        joinedload(VoiceRecording.user)
+    ))
+    recordings = result.scalars().unique().all()
+    
+    # 응답 데이터 구성
+    recording_items = []
+    for recording in recordings:
+        room = recording.voice_session.room
+        user = recording.user
+        
+        recording_items.append(VoiceRecordingItem(
+            recording_id=recording.id,
+            room_code=room.room_code,
+            room_topic=room.topic,
+            room_id=room.id,
+            session_id=recording.voice_session.session_id,
+            user_id=recording.user_id,
+            guest_id=recording.guest_id,
+            username=user.username if user else None,
+            file_path=recording.file_path,  # S3 URL
+            file_size=recording.file_size,
+            duration=recording.duration,
+            created_at=recording.created_at,
+            is_processed=recording.is_processed
+        ))
+    
+    return {
+        "recordings": recording_items,
+        "total_count": total_count,
+        "page": skip // limit + 1,
+        "page_size": limit,
+        "filters_applied": filters_applied
     }

@@ -264,6 +264,55 @@
             <div id="userContainer"></div>
         </div>
 
+        <!-- 음성 녹음 파일 조회 -->
+        <div class="card">
+            <h2>🎤 음성 녹음 파일 조회</h2>
+            <div class="info-box">
+                <h4>필터 옵션</h4>
+                <ul>
+                    <li><strong>방 코드:</strong> 6자리 입장 코드로 검색</li>
+                    <li><strong>방 ID:</strong> 데이터베이스 Room ID</li>
+                    <li><strong>방장 ID:</strong> 방을 생성한 사용자 ID</li>
+                    <li><strong>사용자 ID:</strong> 특정 사용자의 녹음만 조회</li>
+                    <li><strong>날짜 범위:</strong> 기간별 필터링</li>
+                </ul>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                <div class="input-group">
+                    <label for="voiceRoomCode">방 코드 (6자리):</label>
+                    <input type="text" id="voiceRoomCode" placeholder="예: 123456" maxlength="6">
+                </div>
+                <div class="input-group">
+                    <label for="voiceRoomId">방 ID:</label>
+                    <input type="number" id="voiceRoomId" placeholder="예: 123">
+                </div>
+                <div class="input-group">
+                    <label for="voiceCreatorId">방장 ID:</label>
+                    <input type="number" id="voiceCreatorId" placeholder="예: 1">
+                </div>
+                <div class="input-group">
+                    <label for="voiceUserId">사용자 ID:</label>
+                    <input type="number" id="voiceUserId" placeholder="예: 456">
+                </div>
+                <div class="input-group">
+                    <label for="voiceStartDate">시작 날짜:</label>
+                    <input type="date" id="voiceStartDate">
+                </div>
+                <div class="input-group">
+                    <label for="voiceEndDate">종료 날짜:</label>
+                    <input type="date" id="voiceEndDate">
+                </div>
+            </div>
+            
+            <div class="button-group">
+                <button class="btn" onclick="loadVoiceRecordings()">🔍 음성 파일 조회</button>
+                <button class="btn btn-secondary" onclick="loadAllVoiceRecordings()">📋 전체 음성 파일 보기</button>
+                <button class="btn btn-danger" onclick="clearVoiceFilters()">🗑️ 필터 초기화</button>
+            </div>
+            <div id="voiceContainer"></div>
+        </div>
+
         <!-- 선택 데이터 분석 -->
         <div class="card">
             <h2>선택 데이터 분석</h2>
@@ -464,6 +513,124 @@
             } catch (error) {
                 container.innerHTML = `<div class="error">오류: ${error.message}</div>`;
             }
+        }
+
+        // 음성 녹음 파일 조회
+        async function loadVoiceRecordings() {
+            const container = document.getElementById('voiceContainer');
+            container.innerHTML = '<div class="loading">로딩 중...</div>';
+            
+            try {
+                // 필터 값 가져오기
+                const params = new URLSearchParams();
+                
+                const roomCode = document.getElementById('voiceRoomCode').value.trim();
+                const roomId = document.getElementById('voiceRoomId').value.trim();
+                const creatorId = document.getElementById('voiceCreatorId').value.trim();
+                const userId = document.getElementById('voiceUserId').value.trim();
+                const startDate = document.getElementById('voiceStartDate').value;
+                const endDate = document.getElementById('voiceEndDate').value;
+                
+                if (roomCode) params.append('room_code', roomCode);
+                if (roomId) params.append('room_id', roomId);
+                if (creatorId) params.append('creator_id', creatorId);
+                if (userId) params.append('user_id', userId);
+                if (startDate) params.append('start_date', startDate);
+                if (endDate) params.append('end_date', endDate);
+                
+                const url = `${API_BASE}/research/voice-recordings?${params.toString()}`;
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                
+                const data = await response.json();
+                
+                if (data.recordings.length === 0) {
+                    container.innerHTML = `
+                        <div class="warning">조회된 음성 파일이 없습니다.</div>
+                        <div class="info-box">
+                            <p>필터 조건을 변경하거나 "전체 음성 파일 보기"를 시도해보세요.</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // 테이블 형식으로 표시
+                let tableHTML = `
+                    <div class="success">총 ${data.total_count}개의 음성 파일 조회 (${data.page}페이지)</div>
+                    <div class="data-display">
+                        <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+                            <thead>
+                                <tr style="background: #667eea; color: white;">
+                                    <th style="padding: 10px; border: 1px solid #ddd;">ID</th>
+                                    <th style="padding: 10px; border: 1px solid #ddd;">방 코드</th>
+                                    <th style="padding: 10px; border: 1px solid #ddd;">주제</th>
+                                    <th style="padding: 10px; border: 1px solid #ddd;">사용자</th>
+                                    <th style="padding: 10px; border: 1px solid #ddd;">파일 크기</th>
+                                    <th style="padding: 10px; border: 1px solid #ddd;">녹음 시간</th>
+                                    <th style="padding: 10px; border: 1px solid #ddd;">생성일</th>
+                                    <th style="padding: 10px; border: 1px solid #ddd;">S3 URL</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+                
+                data.recordings.forEach(rec => {
+                    const fileSize = rec.file_size ? `${(rec.file_size / 1024).toFixed(1)} KB` : 'N/A';
+                    const duration = rec.duration ? `${rec.duration}초` : 'N/A';
+                    const userName = rec.username || (rec.guest_id ? `게스트(${rec.guest_id})` : 'N/A');
+                    const createdAt = new Date(rec.created_at).toLocaleString('ko-KR');
+                    
+                    tableHTML += `
+                        <tr style="background: ${rec.is_processed ? '#e8f5e9' : '#fff'}">
+                            <td style="padding: 8px; border: 1px solid #ddd;">${rec.recording_id}</td>
+                            <td style="padding: 8px; border: 1px solid #ddd;">${rec.room_code}</td>
+                            <td style="padding: 8px; border: 1px solid #ddd; max-width: 200px; overflow: hidden; text-overflow: ellipsis;">${rec.room_topic}</td>
+                            <td style="padding: 8px; border: 1px solid #ddd;">${userName}</td>
+                            <td style="padding: 8px; border: 1px solid #ddd;">${fileSize}</td>
+                            <td style="padding: 8px; border: 1px solid #ddd;">${duration}</td>
+                            <td style="padding: 8px; border: 1px solid #ddd;">${createdAt}</td>
+                            <td style="padding: 8px; border: 1px solid #ddd;">
+                                <a href="${rec.file_path}" target="_blank" style="color: #667eea; text-decoration: none; font-weight: bold;">
+                                    🔗 파일 열기
+                                </a>
+                                <br>
+                                <small style="color: #666; font-size: 0.8em; word-break: break-all;">${rec.file_path}</small>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                tableHTML += `
+                            </tbody>
+                        </table>
+                        <div style="margin-top: 15px; padding: 10px; background: #f5f5f5; border-radius: 5px;">
+                            <strong>적용된 필터:</strong> ${JSON.stringify(data.filters_applied) || '없음'}
+                        </div>
+                    </div>
+                `;
+                
+                container.innerHTML = tableHTML;
+            } catch (error) {
+                container.innerHTML = `<div class="error">오류: ${error.message}</div>`;
+            }
+        }
+
+        // 전체 음성 파일 조회 (필터 없이)
+        async function loadAllVoiceRecordings() {
+            // 필터 초기화
+            clearVoiceFilters();
+            // 조회
+            await loadVoiceRecordings();
+        }
+
+        // 음성 파일 필터 초기화
+        function clearVoiceFilters() {
+            document.getElementById('voiceRoomCode').value = '';
+            document.getElementById('voiceRoomId').value = '';
+            document.getElementById('voiceCreatorId').value = '';
+            document.getElementById('voiceUserId').value = '';
+            document.getElementById('voiceStartDate').value = '';
+            document.getElementById('voiceEndDate').value = '';
         }
 
         // 페이지 로드 시 자동으로 통계 불러오기
