@@ -379,8 +379,9 @@
         <div class="card">
             <h2>📊 선택 데이터 분석</h2>
             <div class="info-box">
+                <p><strong>사용 방법:</strong> 분석 데이터 조회 버튼을 누르시면 주제별, 역할별, 라운드별 통계를 탭으로 확인하실 수 있습니다.</p>
                 <p><strong>주제 필터:</strong> 특정 주제(예: 안드로이드, AWS)로 필터링 가능</p>
-                <p><strong>탭:</strong> 주제별, 역할별, 라운드별로 데이터 정렬</p>
+                <p><strong>탭:</strong> 📌 주제별 / 👥 역할별 / 🔄 라운드별로 데이터 정렬</p>
             </div>
             <div class="input-group">
                 <label for="topic">주제 필터 (선택사항):</label>
@@ -411,6 +412,29 @@
 
     <script>
         const API_BASE = window.location.origin;
+
+        // 서브토픽별 역할 매핑
+        const ROLE_MAPPING = {
+            "AI의 개인 정보 수집": { 1: "요양보호사 K", 2: "노모 L", 3: "자녀 J" },
+            "안드로이드의 감정 표현": { 1: "요양보호사 K", 2: "노모 L", 3: "자녀 J" },
+            "아이들을 위한 서비스": { 1: "로봇 제조사 연합회 대표", 2: "소비자 대표", 3: "국가 인공지능 위원회 대표" },
+            "설명 가능한 AI": { 1: "로봇 제조사 연합회 대표", 2: "소비자 대표", 3: "국가 인공지능 위원회 대표" },
+            "지구, 인간, AI": { 1: "기업 연합체 대표", 2: "국제 환경단체 대표", 3: "소비자 대표" },
+            "AI 알고리즘 공개": { 1: "지역 주민", 2: "병사 J", 3: "군사 AI 윤리 전문가" },
+            "AWS의 권한": { 1: "신입 병사", 2: "베테랑 병사 A", 3: "군 지휘관" },
+            "사람이 죽지 않는 전쟁": { 1: "개발자", 2: "국방부 장관", 3: "국가 인공지능 위원회 대표" },
+            "AI의 권리와 책임": { 1: "개발자", 2: "국방부 장관", 3: "국가 인공지능 위원회 대표" },
+            "AWS 규제": { 1: "국방 기술 고문", 2: "국제기구 외교 대표", 3: "글로벌 NGO 활동가" }
+        };
+
+        // 역할 이름 가져오기 함수
+        function getRoleName(roleId, subtopic) {
+            if (!roleId) return "역할 없음";
+            if (subtopic && ROLE_MAPPING[subtopic] && ROLE_MAPPING[subtopic][roleId]) {
+                return ROLE_MAPPING[subtopic][roleId];
+            }
+            return `역할 ${roleId}`;
+        }
 
         // 통계 불러오기
         async function loadStats() {
@@ -620,34 +644,26 @@
                 // 역할별 데이터
                 const roleChoices = analysisData.role_choices || [];
                 
-                // 역할별로 그룹화
-                const roleGroups = {};
-                roleChoices.forEach(item => {
-                    const role = item.role_id || '역할 없음';
-                    if (!roleGroups[role]) {
-                        roleGroups[role] = [];
-                    }
-                    roleGroups[role].push(item);
-                });
-                
                 let html = '<div class="tab-content-section"><h3>👥 역할별 선택 통계</h3>';
                 
-                if (Object.keys(roleGroups).length === 0) {
+                if (roleChoices.length === 0) {
                     html += '<p>데이터가 없습니다.</p>';
                 } else {
-                    html += '<table class="data-table"><thead><tr><th>역할</th><th>선택</th><th>횟수</th></tr></thead><tbody>';
+                    html += '<table class="data-table"><thead><tr><th>서브토픽</th><th>역할</th><th>선택</th><th>횟수</th></tr></thead><tbody>';
                     
-                    for (const [role, choices] of Object.entries(roleGroups)) {
-                        choices.forEach(c => {
-                            html += `
-                                <tr>
-                                    <td><strong>${role}</strong></td>
-                                    <td>${c.choice === 1 ? '왼쪽 (1)' : '오른쪽 (2)'}</td>
-                                    <td>${c.count}회</td>
-                                </tr>
-                            `;
-                        });
-                    }
+                    roleChoices.forEach(c => {
+                        const roleName = getRoleName(c.role_id, c.subtopic);
+                        const subtopic = c.subtopic || '서브토픽 없음';
+                        
+                        html += `
+                            <tr>
+                                <td>${subtopic}</td>
+                                <td><strong>${roleName}</strong></td>
+                                <td>${c.choice === 1 ? '왼쪽 (1)' : '오른쪽 (2)'}</td>
+                                <td>${c.count}회</td>
+                            </tr>
+                        `;
+                    });
                     
                     html += '</tbody></table>';
                 }

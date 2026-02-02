@@ -754,9 +754,10 @@ async def analyze_choices(
     round_result = await db.execute(round_query)
     round_analysis = round_result.all()
     
-    # 역할별 선택 분석
+    # 역할별 선택 분석 (subtopic 포함)
     role_query = select(
         RoomParticipant.role_id,
+        RoundChoice.subtopic,
         RoundChoice.choice,
         func.count(RoundChoice.id).label('count')
     ).select_from(RoundChoice).join(
@@ -769,6 +770,7 @@ async def analyze_choices(
     
     role_query = role_query.group_by(
         RoomParticipant.role_id,
+        RoundChoice.subtopic,
         RoundChoice.choice
     )
     
@@ -788,6 +790,7 @@ async def analyze_choices(
         "role_choices": [
             {
                 "role_id": r.role_id,
+                "subtopic": r.subtopic,
                 "choice": r.choice,
                 "count": r.count
             }
