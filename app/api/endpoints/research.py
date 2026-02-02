@@ -386,6 +386,147 @@ async def get_room_detail(
     }
 
 
+@router.get("/experiments/rooms/by-code/{room_code}", response_model=RoomDetailResponse)
+async def get_room_detail_by_code(
+    room_code: str,
+    db: AsyncSession = Depends(get_db)
+) -> Any:
+    """
+    특정 room의 상세 데이터 조회 (입장 코드로)
+    - 6자리 입장 코드로 방 조회
+    - 모든 참가자 정보
+    - 라운드별 개인 선택
+    - 라운드별 합의 선택
+    - 음성 녹음 파일 정보
+    """
+    # Room 조회 (room_code로)
+    room_result = await db.execute(select(Room).where(Room.room_code == room_code))
+    room = room_result.scalar_one_or_none()
+    
+    if not room:
+        raise HTTPException(status_code=404, detail=f"Room with code '{room_code}' not found")
+    
+    # 나머지는 기존 엔드포인트와 동일한 로직
+    room_id = room.id
+    
+    # 참가자 조회
+    participants_result = await db.execute(
+        select(RoomParticipant).where(RoomParticipant.room_id == room_id)
+    )
+    participants = participants_result.scalars().all()
+    
+    # 참가자 상세 정보
+    participants_detail = []
+    for participant in participants:
+        user_info = None
+        if participant.user_id:
+            user_result = await db.execute(select(User).where(User.id == participant.user_id))
+            user = user_result.scalar_one_or_none()
+            if user:
+                user_info = {
+                    "user_id": user.id,
+                    "username": user.username,
+                    "email": user.email,
+                    "birthdate": user.birthdate,
+                    "gender": user.gender,
+                    "education_level": user.education_level,
+                    "major": user.major,
+                    "data_consent": user.data_consent,
+                    "voice_consent": user.voice_consent
+                }
+        
+        # 라운드 선택
+        round_choices_result = await db.execute(
+            select(RoundChoice)
+            .where(RoundChoice.participant_id == participant.id)
+            .order_by(RoundChoice.round_number)
+        )
+        round_choices = round_choices_result.scalars().all()
+        
+        participants_detail.append({
+            "participant_id": participant.id,
+            "nickname": participant.nickname,
+            "role_id": participant.role_id,
+            "is_host": participant.is_host,
+            "joined_at": participant.joined_at,
+            "user_info": user_info,
+            "round_choices": [
+                {
+                    "round_number": rc.round_number,
+                    "choice": rc.choice,
+                    "subtopic": rc.subtopic,
+                    "confidence": rc.confidence,
+                    "created_at": rc.created_at
+                }
+                for rc in round_choices
+            ]
+        })
+    
+    # 합의 선택
+    consensus_result = await db.execute(
+        select(ConsensusChoice)
+        .where(ConsensusChoice.room_id == room_id)
+        .order_by(ConsensusChoice.round_number)
+    )
+    consensus_choices = consensus_result.scalars().all()
+    
+    # 음성 세션
+    voice_sessions_result = await db.execute(
+        select(VoiceSession).where(VoiceSession.room_id == room_id)
+    )
+    voice_sessions_list = voice_sessions_result.scalars().all()
+    
+    voice_sessions = []
+    for vs in voice_sessions_list:
+        recordings_result = await db.execute(
+            select(VoiceRecording).where(VoiceRecording.voice_session_id == vs.id)
+        )
+        recordings = recordings_result.scalars().all()
+        
+        voice_sessions.append({
+            "session_id": vs.session_id,
+            "started_at": vs.started_at,
+            "ended_at": vs.ended_at,
+            "recordings": [
+                {
+                    "id": rec.id,
+                    "user_id": rec.user_id,
+                    "guest_id": rec.guest_id,
+                    "file_path": rec.file_path,
+                    "file_size": rec.file_size,
+                    "duration": rec.duration,
+                    "created_at": rec.created_at,
+                    "is_processed": rec.is_processed
+                }
+                for rec in recordings
+            ]
+        })
+    
+    return {
+        "room_id": room.id,
+        "room_code": room.room_code,
+        "title": room.title,
+        "topic": room.topic,
+        "ai_type": room.ai_type,
+        "ai_name": room.ai_name,
+        "is_started": room.is_started,
+        "start_time": room.start_time,
+        "created_at": room.created_at,
+        "participants": participants_detail,
+        "consensus_choices": [
+            {
+                "round_number": cc.round_number,
+                "choice": cc.choice,
+                "subtopic": cc.subtopic,
+                "confidence": cc.confidence,
+                "created_at": cc.created_at
+            }
+            for cc in consensus_choices
+        ],
+        "voice_sessions": voice_sessions
+    }
+
+
 @router.get("/experiments/users/{user_id}")
 async def get_user_experiment_data(
     user_id: int,

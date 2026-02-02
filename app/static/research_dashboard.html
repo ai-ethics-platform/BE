@@ -210,6 +210,65 @@
             margin: 5px 0;
             color: #333;
         }
+
+        /* 탭 UI 스타일 */
+        .tab-btn {
+            background: #f5f5f5;
+            color: #666;
+            border: none;
+            padding: 12px 24px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            border-radius: 8px 8px 0 0;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+        }
+
+        .tab-btn:hover {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .tab-btn.active {
+            background: white;
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .tab-content-section {
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .data-table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .data-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .data-table tr:hover {
+            background: #f5f5ff;
+        }
     </style>
 </head>
 <body>
@@ -245,9 +304,12 @@
         <!-- 특정 방 조회 -->
         <div class="card">
             <h2>특정 방(Room) 조회</h2>
+            <div class="info-box">
+                <p>🔢 <strong>입장 코드(6자리)</strong>로 방을 조회합니다. (예: 896453)</p>
+            </div>
             <div class="input-group">
-                <label for="roomId">Room ID:</label>
-                <input type="number" id="roomId" placeholder="예: 123">
+                <label for="roomCode">입장 코드 (6자리):</label>
+                <input type="text" id="roomCode" placeholder="예: 896453" maxlength="6">
             </div>
             <button class="btn" onclick="loadRoom()">방 데이터 조회</button>
             <div id="roomContainer"></div>
@@ -315,12 +377,27 @@
 
         <!-- 선택 데이터 분석 -->
         <div class="card">
-            <h2>선택 데이터 분석</h2>
+            <h2>📊 선택 데이터 분석</h2>
+            <div class="info-box">
+                <p><strong>주제 필터:</strong> 특정 주제(예: 안드로이드, AWS)로 필터링 가능</p>
+                <p><strong>탭:</strong> 주제별, 역할별, 라운드별로 데이터 정렬</p>
+            </div>
             <div class="input-group">
                 <label for="topic">주제 필터 (선택사항):</label>
-                <input type="text" id="topic" placeholder="예: 자율주행">
+                <input type="text" id="topic" placeholder="예: 안드로이드">
             </div>
             <button class="btn" onclick="loadAnalysis()">분석 데이터 조회</button>
+            
+            <!-- 탭 UI -->
+            <div id="analysisTabs" style="display: none; margin-top: 20px;">
+                <div style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 3px solid #667eea;">
+                    <button class="tab-btn active" onclick="switchTab('topic')" id="topicTab">📌 주제별</button>
+                    <button class="tab-btn" onclick="switchTab('role')" id="roleTab">👥 역할별</button>
+                    <button class="tab-btn" onclick="switchTab('round')" id="roundTab">🔄 라운드별</button>
+                </div>
+                <div id="tabContent"></div>
+            </div>
+            
             <div id="analysisContainer"></div>
         </div>
 
@@ -403,29 +480,44 @@
 
         // 방 데이터 조회
         async function loadRoom() {
-            const roomId = document.getElementById('roomId').value;
+            const roomCode = document.getElementById('roomCode').value.trim();
             const container = document.getElementById('roomContainer');
             
-            if (!roomId) {
-                container.innerHTML = '<div class="error">Room ID를 입력하세요</div>';
+            if (!roomCode) {
+                container.innerHTML = '<div class="error">입장 코드(6자리)를 입력하세요</div>';
+                return;
+            }
+            
+            if (roomCode.length !== 6) {
+                container.innerHTML = '<div class="error">입장 코드는 6자리여야 합니다</div>';
                 return;
             }
             
             container.innerHTML = '<div class="loading">로딩 중...</div>';
             
             try {
-                const response = await fetch(`${API_BASE}/research/experiments/rooms/${roomId}`);
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const response = await fetch(`${API_BASE}/research/experiments/rooms/by-code/${roomCode}`);
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        throw new Error(`입장 코드 "${roomCode}"에 해당하는 방을 찾을 수 없습니다`);
+                    }
+                    throw new Error(`HTTP ${response.status}`);
+                }
                 
                 const data = await response.json();
                 container.innerHTML = `
                     <div class="success">데이터 조회 성공</div>
                     <div class="data-display">
                         <h3>${data.title || '제목 없음'}</h3>
+                        <p><strong>입장 코드:</strong> ${data.room_code}</p>
                         <p><strong>주제:</strong> ${data.topic || 'N/A'}</p>
                         <p><strong>참가자 수:</strong> ${data.participants?.length || 0}</p>
-                        <p><strong>시작 여부:</strong> ${data.is_started ? '시작됨' : '대기 중'}</p>
-                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                        <p><strong>시작 여부:</strong> ${data.is_started ? '✅ 시작됨' : '⏳ 대기 중'}</p>
+                        <p><strong>음성 녹음:</strong> ${data.voice_sessions?.reduce((sum, vs) => sum + vs.recordings.length, 0) || 0}개</p>
+                        <details style="margin-top: 15px;">
+                            <summary style="cursor: pointer; font-weight: bold; color: #667eea;">📄 전체 JSON 데이터 보기</summary>
+                            <pre style="margin-top: 10px;">${JSON.stringify(data, null, 2)}</pre>
+                        </details>
                     </div>
                 `;
             } catch (error) {
@@ -466,6 +558,9 @@
         }
 
         // 선택 분석 조회
+        // 전역 변수로 분석 데이터 저장
+        let analysisData = null;
+
         async function loadAnalysis() {
             const topic = document.getElementById('topic').value;
             const container = document.getElementById('analysisContainer');
@@ -480,17 +575,124 @@
                 const response = await fetch(url);
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 
-                const data = await response.json();
-                container.innerHTML = `
-                    <div class="success">분석 데이터 조회 성공</div>
-                    <div class="data-display">
-                        <h3>라운드별 선택 분석</h3>
-                        <p><strong>총 데이터:</strong> ${data.round_choices?.length || 0}개</p>
-                        <pre>${JSON.stringify(data, null, 2)}</pre>
-                    </div>
-                `;
+                analysisData = await response.json();
+                
+                // 탭 UI 표시
+                document.getElementById('analysisTabs').style.display = 'block';
+                container.innerHTML = '<div class="success">✅ 데이터 조회 성공! 위의 탭을 클릭해서 데이터를 확인하세요.</div>';
+                
+                // 기본으로 "주제별" 탭 표시
+                switchTab('topic');
+                
             } catch (error) {
                 container.innerHTML = `<div class="error">오류: ${error.message}</div>`;
+                document.getElementById('analysisTabs').style.display = 'none';
+            }
+        }
+
+        // 탭 전환 함수
+        function switchTab(tab) {
+            if (!analysisData) return;
+            
+            // 탭 버튼 활성화 상태 변경
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(tab + 'Tab').classList.add('active');
+            
+            const tabContent = document.getElementById('tabContent');
+            
+            if (tab === 'topic') {
+                // 주제별 데이터 (전체 통계)
+                const roundChoices = analysisData.round_choices || [];
+                const roleChoices = analysisData.role_choices || [];
+                
+                tabContent.innerHTML = `
+                    <div class="tab-content-section">
+                        <h3>📌 전체 통계 (주제별 필터 적용됨)</h3>
+                        <p><strong>라운드 선택:</strong> ${roundChoices.length}개 데이터</p>
+                        <p><strong>역할별 선택:</strong> ${roleChoices.length}개 데이터</p>
+                        <details style="margin-top: 15px;">
+                            <summary style="cursor: pointer; font-weight: bold;">📄 전체 JSON 보기</summary>
+                            <pre style="margin-top: 10px;">${JSON.stringify(analysisData, null, 2)}</pre>
+                        </details>
+                    </div>
+                `;
+            } else if (tab === 'role') {
+                // 역할별 데이터
+                const roleChoices = analysisData.role_choices || [];
+                
+                // 역할별로 그룹화
+                const roleGroups = {};
+                roleChoices.forEach(item => {
+                    const role = item.role_id || '역할 없음';
+                    if (!roleGroups[role]) {
+                        roleGroups[role] = [];
+                    }
+                    roleGroups[role].push(item);
+                });
+                
+                let html = '<div class="tab-content-section"><h3>👥 역할별 선택 통계</h3>';
+                
+                if (Object.keys(roleGroups).length === 0) {
+                    html += '<p>데이터가 없습니다.</p>';
+                } else {
+                    html += '<table class="data-table"><thead><tr><th>역할</th><th>선택</th><th>횟수</th></tr></thead><tbody>';
+                    
+                    for (const [role, choices] of Object.entries(roleGroups)) {
+                        choices.forEach(c => {
+                            html += `
+                                <tr>
+                                    <td><strong>${role}</strong></td>
+                                    <td>${c.choice === 0 ? '왼쪽 (0)' : '오른쪽 (1)'}</td>
+                                    <td>${c.count}회</td>
+                                </tr>
+                            `;
+                        });
+                    }
+                    
+                    html += '</tbody></table>';
+                }
+                
+                html += '</div>';
+                tabContent.innerHTML = html;
+            } else if (tab === 'round') {
+                // 라운드별 데이터
+                const roundChoices = analysisData.round_choices || [];
+                
+                // 라운드별로 그룹화
+                const roundGroups = {};
+                roundChoices.forEach(item => {
+                    const round = item.round_number || 0;
+                    if (!roundGroups[round]) {
+                        roundGroups[round] = [];
+                    }
+                    roundGroups[round].push(item);
+                });
+                
+                let html = '<div class="tab-content-section"><h3>🔄 라운드별 선택 통계</h3>';
+                
+                if (Object.keys(roundGroups).length === 0) {
+                    html += '<p>데이터가 없습니다.</p>';
+                } else {
+                    html += '<table class="data-table"><thead><tr><th>라운드</th><th>선택</th><th>횟수</th><th>평균 확신도</th></tr></thead><tbody>';
+                    
+                    for (const [round, choices] of Object.entries(roundGroups).sort((a, b) => a[0] - b[0])) {
+                        choices.forEach(c => {
+                            html += `
+                                <tr>
+                                    <td><strong>라운드 ${round}</strong></td>
+                                    <td>${c.choice === 0 ? '왼쪽 (0)' : '오른쪽 (1)'}</td>
+                                    <td>${c.count}회</td>
+                                    <td>${c.avg_confidence ? c.avg_confidence.toFixed(2) : 'N/A'}</td>
+                                </tr>
+                            `;
+                        });
+                    }
+                    
+                    html += '</tbody></table>';
+                }
+                
+                html += '</div>';
+                tabContent.innerHTML = html;
             }
         }
 
@@ -580,6 +782,8 @@
                     const userName = rec.username || (rec.guest_id ? `게스트(${rec.guest_id})` : 'N/A');
                     const createdAt = new Date(rec.created_at).toLocaleString('ko-KR');
                     
+                    const fileUrl = `https://dilemmai-idl.com/${rec.file_path}`;
+                    
                     tableHTML += `
                         <tr style="background: ${rec.is_processed ? '#e8f5e9' : '#fff'}">
                             <td style="padding: 8px; border: 1px solid #ddd;">${rec.recording_id}</td>
@@ -590,11 +794,11 @@
                             <td style="padding: 8px; border: 1px solid #ddd;">${duration}</td>
                             <td style="padding: 8px; border: 1px solid #ddd;">${createdAt}</td>
                             <td style="padding: 8px; border: 1px solid #ddd;">
-                                <a href="${rec.file_path}" target="_blank" style="color: #667eea; text-decoration: none; font-weight: bold;">
+                                <a href="${fileUrl}" target="_blank" style="color: #667eea; text-decoration: none; font-weight: bold;">
                                     🔗 파일 열기
                                 </a>
                                 <br>
-                                <small style="color: #666; font-size: 0.8em; word-break: break-all;">${rec.file_path}</small>
+                                <small style="color: #666; font-size: 0.8em; word-break: break-all;">${fileUrl}</small>
                             </td>
                         </tr>
                     `;
