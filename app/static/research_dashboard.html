@@ -644,28 +644,55 @@
                 // 역할별 데이터
                 const roleChoices = analysisData.role_choices || [];
                 
-                let html = '<div class="tab-content-section"><h3>👥 역할별 선택 통계</h3>';
+                // 서브토픽 없음 제외
+                const validChoices = roleChoices.filter(c => c.subtopic && c.subtopic.trim() !== '');
                 
-                if (roleChoices.length === 0) {
+                // 서브토픽별로 그룹화
+                const subtopicGroups = {};
+                validChoices.forEach(item => {
+                    const subtopic = item.subtopic;
+                    if (!subtopicGroups[subtopic]) {
+                        subtopicGroups[subtopic] = [];
+                    }
+                    subtopicGroups[subtopic].push(item);
+                });
+                
+                let html = '<div class="tab-content-section"><h3>👥 역할별 선택 통계 (서브토픽별)</h3>';
+                
+                if (Object.keys(subtopicGroups).length === 0) {
                     html += '<p>데이터가 없습니다.</p>';
                 } else {
-                    html += '<table class="data-table"><thead><tr><th>서브토픽</th><th>역할</th><th>선택</th><th>횟수</th></tr></thead><tbody>';
-                    
-                    roleChoices.forEach(c => {
-                        const roleName = getRoleName(c.role_id, c.subtopic);
-                        const subtopic = c.subtopic || '서브토픽 없음';
+                    // 각 서브토픽별로 테이블 생성
+                    for (const [subtopic, choices] of Object.entries(subtopicGroups)) {
+                        html += `
+                            <h4 style="margin-top: 20px; color: #667eea;">📌 ${subtopic}</h4>
+                            <table class="data-table" style="margin-bottom: 20px;">
+                                <thead>
+                                    <tr>
+                                        <th>역할</th>
+                                        <th>선택</th>
+                                        <th>횟수</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                        `;
+                        
+                        choices.forEach(c => {
+                            const roleName = getRoleName(c.role_id, subtopic);
+                            html += `
+                                <tr>
+                                    <td><strong>${roleName}</strong></td>
+                                    <td>${c.choice === 1 ? '왼쪽' : '오른쪽'}</td>
+                                    <td>${c.count}회</td>
+                                </tr>
+                            `;
+                        });
                         
                         html += `
-                            <tr>
-                                <td>${subtopic}</td>
-                                <td><strong>${roleName}</strong></td>
-                                <td>${c.choice === 1 ? '왼쪽 (1)' : '오른쪽 (2)'}</td>
-                                <td>${c.count}회</td>
-                            </tr>
+                                </tbody>
+                            </table>
                         `;
-                    });
-                    
-                    html += '</tbody></table>';
+                    }
                 }
                 
                 html += '</div>';
