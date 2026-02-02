@@ -642,7 +642,7 @@
                             html += `
                                 <tr>
                                     <td><strong>${role}</strong></td>
-                                    <td>${c.choice === 0 ? '왼쪽 (0)' : '오른쪽 (1)'}</td>
+                                    <td>${c.choice === 1 ? '왼쪽 (1)' : '오른쪽 (2)'}</td>
                                     <td>${c.count}회</td>
                                 </tr>
                             `;
@@ -680,7 +680,7 @@
                             html += `
                                 <tr>
                                     <td><strong>라운드 ${round}</strong></td>
-                                    <td>${c.choice === 0 ? '왼쪽 (0)' : '오른쪽 (1)'}</td>
+                                    <td>${c.choice === 1 ? '왼쪽 (1)' : '오른쪽 (2)'}</td>
                                     <td>${c.count}회</td>
                                     <td>${c.avg_confidence ? c.avg_confidence.toFixed(2) : 'N/A'}</td>
                                 </tr>
@@ -794,10 +794,14 @@
                             <td style="padding: 8px; border: 1px solid #ddd;">${duration}</td>
                             <td style="padding: 8px; border: 1px solid #ddd;">${createdAt}</td>
                             <td style="padding: 8px; border: 1px solid #ddd;">
-                                <a href="${fileUrl}" target="_blank" style="color: #667eea; text-decoration: none; font-weight: bold;">
-                                    🔗 파일 열기
-                                </a>
-                                <br>
+                                <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                                    <a href="${fileUrl}" target="_blank" style="color: #667eea; text-decoration: none; font-weight: bold; padding: 6px 12px; background: #f0f4ff; border-radius: 4px; display: inline-block;">
+                                        🔗 파일 열기
+                                    </a>
+                                    <a href="${fileUrl}" download="recording_${rec.recording_id}.wav" style="color: white; text-decoration: none; font-weight: bold; padding: 6px 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 4px; display: inline-block;">
+                                        ⬇️ 다운로드
+                                    </a>
+                                </div>
                                 <small style="color: #666; font-size: 0.8em; word-break: break-all;">${fileUrl}</small>
                             </td>
                         </tr>
