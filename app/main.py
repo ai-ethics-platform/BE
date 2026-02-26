@@ -24,6 +24,7 @@ app.add_middleware(
         "http://localhost:8000",
         "https://dilemmai.org",
         "https://www.dilemmai.org",
+        "https://fe-git-feature-env-refactoring-dldbstjs-projects.vercel.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],
