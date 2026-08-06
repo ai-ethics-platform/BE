@@ -46,4 +46,10 @@ jobs:
               docker logs --tail=200 "$c" 2>&1 | grep -iE "error|traceback|exception|refused|timed out|gone away|denied" | tail -20
             done
 
+            echo "===== [7] installed DB library versions"
+            docker exec ai_ethics_game-backend-1 pip list 2>/dev/null | grep -iE "sqlalchemy|aiomysql|pymysql|greenlet" || echo "pip list failed"
+
+            echo "===== [8] full pip freeze (for pinning reference)"
+            docker exec ai_ethics_game-backend-1 pip freeze 2>/dev/null || echo "pip freeze failed"
+
             echo "===== done (nothing was changed)"
