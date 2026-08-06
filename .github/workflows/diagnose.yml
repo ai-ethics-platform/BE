@@ -1,0 +1,49 @@
+name: diagnose
+
+on:
+  workflow_dispatch:
+
+jobs:
+  Inspect-EC2:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Create private key file from EC2_KEY
+        run: |
+          echo "${{ secrets.EC2_KEY }}" > key.pem
+          chmod 600 key.pem
+
+      - name: Inspect containers on EC2 (read-only)
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key_path: key.pem
+          port: 22
+          script: |
+            echo "===== [1] compose version"
+            docker-compose version 2>/dev/null | head -1 || echo "docker-compose (v1) not found"
+            docker compose version 2>/dev/null | head -1 || echo "docker compose (v2) not found"
+
+            echo "===== [2] running containers"
+            docker ps
+
+            echo "===== [3] all containers (including stopped)"
+            docker ps -a
+
+            echo "===== [4] networks"
+            docker network ls
+
+            echo "===== [5] backend containers: created / state / network aliases"
+            for c in $(docker ps -aq --filter "name=backend"); do
+              docker inspect --format '{{.Name}} | created={{.Created}} | state={{.State.Status}} | image={{.Config.Image}}' "$c"
+              docker inspect --format '{{range $k,$v := .NetworkSettings.Networks}}    net={{$k}} ip={{$v.IPAddress}} aliases={{$v.Aliases}}{{"\n"}}{{end}}' "$c"
+            done
+
+            echo "===== [6] backend error logs (filtered)"
+            for c in $(docker ps -aq --filter "name=backend"); do
+              echo "--- container $c"
+              docker logs --tail=200 "$c" 2>&1 | grep -iE "error|traceback|exception|refused|timed out|gone away|denied" | tail -20
+            done
+
+            echo "===== done (nothing was changed)"
