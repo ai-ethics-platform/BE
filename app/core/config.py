@@ -64,7 +64,7 @@ class Settings(BaseSettings):
         },
         "flip": {
             "id": "pmpt_68c1294a9c788190a354084edf3e5b4e0551d09aeaea88c0",
-            "version": "23"
+            "version": "24"
         },
         "roles": {
             "id": "pmpt_68c12508f4088193905744bdf4a5aa4a0b87855a9b1545b0",
