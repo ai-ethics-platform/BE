@@ -22,7 +22,7 @@ pydub==0.25.1
 boto3==1.28.64
 pydantic[email]
 aiomysql==0.2.0
-pymysql
+pymysql==1.1.2
 celery
 redis==5.0.1
 aioredis
