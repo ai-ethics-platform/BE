@@ -60,15 +60,15 @@ class Settings(BaseSettings):
         },
         "question": {
             "id": "pmpt_68c123df86948197a9be12f7344438270a5924971aab8f27",
-            "version": "18"
+            "version": "19"
         },
         "flip": {
             "id": "pmpt_68c1294a9c788190a354084edf3e5b4e0551d09aeaea88c0",
-            "version": "27"
+            "version": "28"
         },
         "roles": {
             "id": "pmpt_68c12508f4088193905744bdf4a5aa4a0b87855a9b1545b0",
-            "version": "19"
+            "version": "20"
         },
         "ending": {
             "id": "pmpt_68c12982ae048190aaed3a4004918f1a09e33c363c985ff5",
