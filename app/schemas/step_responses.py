@@ -13,23 +13,34 @@ class OpeningResponse(BaseModel):
 
 
 class QuestionResponse(BaseModel):
-    """question 단계 응답 모델 - question, choice1, choice2 변수 추출 (flip 단계에 전달)"""
+    """question 단계 응답 모델 - question, choice1, choice2 변수 추출 (flip 단계에 전달)
+
+    질문/선택지는 반드시 '- 질문:' '- 선택지1:' '- 선택지2:' 마커 뒤의 텍스트에서만
+    추출한다. 마커가 없는 텍스트(인사말, 가치 충돌 설명 등)에서 값을 추측해 채우면
+    세션에 저장된 정상 값을 덮어쓰게 된다. (QA 8/17 #3)
+    """
     response_text: Optional[str] = Field(default="", description="사용자에게 보여줄 응답 텍스트(추출하지 않음)")
-    question: Optional[str] = Field(None, description="다음 단계(flip)에 전달할 question 변수")
-    choice1: Optional[str] = Field(None, description="다음 단계(flip)에 전달할 choice1 변수")
-    choice2: Optional[str] = Field(None, description="다음 단계(flip)에 전달할 choice2 변수")
+    question: Optional[str] = Field(None, description="다음 단계(flip)에 전달할 question 변수. '- 질문:' 마커 뒤의 텍스트에서만 추출하고, 마커가 없으면 null")
+    choice1: Optional[str] = Field(None, description="다음 단계(flip)에 전달할 choice1 변수. '- 선택지1:' 마커 뒤의 텍스트에서만 추출하고, 마커가 없으면 null")
+    choice2: Optional[str] = Field(None, description="다음 단계(flip)에 전달할 choice2 변수. '- 선택지2:' 마커 뒤의 텍스트에서만 추출하고, 마커가 없으면 null")
     # question → flip: question, choice1, choice2 필요
 
 
 class FlipResponse(BaseModel):
-    """flip 단계 응답 모델 - 시나리오와 플립 상황 변수 추출 (roles 단계에 전달)"""
+    """flip 단계 응답 모델 - 시나리오와 플립 상황 변수 추출 (roles 단계에 전달)
+
+    각 필드는 반드시 해당 마커 뒤의 텍스트에서만 추출한다. 마커가 없는 텍스트
+    (단계 진입 인사말, 자유 대화 등)에서 값을 추측해 채우면 세션에 저장된 정상 값을
+    덮어쓰게 된다. (QA 8/17 #3 — 인사말의 "두 가지 선택지 중 하나를 고릅니다"가
+    choice1로 잘못 추출된 사례)
+    """
     response_text: Optional[str] = Field(default="", description="사용자에게 보여줄 응답 텍스트(추출하지 않음)")
-    dilemma_situation: Optional[str] = Field(None, description="상황 시나리오")
-    question: Optional[str] = Field(None, description="딜레마 질문")
-    choice1: Optional[str] = Field(None, description="선택지 1 (agree_label)")
-    flips_agree_texts: Optional[str] = Field(None, description="선택지 1에 대한 결과 자료. 라벨은 '예상하지 못한 결과:' 또는 (구버전) '플립자료:' 둘 다 인정한다")
-    choice2: Optional[str] = Field(None, description="선택지 2 (disagree_label)")
-    flips_disagree_texts: Optional[str] = Field(None, description="선택지 2에 대한 결과 자료. 라벨은 '예상하지 못한 결과:' 또는 (구버전) '플립자료:' 둘 다 인정한다")
+    dilemma_situation: Optional[str] = Field(None, description="상황 시나리오. '- 상황 시나리오:' 마커 뒤의 텍스트에서만 추출하고, 마커가 없으면 null")
+    question: Optional[str] = Field(None, description="딜레마 질문. '- 질문:' 마커 뒤의 텍스트에서만 추출하고, 마커가 없으면 null")
+    choice1: Optional[str] = Field(None, description="선택지 1 (agree_label). '- 선택지1:' 마커 뒤의 텍스트에서만 추출하고, 마커가 없으면 null")
+    flips_agree_texts: Optional[str] = Field(None, description="선택지 1에 대한 결과 자료. '- 선택지1:' 줄 다음에 오는 '플립자료:' 또는 '예상하지 못한 결과:' 라벨 뒤의 텍스트에서만 추출하고, 라벨이 없으면 null")
+    choice2: Optional[str] = Field(None, description="선택지 2 (disagree_label). '- 선택지2:' 마커 뒤의 텍스트에서만 추출하고, 마커가 없으면 null")
+    flips_disagree_texts: Optional[str] = Field(None, description="선택지 2에 대한 결과 자료. '- 선택지2:' 줄 다음에 오는 '플립자료:' 또는 '예상하지 못한 결과:' 라벨 뒤의 텍스트에서만 추출하고, 라벨이 없으면 null")
     # flip → roles: 모든 플립 자료 전달
 
 
