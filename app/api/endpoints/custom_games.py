@@ -51,7 +51,7 @@ async def get_custom_game(code: str, db: AsyncSession = Depends(get_db)) -> Any:
 
 
 # Representative image upload
-IMAGE_DIR = "static/images"
+IMAGE_DIR = "app/static/images"  # main.py가 /static을 app/static 디렉터리로 mount하므로 반드시 일치해야 함
 os.makedirs(IMAGE_DIR, exist_ok=True)
 
 
