@@ -80,7 +80,9 @@ async def update_representative_images(
     game = await custom_game_service.get_by_code(db, code)
     if not game:
         raise HTTPException(status_code=404, detail="커스텀 게임을 찾을 수 없습니다.")
-    await _merge_and_save(db, game, {"representativeImages": payload.images})
+    current = _load_data(game).get("representativeImages", {})
+    current.update(payload.images)
+    await _merge_and_save(db, game, {"representativeImages": current})
     return {"message": "updated"}
 
 
