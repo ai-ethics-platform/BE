@@ -1,7 +1,7 @@
 # app/api/api.py
 from fastapi import APIRouter
 
-from app.api.endpoints import auth, users, rooms, voice, stats, custom_games, chat, research, webrtc, play_applications
+from app.api.endpoints import auth, users, rooms, voice, stats, custom_games, chat, research, webrtc, play_applications, admin_play_applications
 from app.api import voice_ws
 from app.api import voice_signaling_ws  # WebRTC 시그널링 서버 라우터 추가
 from app.api import audio_upload
@@ -22,3 +22,4 @@ api_router.include_router(chat.router, prefix="", tags=["chatbot"])
 api_router.include_router(research.router, prefix="/research", tags=["research"])
 api_router.include_router(webrtc.router, prefix="/webrtc", tags=["webrtc"])
 api_router.include_router(play_applications.router, prefix="/play-applications", tags=["play_applications"],)
+api_router.include_router(admin_play_applications.router, prefix="/admin/play-applications", tags=["admin_play_applications"],)
