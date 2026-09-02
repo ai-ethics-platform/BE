@@ -52,4 +52,22 @@ jobs:
             echo "===== [8] full pip freeze (for pinning reference)"
             docker exec ai_ethics_game-backend-1 pip freeze 2>/dev/null || echo "pip freeze failed"
 
+            echo "===== [9] backend DB target (safe)"
+            docker exec ai_ethics_game-backend-1 python -c "
+            from app.core.config import settings
+            from sqlalchemy.engine import make_url
+            u = make_url(settings.SQLALCHEMY_DATABASE_URI)
+            print('DB_HOST =', u.host)
+            print('DB_PORT =', u.port)
+            print('DB_NAME =', u.database)
+            "
+
+            echo "===== [10] mysql network"
+            docker inspect ai_ethics_game-mysql-1 \
+              --format '{{range $k,$v := .NetworkSettings.Networks}}net={{$k}} ip={{$v.IPAddress}} aliases={{$v.Aliases}}{{"\n"}}{{end}}'
+
+            echo "===== [11] mysql storage"
+            docker inspect ai_ethics_game-mysql-1 \
+              --format '{{range .Mounts}}{{.Type}} {{.Name}} -> {{.Destination}}{{"\n"}}{{end}}'
+
             echo "===== done (nothing was changed)"
