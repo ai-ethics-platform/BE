@@ -4,11 +4,14 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt
 from pydantic import ValidationError
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
 
 from app.core.config import settings
 from app.core.database import async_session
 from app.models.user import User
+from app.models.play_application import PlayApplication
 from app.schemas.token import TokenPayload
 
 
@@ -92,6 +95,40 @@ async def get_current_user(
             detail="Invalid user ID in token",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+async def get_current_approved_user(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> User:
+    """
+    플레이 승인이 완료된 일반 사용자만 허용
+
+    - 승인 신청 없음: 403
+    - pending / rejected: 403
+    - approved: 사용자 반환
+    """
+
+    result = await db.execute(
+        select(PlayApplication).where(
+            PlayApplication.user_id == current_user.id
+        )
+    )
+
+    application = result.scalar_one_or_none()
+
+    if application is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Play approval is required"
+        )
+
+    if application.status != "approved":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Play approval has not been granted"
+        )
+
+    return current_user
 
 
 async def get_current_active_user(
