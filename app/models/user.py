@@ -32,7 +32,7 @@ class User(Base):
     # Relationships
     created_rooms = relationship("Room", back_populates="creator")
     room_participations = relationship("RoomParticipant", back_populates="user")
-    voice_participations = relationship("VoiceParticipant", back_populates="user") 
+    voice_participations = relationship("VoiceParticipant", back_populates="user")
 
     play_application = relationship(
     "PlayApplication",

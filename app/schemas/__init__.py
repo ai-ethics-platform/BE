@@ -227,4 +227,3 @@ __all__ += [
     "PlayApplicationStatusResponse",
     "PlayApplicationActionResponse",
 ]
-
