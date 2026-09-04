@@ -26,6 +26,8 @@ jobs:
           key_path: key.pem
           port: 22
           script: |
+            set -e
+
             echo "[1] 프로젝트 이동 또는 클론"
             cd ~
             if [ -d "ai_ethics_game" ]; then
@@ -43,5 +45,11 @@ jobs:
             docker-compose down || true
             docker system prune -af
             docker-compose up -d --build
+
+            echo "[4] DB migration 적용"
+            docker-compose exec -T backend alembic upgrade head
+
+            echo "[5] 컨테이너 상태 확인"
+            docker-compose ps
 
             echo "✅ Deployment completed!"
