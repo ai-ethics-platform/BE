@@ -4,7 +4,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_
 
 from app import models, schemas
-from app.core.deps import get_db, get_current_user_or_guest
+from app.core.deps import (
+    get_db,
+    get_current_user_or_guest,
+    get_current_approved_user,
+)
 from app.services.room_service import room_service
 
 router = APIRouter()
@@ -18,7 +22,7 @@ page_sync_status: Dict[str, Dict[int, Set[str]]] = {}
 async def create_public_room(
     room_data: schemas.RoomCreatePublic,
     db: AsyncSession = Depends(get_db),
-    current_user: Union[models.User, dict] = Depends(get_current_user_or_guest)
+    current_user: Union[models.User, dict] = Depends(get_current_approved_user)
 ) -> Any:
     """
     공개 방 생성
@@ -70,7 +74,8 @@ async def create_public_room(
 async def get_public_rooms(
     skip: int = 0,
     limit: int = 20,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: models.User = Depends(get_current_approved_user)
 ) -> Any:
     """
     공개 방 목록 조회
@@ -97,7 +102,8 @@ async def get_public_rooms(
 @router.get("/code/{room_code}", response_model=schemas.Room)
 async def get_room_by_code(
     room_code: str,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: models.User = Depends(get_current_approved_user)
 ) -> Any:
     """
     방 코드로 방 정보 조회
@@ -131,7 +137,7 @@ async def get_room_by_code(
 async def join_room_by_code(
     join_data: schemas.RoomJoinByCode,
     db: AsyncSession = Depends(get_db),
-    current_user: Union[models.User, dict] = Depends(get_current_user_or_guest)
+    current_user: Union[models.User, dict] = Depends(get_current_approved_user)
 ) -> Any:
     """
     방 코드로 방 입장
@@ -192,7 +198,7 @@ async def join_room_by_id(
     room_id: int,
     join_data: schemas.RoomJoinRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: Union[models.User, dict] = Depends(get_current_user_or_guest)
+    current_user: Union[models.User, dict] = Depends(get_current_approved_user)
 ) -> Any:
     """
     방 ID로 방 입장 (공개 방 목록에서 선택하여 입장)
@@ -245,7 +251,7 @@ async def join_room_by_id(
 async def create_private_room(
     room_data: schemas.RoomCreatePrivate,
     db: AsyncSession = Depends(get_db),
-    current_user: Union[models.User, dict] = Depends(get_current_user_or_guest)
+    current_user: Union[models.User, dict] = Depends(get_current_approved_user)
 ) -> Any:
     """
     비공개 방 생성
@@ -298,7 +304,7 @@ async def get_private_rooms(
     skip: int = 0,
     limit: int = 20,
     db: AsyncSession = Depends(get_db),
-    current_user: Union[models.User, dict] = Depends(get_current_user_or_guest)
+    current_user: Union[models.User, dict] = Depends(get_current_approved_user)
 ) -> Any:
     """
     비공개 방 목록 조회
@@ -326,7 +332,7 @@ async def get_private_rooms(
 async def toggle_ready_status(
     ready_data: schemas.RoomReadyRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: Union[models.User, dict] = Depends(get_current_user_or_guest)
+    current_user: Union[models.User, dict] = Depends(get_current_approved_user)
 ) -> Any:
     """
     준비 상태 토글
@@ -497,7 +503,8 @@ async def leave_room(
 @router.post("/assign-roles/{room_code}", response_model=schemas.RoleAssignmentResult)
 async def assign_roles(
     room_code: str,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: models.User = Depends(get_current_approved_user)
 ) -> Any:
     """
     역할 랜덤 배정
@@ -532,7 +539,8 @@ async def assign_roles(
 @router.get("/assign-roles/{room_code}", response_model=schemas.RoleAssignmentStatus)
 async def get_role_assignment_status(
     room_code: str,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: models.User = Depends(get_current_approved_user)
 ) -> Any:
     """
     방의 역할 배정 상태 조회
@@ -563,7 +571,8 @@ async def get_role_assignment_status(
 @router.post("/ai-select", response_model=schemas.AiTypeSelectResponse)
 async def set_ai_type(
     req: schemas.AiTypeSelectRequest,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: models.User = Depends(get_current_approved_user)
 ):
     try:
         room = await room_service.set_ai_type(db, req.room_code, req.ai_type)
@@ -575,7 +584,8 @@ async def set_ai_type(
 @router.get("/ai-select", response_model=schemas.AiTypeSelectResponse)
 async def get_ai_type(
     room_code: str,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: models.User = Depends(get_current_approved_user)
 ):
     try:
         ai_type = await room_service.get_ai_type(db, room_code)
@@ -587,7 +597,8 @@ async def get_ai_type(
 @router.post("/ai-name", response_model=schemas.AiNameResponse)
 async def set_ai_name(
     req: schemas.AiNameRequest,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: models.User = Depends(get_current_approved_user)
 ):
     try:
         room = await room_service.set_ai_name(db, req.room_code, req.ai_name)
@@ -599,7 +610,8 @@ async def set_ai_name(
 @router.get("/ai-name", response_model=schemas.AiNameResponse)
 async def get_ai_name(
     room_code: str,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: models.User = Depends(get_current_approved_user)
 ):
     try:
         ai_name = await room_service.get_ai_name(db, room_code)
@@ -614,7 +626,7 @@ async def submit_round_choice(
     room_code: str,
     choice_data: schemas.RoundChoiceRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: Union[models.User, dict] = Depends(get_current_user_or_guest)
+    current_user: Union[models.User, dict] = Depends(get_current_approved_user)
 ) -> Any:
     """
     라운드 개인 선택 제출 (round_number는 body로)
@@ -656,7 +668,7 @@ async def submit_individual_confidence(
     room_code: str,
     confidence_data: schemas.IndividualConfidenceRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: Union[models.User, dict] = Depends(get_current_user_or_guest)
+    current_user: Union[models.User, dict] = Depends(get_current_approved_user)
 ) -> Any:
     """
     개별 확신도 제출 (round_number는 body로)
@@ -698,7 +710,7 @@ async def submit_consensus_choice(
     room_code: str,
     choice_data: schemas.ConsensusChoiceRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: Union[models.User, dict] = Depends(get_current_user_or_guest)
+    current_user: Union[models.User, dict] = Depends(get_current_approved_user)
 ) -> Any:
     # 합의 선택 제출 (round_number는 body로)
     try:
@@ -738,7 +750,7 @@ async def submit_consensus_confidence(
     room_code: str,
     confidence_data: schemas.ConsensusConfidenceRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: Union[models.User, dict] = Depends(get_current_user_or_guest)
+    current_user: Union[models.User, dict] = Depends(get_current_approved_user)
 ) -> Any:
     """
     합의 선택에 대한 확신도 제출 (round_number는 body로)
@@ -780,7 +792,8 @@ async def submit_consensus_confidence(
 async def get_choice_status(
     room_code: str,
     round_number: int,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: models.User = Depends(get_current_approved_user)
 ) -> Any:
     """
     라운드별 선택 상태 조회
@@ -873,7 +886,7 @@ async def ping_websocket_connections(session_id: str):
 async def record_page_arrival(
     arrival_data: schemas.room.PageArrivalRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: Union[models.User, dict] = Depends(get_current_user_or_guest)
+    current_user: Union[models.User, dict] = Depends(get_current_approved_user)
 ) -> Any:
     """
     사용자가 특정 페이지에 도착했음을 기록
@@ -929,7 +942,8 @@ async def record_page_arrival(
 async def get_page_sync_status(
     room_code: str,
     page_number: int,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: models.User = Depends(get_current_approved_user)
 ) -> Any:
     """
     특정 방과 페이지의 동기화 상태 조회
@@ -984,7 +998,8 @@ async def get_page_sync_status(
 async def reset_page_sync_status(
     room_code: str,
     page_number: int,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: models.User = Depends(get_current_approved_user)
 ) -> Any:
     """
     특정 방과 페이지의 동기화 상태 초기화
@@ -1025,7 +1040,8 @@ async def manual_page_sync_signal(
     room_code: str,
     page_number: int,
     signal_type: str = "three_next",
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: models.User = Depends(get_current_approved_user)
 ) -> Any:
     """
     수동으로 페이지 동기화 신호 전송
