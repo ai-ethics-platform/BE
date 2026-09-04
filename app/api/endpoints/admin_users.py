@@ -59,6 +59,26 @@ async def search_user(
 
     return serialize_user(user)
 
+@router.get("/admins")
+async def get_admin_users(
+    db: AsyncSession = Depends(get_db),
+    current_admin: User = Depends(get_current_admin_user),
+) -> Any:
+    """
+    현재 관리자 권한이 있는 일반 계정 목록을 조회합니다.
+    """
+    result = await db.execute(
+        select(User)
+        .where(
+            User.is_admin.is_(True),
+            User.is_guest.is_(False),
+        )
+        .order_by(User.username.asc())
+    )
+
+    users = result.scalars().all()
+
+    return [serialize_user(user) for user in users]
 
 @router.patch("/{user_id}/grant-admin")
 async def grant_admin_permission(
