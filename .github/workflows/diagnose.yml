@@ -48,23 +48,23 @@ jobs:
 
             echo "===== [9] recent custom_games codes (code + created_at only, no other fields)"
             docker exec ai_ethics_game-backend-1 python -c "
-import asyncio
-from sqlalchemy import select
-from app.core.database import async_session
-from app.models.custom_game import CustomGame
+            import asyncio
+            from sqlalchemy import select
+            from app.core.database import async_session
+            from app.models.custom_game import CustomGame
 
-async def main():
-    async with async_session() as db:
-        result = await db.execute(
-            select(CustomGame.code, CustomGame.created_at)
-            .order_by(CustomGame.created_at.desc())
-            .limit(20)
-        )
-        for code, created_at in result.all():
-            print(f'{code}\t{created_at}')
+            async def main():
+                async with async_session() as db:
+                    result = await db.execute(
+                        select(CustomGame.code, CustomGame.created_at)
+                        .order_by(CustomGame.created_at.desc())
+                        .limit(20)
+                    )
+                    for code, created_at in result.all():
+                        print(f'{code}\t{created_at}')
 
-asyncio.run(main())
-" > /tmp/codes.txt 2>&1
+            asyncio.run(main())
+            " > /tmp/codes.txt 2>&1
             cat /tmp/codes.txt
 
             echo "===== [10] editor version classification per code (counts only, no raw log content)"
