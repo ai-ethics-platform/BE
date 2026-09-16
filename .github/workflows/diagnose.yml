@@ -46,13 +46,37 @@ jobs:
               docker logs --tail=200 "$c" 2>&1 | grep -iE "error|traceback|exception|refused|timed out|gone away|denied" | tail -20
             done
 
-            echo "===== [6b] backend logs, 2026-09-15 18:00~24:00 KST (09:00~15:00 UTC), with real timestamps"
+            echo "===== [9] recent custom_games codes (code + created_at only, no other fields)"
+            docker exec ai_ethics_game-backend-1 python -c "
+import asyncio
+from sqlalchemy import select
+from app.core.database import async_session
+from app.models.custom_game import CustomGame
+
+async def main():
+    async with async_session() as db:
+        result = await db.execute(
+            select(CustomGame.code, CustomGame.created_at)
+            .order_by(CustomGame.created_at.desc())
+            .limit(20)
+        )
+        for code, created_at in result.all():
+            print(f'{code}\t{created_at}')
+
+asyncio.run(main())
+" > /tmp/codes.txt 2>&1
+            cat /tmp/codes.txt
+
+            echo "===== [10] editor version classification per code (counts only, no raw log content)"
             for c in $(docker ps -aq --filter "name=backend"); do
-              echo "--- container $c"
-              docker logs -t --since 2026-09-15T09:00:00Z --until 2026-09-15T15:00:00Z "$c" > /tmp/win.log 2>&1
-              echo "total lines in window: $(wc -l < /tmp/win.log)"
-              echo "--- custom-games / role-images / representative-images requests, with context ---"
-              grep -nE "custom-games|role-images|representative-images" -B5 -A5 /tmp/win.log
+              docker logs "$c" > /tmp/be_full.log 2>&1
+              echo "total backend log lines available: $(wc -l < /tmp/be_full.log)"
+              while IFS=$'\t' read -r code created; do
+                [ -z "$code" ] && continue
+                old_hits=$(grep -cE "\"(PUT) /custom-games/${code}/(opening|roles|dilemma|flips)\"" /tmp/be_full.log)
+                new_hits=$(grep -cE "\"(PUT|POST) /custom-games/${code}/(representative-images|title)\"" /tmp/be_full.log)
+                echo "code=${code} created=${created} old_version_hits=${old_hits} new_version_hits=${new_hits}"
+              done < /tmp/codes.txt
             done
 
             echo "===== [7] installed DB library versions"
