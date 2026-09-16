@@ -64,8 +64,9 @@ jobs:
                         print(f'{code}\t{created_at}')
 
             asyncio.run(main())
-            " > /tmp/codes.txt 2>&1
-            cat /tmp/codes.txt
+            " > /tmp/codes.txt 2>/dev/null
+            grep -E $'^[^\t]+\t' /tmp/codes.txt > /tmp/codes_clean.txt
+            cat /tmp/codes_clean.txt
 
             echo "===== [10] editor version classification per code (counts only, no raw log content)"
             for c in $(docker ps -aq --filter "name=backend"); do
@@ -73,10 +74,10 @@ jobs:
               echo "total backend log lines available: $(wc -l < /tmp/be_full.log)"
               while IFS=$'\t' read -r code created; do
                 [ -z "$code" ] && continue
-                old_hits=$(grep -cE "\"(PUT) /custom-games/${code}/(opening|roles|dilemma|flips)\"" /tmp/be_full.log)
-                new_hits=$(grep -cE "\"(PUT|POST) /custom-games/${code}/(representative-images|title)\"" /tmp/be_full.log)
+                old_hits=$(grep -cE "\"PUT /custom-games/${code}/(opening|roles|dilemma|flips)" /tmp/be_full.log)
+                new_hits=$(grep -cE "\"(PUT|POST) /custom-games/${code}/(representative-images|title)" /tmp/be_full.log)
                 echo "code=${code} created=${created} old_version_hits=${old_hits} new_version_hits=${new_hits}"
-              done < /tmp/codes.txt
+              done < /tmp/codes_clean.txt
             done
 
             echo "===== [7] installed DB library versions"
