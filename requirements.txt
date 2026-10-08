@@ -29,3 +29,4 @@ aioredis
 ffmpeg-python
 bcrypt==4.0.1
 openpyxl==3.1.2
+posthog>=7.59.0,<8
