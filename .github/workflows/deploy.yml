@@ -20,7 +20,10 @@ jobs:
 
       - name: Connect and deploy to EC2
         uses: appleboy/ssh-action@v0.1.5
+        env:
+          POSTHOG_PROJECT_TOKEN: ${{ secrets.POSTHOG_PROJECT_TOKEN }}
         with:
+          envs: POSTHOG_PROJECT_TOKEN
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key_path: key.pem
@@ -40,7 +43,7 @@ jobs:
 
             echo "[2] .env 파일 생성 (base64 decode)"
             echo "${{ secrets.ENCODED_ENV_VARS }}" | base64 -d > .env
-
+            printf '\nPOSTHOG_PROJECT_TOKEN=%s\n' "$POSTHOG_PROJECT_TOKEN" >> .env
             echo "[3] Docker 재시작 및 빌드"
             docker-compose down || true
             docker system prune -af
