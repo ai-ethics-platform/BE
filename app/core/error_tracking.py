@@ -30,8 +30,8 @@ def capture_exception(error: Exception, endpoint: str) -> None:
     try:
         posthog_client.capture_exception(
             error,
-            "backend",
-            {"endpoint": endpoint, "$process_person_profile": False},
+            distinct_id="backend",
+            properties={"endpoint": endpoint, "$process_person_profile": False},
         )
     except Exception:
         # Telemetry outages must never affect API behavior.
