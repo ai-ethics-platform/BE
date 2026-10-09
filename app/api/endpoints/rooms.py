@@ -1,5 +1,5 @@
 from typing import Any, List, Union, Dict, Set, Optional
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, Request, status, Query
 from app.core.error_tracking import capture_exception
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_
@@ -137,6 +137,7 @@ async def get_room_by_code(
 @router.post("/join/code", response_model=schemas.RoomJoinResponse)
 async def join_room_by_code(
     join_data: schemas.RoomJoinByCode,
+    request: Request,
     db: AsyncSession = Depends(get_db),
     current_user: Union[models.User, dict] = Depends(get_current_approved_user)
 ) -> Any:
@@ -188,7 +189,7 @@ async def join_room_by_code(
             detail=str(e)
         )
     except Exception as e:
-        capture_exception(e, "/rooms/join/code")
+        capture_exception(e, "/rooms/join/code", request.headers.get("x-posthog-session-id"))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"방 입장 중 오류가 발생했습니다: {str(e)}"

@@ -22,7 +22,7 @@ app = FastAPI(
 async def report_unhandled_exception(request: Request, exc: Exception):
     route = request.scope.get("route")
     endpoint = getattr(route, "path", "unmatched")
-    capture_exception(exc, endpoint)
+    capture_exception(exc, endpoint, request.headers.get("x-posthog-session-id"))
     return JSONResponse(
         status_code=500,
         content={"detail": "Internal server error"},
