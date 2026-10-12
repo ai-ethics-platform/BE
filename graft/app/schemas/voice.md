@@ -1,0 +1,23 @@
+# app/schemas/voice.py
+
+- VoiceSessionCreate · class · L7-L9 — class VoiceSessionCreate(BaseModel)
+- VoiceSession · class · L13-L23 — class VoiceSession(BaseModel)
+- Config · class · L21-L23 — class Config
+- VoiceParticipant · class · L27-L44 — class VoiceParticipant(BaseModel)
+- Config · class · L42-L44 — class Config
+- VoiceStatusUpdate · class · L48-L51 — class VoiceStatusUpdate(BaseModel)
+- VoiceStatusResponse · class · L55-L57 — class VoiceStatusResponse(BaseModel)
+- VoiceJoinRequest · class · L61-L63 — class VoiceJoinRequest(BaseModel)
+- VoiceJoinResponse · class · L67-L70 — class VoiceJoinResponse(BaseModel)
+- VoiceLeaveRequest · class · L74-L75 — class VoiceLeaveRequest(BaseModel)
+- VoiceLeaveResponse · class · L79-L81 — class VoiceLeaveResponse(BaseModel)
+- VoiceSessionInfo · class · L85-L88 — class VoiceSessionInfo(BaseModel)
+- RecordingStartRequest · class · L92-L93 — class RecordingStartRequest(BaseModel)
+- RecordingStartResponse · class · L97-L100 — class RecordingStartResponse(BaseModel)
+- RecordingStopRequest · class · L104-L105 — class RecordingStopRequest(BaseModel)
+- RecordingStopResponse · class · L109-L113 — class RecordingStopResponse(BaseModel)
+- RecordingUploadRequest · class · L117-L119 — class RecordingUploadRequest(BaseModel)
+- RecordingUploadResponse · class · L123-L127 — class RecordingUploadResponse(BaseModel)
+- WebSocketMessage · class · L131-L134 — class WebSocketMessage(BaseModel)
+- VoiceStatusBroadcast · class · L138-L144 — class VoiceStatusBroadcast(BaseModel)
+- ParticipantEvent · class · L148-L152 — class ParticipantEvent(BaseModel)

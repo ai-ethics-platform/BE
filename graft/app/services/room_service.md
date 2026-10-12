@@ -1,0 +1,32 @@
+# app/services/room_service.py
+
+- RoomService · class · L11-L1294 — class RoomService
+- _validate_custom_game · method · L13-L18 — async def _validate_custom_game(db: AsyncSession, code: Optional[str]) -> Optional[str]
+- normalize_subtopic · method · L21-L44 — def normalize_subtopic(subtopic: str) -> str
+- create_public_room · method · L47-L110 — async def create_public_room( db: AsyncSession, room_data: schemas.RoomCreatePublic, creator_id: Optional[int], creator_nickname: str ) -> models.Room
+- _generate_unique_room_code · method · L113-L126 — async def _generate_unique_room_code(db: AsyncSession) -> str
+- get_room_by_code · method · L129-L140 — async def get_room_by_code(db: AsyncSession, room_code: str) -> Optional[models.Room]
+- get_public_rooms · method · L143-L162 — async def get_public_rooms( db: AsyncSession, skip: int = 0, limit: int = 20 ) -> List[models.Room]
+- join_room · method · L165-L218 — async def join_room( db: AsyncSession, room_id: int, user_id: Optional[int], guest_id: Optional[str], nickname: str ) -> models.RoomParticipant
+- create_private_room · method · L221-L282 — async def create_private_room( db: AsyncSession, room_data: schemas.RoomCreatePrivate, creator_id: Optional[int], creator_nickname: str ) -> models.Room
+- get_private_rooms · method · L285-L308 — async def get_private_rooms( db: AsyncSession, user_id: Optional[int], skip: int = 0, limit: int = 20 ) -> List[models.Room]
+- get_available_rooms_for_random_join · method · L311-L328 — async def get_available_rooms_for_random_join( db: AsyncSession ) -> List[models.Room]
+- toggle_ready_status · method · L331-L407 — async def toggle_ready_status( db: AsyncSession, room_code: str, user_id: Optional[int], guest_id: Optional[str], custom_game_code: Optional[str] = None, ) -> tuple[models.RoomParticipant, models.Room, bool, Optional[datetime]]
+- reset_room_status · method · L410-L443 — async def reset_room_status( db: AsyncSession, room_code: str ) -> models.Room
+- leave_room · method · L446-L521 — async def leave_room( db: AsyncSession, room_code: str, user_id: Optional[int], guest_id: Optional[str] ) -> tuple[str, int, bool, Optional[dict], bool]
+- assign_roles · method · L524-L580 — async def assign_roles( db: AsyncSession, room_code: str ) -> List[schemas.RoleAssignment]
+- set_ai_type · method · L583-L591 — async def set_ai_type(db: AsyncSession, room_code: str, ai_type: int)
+- get_ai_type · method · L594-L600 — async def get_ai_type(db: AsyncSession, room_code: str)
+- set_ai_name · method · L603-L611 — async def set_ai_name(db: AsyncSession, room_code: str, ai_name: str)
+- get_ai_name · method · L614-L619 — async def get_ai_name(db: AsyncSession, room_code: str)
+- submit_round_choice · method · L622-L696 — async def submit_round_choice( db: AsyncSession, room_code: str, round_number: int, choice: int, user_id: Optional[int], guest_id: Optional[str], subtopic: Optional[str] = None ) -> models.RoundChoice
+- submit_individual_confidence · method · L699-L749 — async def submit_individual_confidence( db: AsyncSession, room_code: str, round_number: int, confidence: int, user_id: Optional[int], guest_id: Optional[str], subtopic: Optional[str] = None ) -> models.RoundChoice
+- submit_consensus_choice · method · L752-L834 — async def submit_consensus_choice( db: AsyncSession, room_code: str, round_number: int, choice: int, user_id: Optional[int], guest_id: Optional[str], subtopic: Optional[str] = None ) -> models.ConsensusChoice
+- submit_consensus_confidence · method · L837-L886 — async def submit_consensus_confidence( db: AsyncSession, room_code: str, round_number: int, confidence: int, user_id: Optional[int], guest_id: Optional[str], subtopic: Optional[str] = None ) -> models.ConsensusChoice
+- get_choice_status · method · L889-L958 — async def get_choice_status( db: AsyncSession, room_code: str, round_number: int ) -> schemas.ChoiceStatusResponse
+- get_role_assignment_status · method · L961-L1008 — async def get_role_assignment_status( db: AsyncSession, room_code: str ) -> schemas.RoleAssignmentStatus
+- get_room_participant_by_code · method · L1011-L1028 — async def get_room_participant_by_code( db: AsyncSession, room_code: str, user_id: Optional[int] = None, guest_id: Optional[str] = None ) -> Optional[models.RoomParticipant]
+- get_room_participant_by_room_id · method · L1031-L1052 — async def get_room_participant_by_room_id( db: AsyncSession, room_id: int, user_id: Optional[int] = None, guest_id: Optional[str] = None ) -> Optional[models.RoomParticipant]
+- get_statistics · method · L1055-L1212 — async def get_statistics( db: AsyncSession, exclude_dummy: bool = True, from_dt: Optional[datetime] = None, to_dt: Optional[datetime] = None, ai_type: Optional[int] = None, is_public: Optional[bool] = None, ) -> dict
+- get_statistics_for_subtopic · method · L1215-L1248 — async def get_statistics_for_subtopic( db: AsyncSession, subtopic: str, exclude_dummy: bool = True, from_dt: Optional[datetime] = None, to_dt: Optional[datetime] = None, ai_type: Optional[int] = None, is_public: Optional[bool] = None, ) -> dict
+- list_subtopics · method · L1251-L1294 — async def list_subtopics( db: AsyncSession, exclude_dummy: bool = True, from_dt: Optional[datetime] = None, to_dt: Optional[datetime] = None, ai_type: Optional[int] = None, is_public: Optional[bool] = None, ) -> List[dict]

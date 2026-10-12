@@ -8,6 +8,7 @@ class RoomCreatePublic(BaseModel):
     title: str = Field(..., min_length=1, max_length=100, description="방 제목")
     description: Optional[str] = Field(None, max_length=500, description="방 설명")
     topic: str = Field(..., description="플레이 주제")
+    custom_game_code: Optional[str] = Field(None, min_length=1, max_length=20)
     custom_room_code: Optional[str] = Field(
         None,
         min_length=6,
@@ -22,6 +23,7 @@ class RoomCreatePrivate(BaseModel):
     title: str = Field(..., min_length=1, max_length=100, description="방 제목")
     description: Optional[str] = Field(None, max_length=500, description="방 설명")
     topic: str = Field(..., description="플레이 주제")
+    custom_game_code: Optional[str] = Field(None, min_length=1, max_length=20)
     custom_room_code: Optional[str] = Field(
         None,
         min_length=6,
@@ -76,6 +78,7 @@ class Room(BaseModel):
     title: str
     description: Optional[str] = None
     topic: str
+    custom_game_code: Optional[str] = None
     is_public: bool
     allow_random_matching: bool
     max_players: int
@@ -162,6 +165,7 @@ class RoomJoinResponse(BaseModel):
 
 # 준비 상태 변경 요청 스키마
 class RoomReadyRequest(BaseModel):
+    custom_game_code: Optional[str] = Field(None, min_length=1, max_length=20)
     room_code: str = Field(
         ..., 
         min_length=6, 
@@ -347,4 +351,4 @@ class StatisticsResponse(BaseModel):
     statistics: List[SubtopicStatistic] = Field(..., description="각 서브토픽별 통계")
     total_rooms: int = Field(..., description="총 방 수")
     total_participants: int = Field(..., description="총 참가자 수")
-    message: str = Field(default="통계 조회 성공", description="응답 메시지") 
+    message: str = Field(default="통계 조회 성공", description="응답 메시지")
