@@ -46,6 +46,28 @@ def capture_exception(error: Exception, endpoint: str, session_id: Optional[str]
         logger.exception("Failed to report exception to PostHog")
 
 
+def capture_event(event: str, properties: dict, session_id: Optional[str] = None) -> None:
+    """Report a small diagnostic event without identifiers or game content."""
+    if posthog_client is None:
+        return
+
+    try:
+        event_properties = {**properties, "$process_person_profile": False}
+        if session_id:
+            try:
+                if UUID(session_id).version == 7:
+                    event_properties["$session_id"] = session_id
+            except ValueError:
+                pass
+        posthog_client.capture(
+            event=event,
+            distinct_id="backend",
+            properties=event_properties,
+        )
+    except Exception:
+        logger.exception("Failed to report diagnostic event to PostHog")
+
+
 def shutdown_error_tracking() -> None:
     if posthog_client is not None:
         posthog_client.shutdown()
