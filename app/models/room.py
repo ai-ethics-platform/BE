@@ -14,6 +14,7 @@ class Room(Base):
     title = Column(String(100), nullable=False)
     description = Column(Text, nullable=True)
     topic = Column(String(50), nullable=False)  # 플레이 주제
+    custom_game_code = Column(String(20), nullable=True)
     is_public = Column(Boolean, default=True, nullable=False)
     allow_random_matching = Column(Boolean, default=True, nullable=False)  # 랜덤 배정 허용 여부
     max_players = Column(Integer, default=3, nullable=False)  # 기본값을 3으로 변경
@@ -84,4 +85,4 @@ class ConsensusChoice(Base):
     confidence = Column(Integer, nullable=True)  # 1~5 확신도
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    room = relationship("Room") 
+    room = relationship("Room")
