@@ -149,8 +149,11 @@ async def join_room_by_code(
     방 코드로 방 입장
     """
     try:
+        request.state.diagnostic_room_code = join_data.room_code
         # 방 코드로 방 찾기
         room = await room_service.get_room_by_code(db=db, room_code=join_data.room_code)
+        if room:
+            request.state.diagnostic_room_game_code = room.custom_game_code
         if not room:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -341,6 +344,7 @@ async def get_private_rooms(
 
 @router.post("/ready", response_model=schemas.RoomReadyResponse)
 async def toggle_ready_status(
+    request: Request,
     ready_data: schemas.RoomReadyRequest,
     db: AsyncSession = Depends(get_db),
     current_user: Union[models.User, dict] = Depends(get_current_approved_user)
@@ -350,6 +354,8 @@ async def toggle_ready_status(
     - 사용자의 준비 상태를 변경합니다
     - 3명이 모두 준비되면 3초 후 게임 시작이 예약됩니다
     """
+    request.state.diagnostic_room_code = ready_data.room_code
+    request.state.diagnostic_submitted_game_code = ready_data.custom_game_code
     try:
         # 사용자 정보 추출
         if isinstance(current_user, models.User):
@@ -371,6 +377,7 @@ async def toggle_ready_status(
             guest_id=guest_id,
             custom_game_code=ready_data.custom_game_code,
         )
+        request.state.diagnostic_room_game_code = room.custom_game_code
         
         # 응답 메시지 생성
         if game_starting:
