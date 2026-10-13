@@ -207,15 +207,6 @@ Twilio Console에서 실시간 확인:
 - Network Traversal 사용량
 - 비용 트래킹
 
-## 🚀 배포 체크리스트
-
-- [ ] `.env`에 `TWILIO_ACCOUNT_SID` 추가
-- [ ] `.env`에 `TWILIO_AUTH_TOKEN` 추가
-- [ ] 서버 재시작
-- [ ] `/webrtc/health` 확인 (`turn_configured: true`)
-- [ ] 프론트엔드에서 `/webrtc/ice-config` 호출 로직 추가
-- [ ] 문제 환경에서 재테스트
-- [ ] ICE candidate에서 `relay` 타입 확인
 
 ## 📝 참고
 

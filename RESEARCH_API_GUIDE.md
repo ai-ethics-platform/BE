@@ -490,8 +490,5 @@ API 응답의 `file_path` 필드를 통해 파일 경로를 확인할 수 있습
 ---
 
 ## 문의
-
-API 사용 중 문제가 발생하거나 추가 기능이 필요한 경우, 개발팀에 문의하세요.
-
-- Email: dev@example.com
 - GitHub Issues: https://github.com/your-repo/issues
+- 작성자: 황재령
