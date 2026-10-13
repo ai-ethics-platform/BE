@@ -1,0 +1,21 @@
+# app/schemas/user.py
+
+- UserBase · class · L31-L61 — class UserBase(BaseModel)
+- validate_gender · method · L41-L44 — def validate_gender(cls, v)
+- validate_education_level · method · L47-L50 — def validate_education_level(cls, v)
+- validate_major · method · L53-L61 — def validate_major(cls, v, info)
+- UserCreate · class · L65-L68 — class UserCreate(UserBase)
+- UserLogin · class · L72-L74 — class UserLogin(BaseModel)
+- UserUpdate · class · L78-L106 — class UserUpdate(BaseModel)
+- validate_gender · method · L88-L91 — def validate_gender(cls, v)
+- validate_education_level · method · L94-L97 — def validate_education_level(cls, v)
+- validate_major · method · L100-L106 — def validate_major(cls, v, info)
+- ConsentUpdate · class · L110-L112 — class ConsentUpdate(BaseModel)
+- UserInDB · class · L116-L127 — class UserInDB(UserBase)
+- Config · class · L125-L127 — class Config
+- User · class · L131-L132 — class User(UserInDB)
+- UserStats · class · L136-L141 — class UserStats(BaseModel)
+- Config · class · L139-L141 — class Config
+- UsernameCheck · class · L145-L147 — class UsernameCheck(BaseModel)
+- FindUsernameRequest · class · L151-L160 — class FindUsernameRequest(BaseModel)
+- validate_gender · method · L157-L160 — def validate_gender(cls, v)

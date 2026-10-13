@@ -1,0 +1,22 @@
+# app/api/endpoints/custom_games.py
+
+- create_custom_game · function · L22-L36 — async def create_custom_game( payload: schemas.CustomGameCreate, db: AsyncSession = Depends(get_db) ) -> Any
+- get_custom_game · function · L40-L69 — async def get_custom_game(code: str, request: Request, db: AsyncSession = Depends(get_db)) -> Any
+- upload_representative_image · function · L78-L89 — async def upload_representative_image( file: UploadFile = File(...) ) -> Any
+- update_representative_images · function · L94-L105 — async def update_representative_images( code: str, payload: schemas.RepresentativeImagesUpdate, db: AsyncSession = Depends(get_db) ) -> Any
+- get_representative_images · function · L109-L115 — async def get_representative_images(code: str, db: AsyncSession = Depends(get_db)) -> Any
+- _load_data · function · L119-L121 — def _load_data(game) -> dict
+- _merge_and_save · function · L124-L130 — async def _merge_and_save(db: AsyncSession, game, patch: dict) -> None
+- update_opening · function · L134-L143 — async def update_opening( code: str, payload: schemas.OpeningUpdate, db: AsyncSession = Depends(get_db) ) -> Any
+- update_roles · function · L147-L159 — async def update_roles( code: str, payload: schemas.RolesUpdate, db: AsyncSession = Depends(get_db) ) -> Any
+- update_dilemma · function · L163-L178 — async def update_dilemma( code: str, payload: schemas.DilemmaUpdate, db: AsyncSession = Depends(get_db) ) -> Any
+- update_flips · function · L182-L196 — async def update_flips( code: str, payload: schemas.FlipsUpdate, db: AsyncSession = Depends(get_db) ) -> Any
+- update_ending · function · L200-L214 — async def update_ending( code: str, payload: schemas.EndingUpdate, db: AsyncSession = Depends(get_db) ) -> Any
+- update_title · function · L219-L230 — async def update_title( code: str, payload: schemas.TitleUpdate, db: AsyncSession = Depends(get_db) ) -> Any
+- get_title · function · L234-L238 — async def get_title(code: str, db: AsyncSession = Depends(get_db)) -> Any
+- get_roles · function · L243-L250 — async def get_roles(code: str, db: AsyncSession = Depends(get_db)) -> Any
+- upload_role_image · function · L263-L286 — async def upload_role_image( code: str, slot: int, file: UploadFile = File(...), db: AsyncSession = Depends(get_db), ) -> Any
+- get_role_images · function · L290-L296 — async def get_role_images(code: str, db: AsyncSession = Depends(get_db)) -> Any
+- upload_dilemma_image · function · L300-L323 — async def upload_dilemma_image( code: str, slot: str, file: UploadFile = File(...), db: AsyncSession = Depends(get_db), ) -> Any
+- get_dilemma_images · function · L327-L333 — async def get_dilemma_images(code: str, db: AsyncSession = Depends(get_db)) -> Any
+- send_custom_game_email · function · L337-L365 — async def send_custom_game_email(code: str, to_email: str = Form(...)) -> Any

@@ -1,6 +1,6 @@
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
+from fastapi import APIRouter, Depends, HTTPException, Request, status, UploadFile, File, Form
 from sqlalchemy.ext.asyncio import AsyncSession
 import os
 import shutil
@@ -10,6 +10,7 @@ from app.core.config import settings
 from app import schemas
 from app.services.custom_game_service import custom_game_service
 from app import models
+from app.core.error_tracking import capture_event
 import smtplib
 from email.mime.text import MIMEText
 
@@ -31,14 +32,19 @@ async def create_custom_game(
         representative_image_url=payload.representative_image_url,
         data=payload.data,
     )
-    base_url = os.getenv("FRONTEND_BASE_URL", "https://www.dilemmai-idl.com")
+    base_url = os.getenv("FRONTEND_BASE_URL", "https://www.dilemmai.org")
     return {"code": game.code, "url": f"{base_url}/?code={game.code}"}
 
 
 @router.get("/custom-games/{code}", response_model=schemas.CustomGame)
-async def get_custom_game(code: str, db: AsyncSession = Depends(get_db)) -> Any:
+async def get_custom_game(code: str, request: Request, db: AsyncSession = Depends(get_db)) -> Any:
     game = await custom_game_service.get_by_code(db, code)
     if not game:
+        capture_event(
+            "custom_game_lookup",
+            {"result": "not_found"},
+            request.headers.get("x-posthog-session-id"),
+        )
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="커스텀 게임을 찾을 수 없습니다.")
     # Convert JSON string to dict for response schema
     import json
@@ -47,11 +53,24 @@ async def get_custom_game(code: str, db: AsyncSession = Depends(get_db)) -> Any:
     rep_images = game.data.get("representativeImages") if isinstance(game.data, dict) else None
     if rep_images:
         game.representative_images = rep_images
+    data_is_object = isinstance(game.data, dict)
+    data = game.data if data_is_object else {}
+    capture_event(
+        "custom_game_lookup",
+        {
+            "result": "found",
+            "data_is_object": data_is_object,
+            "roles_count": len(data.get("roles", [])) if isinstance(data.get("roles"), list) else 0,
+            "opening_count": len(data.get("opening", [])) if isinstance(data.get("opening"), list) else 0,
+            "has_dilemma": isinstance(data.get("dilemma"), dict),
+        },
+        request.headers.get("x-posthog-session-id"),
+    )
     return game
 
 
 # Representative image upload
-IMAGE_DIR = "static/images"
+IMAGE_DIR = "app/static/images"  # main.py가 /static을 app/static 디렉터리로 mount하므로 반드시 일치해야 함
 os.makedirs(IMAGE_DIR, exist_ok=True)
 
 
@@ -80,7 +99,9 @@ async def update_representative_images(
     game = await custom_game_service.get_by_code(db, code)
     if not game:
         raise HTTPException(status_code=404, detail="커스텀 게임을 찾을 수 없습니다.")
-    await _merge_and_save(db, game, {"representativeImages": payload.images})
+    current = _load_data(game).get("representativeImages", {})
+    current.update(payload.images)
+    await _merge_and_save(db, game, {"representativeImages": current})
     return {"message": "updated"}
 
 
@@ -314,7 +335,7 @@ async def get_dilemma_images(code: str, db: AsyncSession = Depends(get_db)) -> A
 
 @router.post("/custom-games/{code}/send-email")
 async def send_custom_game_email(code: str, to_email: str = Form(...)) -> Any:
-    frontend_base = os.getenv("FRONTEND_BASE_URL", "https://www.dilemmai-idl.com")
+    frontend_base = os.getenv("FRONTEND_BASE_URL", "https://www.dilemmai.org")
     game_url = f"{frontend_base}/?code={code}"
     subject = "딜레마 게임 링크"
     body = f"안녕하세요, 요청하신 커스텀 딜레마 게임 링크입니다: {game_url}"

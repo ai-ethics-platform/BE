@@ -181,6 +181,17 @@ class ChatService:
             print(f"[DEBUG] Raw response_text (first 300 chars): {raw_response_text[:300]}")
             
             # 2. LangChain으로 변수만 추출 (response_text는 raw_response_text 그대로 사용!)
+            # 단, INIT 턴(단계 진입 인사말)은 추출하지 않는다. 인사말에는 확정된 값이
+            # 없는데도 추출기가 인사말 문구(예: 3단계 인사말의 "두 가지 선택지 중
+            # 하나를 고릅니다")를 choice1 등으로 오인해 세션 context의 정상 값을
+            # 덮어쓴다. (QA 8/17 #3 — 2단계에서 설정한 선택지가 바뀜)
+            # ending은 INIT에서 인사말이 아니라 초안 전체를 출력하므로 추출을
+            # 유지한다. (QA #24 — 템플릿 생성 버튼 조건이 이 추출 값에 의존)
+            skip_extraction = user_input.strip() == "__INIT__" and step != "ending"
+            if skip_extraction:
+                print(f"[DEBUG] INIT turn — variable extraction skipped for step: {step}")
+                return raw_response_text, {}
+
             parsed_variables = {}
             try:
                 from langchain_openai import ChatOpenAI

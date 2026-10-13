@@ -19,6 +19,8 @@ class User(Base):
     
     is_active = Column(Boolean, default=True)
     is_guest = Column(Boolean, default=False)
+    # 관리자 테이블 추가
+    is_admin = Column(Boolean, default=False, nullable=False)
     
     # 개인정보 및 음성 활용 동의
     data_consent = Column(Boolean, default=True)
@@ -30,4 +32,10 @@ class User(Base):
     # Relationships
     created_rooms = relationship("Room", back_populates="creator")
     room_participations = relationship("RoomParticipant", back_populates="user")
-    voice_participations = relationship("VoiceParticipant", back_populates="user") 
+    voice_participations = relationship("VoiceParticipant", back_populates="user")
+
+    play_application = relationship(
+    "PlayApplication",
+    back_populates="user",
+    uselist=False,
+    )

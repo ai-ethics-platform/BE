@@ -6,10 +6,16 @@ from datetime import datetime, timedelta
 import random
 
 from app import models, schemas
-from app.core.deps import get_db
 
 
 class RoomService:
+    @staticmethod
+    async def _validate_custom_game(db: AsyncSession, code: Optional[str]) -> Optional[str]:
+        if code is not None:
+            result = await db.execute(select(models.CustomGame.id).where(models.CustomGame.code == code))
+            if result.scalar_one_or_none() is None:
+                raise ValueError("존재하지 않는 커스텀 게임입니다.")
+        return code
     
     @staticmethod
     def normalize_subtopic(subtopic: str) -> str:
@@ -45,6 +51,7 @@ class RoomService:
         creator_nickname: str
     ) -> models.Room:
         """공개 방 생성"""
+        custom_game_code = await RoomService._validate_custom_game(db, room_data.custom_game_code)
         
         # 방 코드 결정
         if room_data.custom_room_code:
@@ -69,6 +76,7 @@ class RoomService:
             title=room_data.title,
             description=room_data.description,
             topic=room_data.topic,
+            custom_game_code=custom_game_code,
             is_public=True,
             allow_random_matching=True,  # 기본값
             max_players=3,  # 고정값 3
@@ -217,6 +225,7 @@ class RoomService:
         creator_nickname: str
     ) -> models.Room:
         """비공개 방 생성"""
+        custom_game_code = await RoomService._validate_custom_game(db, room_data.custom_game_code)
         # 방 코드 결정
         if room_data.custom_room_code:
             # 6자리 숫자 유효성 검사
@@ -239,6 +248,7 @@ class RoomService:
             title=room_data.title,
             description=room_data.description,
             topic=room_data.topic,
+            custom_game_code=custom_game_code,
             is_public=False,  # 비공개 방
             allow_random_matching=True,  # 기본값
             max_players=3,  # 고정값 3
@@ -322,7 +332,8 @@ class RoomService:
         db: AsyncSession,
         room_code: str,
         user_id: Optional[int],
-        guest_id: Optional[str]
+        guest_id: Optional[str],
+        custom_game_code: Optional[str] = None,
     ) -> tuple[models.RoomParticipant, models.Room, bool, Optional[datetime]]:
         """
         준비 상태 토글 및 게임 시작 체크
@@ -333,6 +344,8 @@ class RoomService:
         room = await RoomService.get_room_by_code(db=db, room_code=room_code)
         if not room:
             raise ValueError("존재하지 않는 방 코드입니다.")
+        if room.custom_game_code is not None and room.custom_game_code != custom_game_code:
+            raise ValueError("방의 커스텀 게임을 먼저 불러와야 준비할 수 있습니다. 공유 링크로 다시 접속해주세요.")
         
         if not room.is_active:
             raise ValueError("비활성화된 방입니다.")
@@ -1282,4 +1295,4 @@ class RoomService:
 
 
 # 서비스 인스턴스
-room_service = RoomService() 
+room_service = RoomService()

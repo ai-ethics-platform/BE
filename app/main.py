@@ -1,4 +1,5 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime
 import os
@@ -6,6 +7,7 @@ import os
 from app.api.api import api_router
 from app.core.config import settings
 from app.core.database import create_tables
+from app.core.error_tracking import capture_exception, shutdown_error_tracking
 from fastapi.staticfiles import StaticFiles
 
 app = FastAPI(
@@ -14,6 +16,17 @@ app = FastAPI(
     version="0.1.0",
     openapi_url=f"/openapi.json"
 )
+
+
+@app.exception_handler(Exception)
+async def report_unhandled_exception(request: Request, exc: Exception):
+    route = request.scope.get("route")
+    endpoint = getattr(route, "path", "unmatched")
+    capture_exception(exc, endpoint, request.headers.get("x-posthog-session-id"))
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error"},
+    )
 
 # CORS 설정
 app.add_middleware(
@@ -26,6 +39,7 @@ app.add_middleware(
         "https://www.dilemmai.org",
         "https://fe-git-feature-env-refactoring-dldbstjs-projects.vercel.app",
     ],
+    allow_origin_regex=r"^https://fe-tfc6-[a-z0-9-]+-idl-lab\.vercel\.app$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -46,6 +60,11 @@ async def startup_event():
     # 데이터베이스 테이블 생성
     await create_tables()
 
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    shutdown_error_tracking()
+
 @app.get("/")
 async def root():
     return {"message": "AI 윤리게임에 오신 것을 환영합니다!"}
@@ -62,4 +81,4 @@ async def health_check():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True) 
+    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
