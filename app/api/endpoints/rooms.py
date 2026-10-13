@@ -64,10 +64,6 @@ async def create_public_room(
             message="공개 방이 성공적으로 생성되었습니다."
         )
         
-    except HTTPException:
-        raise
-    except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -299,10 +295,6 @@ async def create_private_room(
             message="비공개 방이 성공적으로 생성되었습니다."
         )
         
-    except HTTPException:
-        raise
-    except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -368,8 +360,7 @@ async def toggle_ready_status(
             db=db,
             room_code=ready_data.room_code,
             user_id=user_id,
-            guest_id=guest_id,
-            custom_game_code=ready_data.custom_game_code,
+            guest_id=guest_id
         )
         
         # 응답 메시지 생성
