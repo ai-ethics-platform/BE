@@ -1,6 +1,8 @@
 # app/core/websocket_manager.py
 import json
 import asyncio
+from uuid import uuid4
+from app.core.game_diagnostics import record_navigation_delivery
 from typing import Dict, Set, Optional
 from fastapi import WebSocket, WebSocketDisconnect
 from datetime import datetime
@@ -104,6 +106,13 @@ class WebSocketManager:
             print(f"⚠️ 세션 {session_id}에 활성 연결이 없습니다.")
             return
         
+        diagnostic_message = None
+        try:
+            if message.get('type') == 'next_page':
+                message = {**message, 'diagnostic_id': str(uuid4())}
+                diagnostic_message = message
+        except Exception:
+            pass
         disconnected = set()
         connection_count = len(self.active_connections[session_id])
         success_count = 0
@@ -111,9 +120,11 @@ class WebSocketManager:
         print(f"📢 브로드캐스트 시작: 세션 {session_id}, 대상 연결 수: {connection_count}")
         
         for connection in self.active_connections[session_id].copy():  # 복사본으로 순회
+            sent = False
             try:
                 await connection.send_text(json.dumps(jsonable_encoder(message)))
                 success_count += 1
+                sent = True
                 
                 # 연결 상태 업데이트
                 if connection in self.connection_health:
@@ -133,6 +144,10 @@ class WebSocketManager:
                         print(f"⚠️ 연결 {id(connection)}이 10번 연속 실패하여 해제됩니다.")
                         disconnected.add(connection)
         
+            finally:
+                if diagnostic_message is not None:
+                    record_navigation_delivery(connection, diagnostic_message, sent)
+
         # 연결이 끊어진 클라이언트들만 정리
         for connection in disconnected:
             self.disconnect(connection)

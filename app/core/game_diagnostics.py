@@ -71,6 +71,10 @@ def record_request(request, status):
                'endpoint': route, 'method': request.method, 'status': status,
                'account_ref': actor, **context}
     capture_event('game_api_request', payload, request.headers.get('x-posthog-session-id'))
+    queue_diagnostic(payload)
+
+
+def queue_diagnostic(payload):
     if os.getenv('GAME_DIAGNOSTIC_URL') and os.getenv('GAME_DIAGNOSTIC_API_KEY'):
         if len(pending) >= 100:
             logger.warning('Game diagnostic backlog full; request_id=%s', payload['request_id'])
@@ -88,14 +92,37 @@ async def send_to_admin(payload):
                     response = await client.post(os.environ['GAME_DIAGNOSTIC_URL'], json=payload,
                         headers={'x-game-diagnostic-key': os.environ['GAME_DIAGNOSTIC_API_KEY']})
                     response.raise_for_status()
-                    return
+                    return True
                 except httpx.HTTPError:
                     if attempt:
                         raise
     except Exception:
         logger.warning('Game request diagnostic delivery failed; request_id=%s', payload['request_id'])
+        return False
 
 
 async def flush_game_diagnostics():
     if pending:
         await asyncio.wait(list(pending), timeout=9)
+
+
+def record_navigation_delivery(websocket, message, succeeded):
+    """A socket write is evidence of sending, not proof the browser handled it."""
+    try:
+        token = websocket.query_params.get('token', '')
+        user_id = None
+        try:
+            user_id = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256']).get('sub')
+        except Exception:
+            pass  # An expired socket token must not erase the delivery observation.
+        actor = hashlib.sha256(f'game-account:{user_id}'.encode()).hexdigest()[:16] if user_id else ''
+        queue_diagnostic({
+            'request_id': str(uuid4()), 'at': datetime.now(timezone.utc).isoformat(),
+            'endpoint': '/ws/voice', 'method': 'POST', 'status': 200 if succeeded else 500,
+            'context_status': 'missing', 'account_ref': actor, 'event': 'navigation_broadcast',
+            'evidence_source': 'server_broadcast',
+            'details': {'message_id': message['diagnostic_id'], 'message_type': message['type'],
+                        'phase': 'socket_write_succeeded' if succeeded else 'socket_write_failed'},
+        })
+    except Exception:
+        pass  # Never change the broadcast result when recording fails.

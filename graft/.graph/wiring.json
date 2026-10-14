@@ -1,8 +1,8 @@
 {
   "meta": {
     "version": 1,
-    "nodeCount": 534,
-    "edgeCount": 1093,
+    "nodeCount": 545,
+    "edgeCount": 1130,
     "languages": [
       "python"
     ],
@@ -765,12 +765,12 @@
       "name": "api.py",
       "kind": "file",
       "path": "app/api/api.py",
-      "span": "L1-L94",
+      "span": "L1-L96",
       "signature": null,
       "exported": true,
       "origin": "ast",
-      "body_hash": "e917bca55213b0a1af29fc2e5ec515edf10ecef538da0e37958ca15677876ec0",
-      "chars": 1783,
+      "body_hash": "3f9f028b48a4940977f9cfc51d47a555f1d74781732cee676c93423aefd6bd26",
+      "chars": 1883,
       "summary_state": "pending",
       "summary": null,
       "crux": null
@@ -1477,6 +1477,35 @@
       "exported": true,
       "origin": "ast",
       "body_hash": "75490c273faab499fc3ad01aa7a3bd89670e5ed073f9f5dbdfd558ceddae46f1",
+      "summary_state": "pending",
+      "summary": null,
+      "crux": null
+    },
+    {
+      "id": "app/api/endpoints/game_diagnostics.py",
+      "name": "game_diagnostics.py",
+      "kind": "file",
+      "path": "app/api/endpoints/game_diagnostics.py",
+      "span": "L1-L59",
+      "signature": null,
+      "exported": true,
+      "origin": "ast",
+      "body_hash": "167dd0a804c27c94584232d3d8eb6c1ee1e1750a9ee08e3457a7cb7c0b25ea0a",
+      "chars": 2731,
+      "summary_state": "pending",
+      "summary": null,
+      "crux": null
+    },
+    {
+      "id": "app/api/endpoints/game_diagnostics.py#receive_game_diagnostics",
+      "name": "receive_game_diagnostics",
+      "kind": "function",
+      "path": "app/api/endpoints/game_diagnostics.py",
+      "span": "L22-L58",
+      "signature": "async def receive_game_diagnostics(request: Request, db: AsyncSession = Depends(get_db), user=Depends(get_current_user_or_guest))",
+      "exported": true,
+      "origin": "ast",
+      "body_hash": "7172b35b0260b1b85864fab8c292187e31975c2c8a60bdd35dcc22e1e81aed64",
       "summary_state": "pending",
       "summary": null,
       "crux": null
@@ -2993,12 +3022,12 @@
       "name": "game_diagnostics.py",
       "kind": "file",
       "path": "app/core/game_diagnostics.py",
-      "span": "L1-L102",
+      "span": "L1-L129",
       "signature": null,
       "exported": true,
       "origin": "ast",
-      "body_hash": "0cbacab4e2585450b0d9a1b8043c41af857240035ce05a43a8f85ed76d3c1d5b",
-      "chars": 4740,
+      "body_hash": "646d980906e1d7230bf51021969ae20d0006f50ed8222cedea400814e66afb91",
+      "chars": 6040,
       "summary_state": "pending",
       "summary": null,
       "crux": null
@@ -3022,7 +3051,7 @@
       "name": "flush_game_diagnostics",
       "kind": "function",
       "path": "app/core/game_diagnostics.py",
-      "span": "L99-L101",
+      "span": "L104-L106",
       "signature": "async def flush_game_diagnostics()",
       "exported": true,
       "origin": "ast",
@@ -3032,15 +3061,43 @@
       "crux": null
     },
     {
+      "id": "app/core/game_diagnostics.py#queue_diagnostic",
+      "name": "queue_diagnostic",
+      "kind": "function",
+      "path": "app/core/game_diagnostics.py",
+      "span": "L77-L84",
+      "signature": "def queue_diagnostic(payload)",
+      "exported": true,
+      "origin": "ast",
+      "body_hash": "80df22a51f2aecc61c480f716de6ea048edba9c61c78f91b79b386763fb2266e",
+      "summary_state": "pending",
+      "summary": null,
+      "crux": null
+    },
+    {
+      "id": "app/core/game_diagnostics.py#record_navigation_delivery",
+      "name": "record_navigation_delivery",
+      "kind": "function",
+      "path": "app/core/game_diagnostics.py",
+      "span": "L109-L128",
+      "signature": "def record_navigation_delivery(websocket, message, succeeded)",
+      "exported": true,
+      "origin": "ast",
+      "body_hash": "0c8d30b8c34c583888206a3f9ff62c41b6e1768dc57ecc88b487cdcc44039e99",
+      "summary_state": "pending",
+      "summary": null,
+      "crux": null
+    },
+    {
       "id": "app/core/game_diagnostics.py#record_request",
       "name": "record_request",
       "kind": "function",
       "path": "app/core/game_diagnostics.py",
-      "span": "L47-L80",
+      "span": "L47-L74",
       "signature": "def record_request(request, status)",
       "exported": true,
       "origin": "ast",
-      "body_hash": "0cf667066b00e9f1da05d7b858f510593e137a2bc3006cc2079797fbe2706a00",
+      "body_hash": "32f1f0cbee5f06a903f50ae9def8485e9ac932362e7c7254b5e68f83d3bf286a",
       "summary_state": "pending",
       "summary": null,
       "crux": null
@@ -3050,11 +3107,11 @@
       "name": "send_to_admin",
       "kind": "function",
       "path": "app/core/game_diagnostics.py",
-      "span": "L83-L96",
+      "span": "L87-L101",
       "signature": "async def send_to_admin(payload)",
       "exported": true,
       "origin": "ast",
-      "body_hash": "7a3716c61db0da6b6756c9f05ac981d37b009b3ad014a2743cd29938eb78935e",
+      "body_hash": "f768755186877ffa5cf96819f2ef8da00461fd5a2a6248c7c6ebdc988888fdf0",
       "summary_state": "pending",
       "summary": null,
       "crux": null
@@ -3135,12 +3192,12 @@
       "name": "websocket_manager.py",
       "kind": "file",
       "path": "app/core/websocket_manager.py",
-      "span": "L1-L248",
+      "span": "L1-L263",
       "signature": null,
       "exported": true,
       "origin": "ast",
-      "body_hash": "155d3b3c4d407c8487f8f34c294c11e44b1cb9144677a27cbd980395655f3def",
-      "chars": 10404,
+      "body_hash": "85a904354c74881d347a8b746a9dbd8f3179f4d99e2390254491db4582b53db6",
+      "chars": 10958,
       "summary_state": "pending",
       "summary": null,
       "crux": null
@@ -3150,11 +3207,11 @@
       "name": "WebSocketManager",
       "kind": "class",
       "path": "app/core/websocket_manager.py",
-      "span": "L12-L244",
+      "span": "L14-L259",
       "signature": "class WebSocketManager",
       "exported": true,
       "origin": "ast",
-      "body_hash": "f239f910fa2a2d7f8c2341498f058fc47cbc09854b92b13329df490dc0bd455c",
+      "body_hash": "1272f736a8f94c80e6c5dd8fdb441a7b6912df11f5e12abbeade01a5c445256b",
       "summary_state": "pending",
       "summary": null,
       "crux": null
@@ -3164,7 +3221,7 @@
       "name": "__init__",
       "kind": "method",
       "path": "app/core/websocket_manager.py",
-      "span": "L13-L21",
+      "span": "L15-L23",
       "signature": "def __init__(self): # 세션별 연결된 클라이언트들",
       "exported": false,
       "origin": "ast",
@@ -3179,7 +3236,7 @@
       "name": "broadcast_participant_event",
       "kind": "method",
       "path": "app/core/websocket_manager.py",
-      "span": "L187-L194",
+      "span": "L202-L209",
       "signature": "async def broadcast_participant_event(self, session_id: str, event_type: str, participant: schemas.VoiceParticipant)",
       "exported": true,
       "origin": "ast",
@@ -3194,11 +3251,11 @@
       "name": "broadcast_to_session",
       "kind": "method",
       "path": "app/core/websocket_manager.py",
-      "span": "L101-L144",
+      "span": "L103-L159",
       "signature": "async def broadcast_to_session(self, session_id: str, message: dict)",
       "exported": true,
       "origin": "ast",
-      "body_hash": "444a8386999603f3a3b4f2eef8749f21e0187d8c5a597cffd26445adcfe723e3",
+      "body_hash": "95858c82b31c8754b72e9d058dad73970f09e44379baab4b1c4e5c7e1ab1db2d",
       "summary_state": "pending",
       "summary": null,
       "crux": null,
@@ -3209,7 +3266,7 @@
       "name": "broadcast_voice_status",
       "kind": "method",
       "path": "app/core/websocket_manager.py",
-      "span": "L177-L185",
+      "span": "L192-L200",
       "signature": "async def broadcast_voice_status(self, session_id: str, participant: schemas.VoiceParticipant)",
       "exported": true,
       "origin": "ast",
@@ -3224,7 +3281,7 @@
       "name": "connect",
       "kind": "method",
       "path": "app/core/websocket_manager.py",
-      "span": "L24-L79",
+      "span": "L26-L81",
       "signature": "async def connect(self, websocket: WebSocket, session_id: str, user_info: dict)",
       "exported": true,
       "origin": "ast",
@@ -3239,7 +3296,7 @@
       "name": "disconnect",
       "kind": "method",
       "path": "app/core/websocket_manager.py",
-      "span": "L81-L99",
+      "span": "L83-L101",
       "signature": "def disconnect(self, websocket: WebSocket)",
       "exported": true,
       "origin": "ast",
@@ -3254,7 +3311,7 @@
       "name": "get_all_stats",
       "kind": "method",
       "path": "app/core/websocket_manager.py",
-      "span": "L208-L210",
+      "span": "L223-L225",
       "signature": "def get_all_stats(self) -> Dict[str, dict]",
       "exported": true,
       "origin": "ast",
@@ -3269,7 +3326,7 @@
       "name": "get_connection_count",
       "kind": "method",
       "path": "app/core/websocket_manager.py",
-      "span": "L200-L202",
+      "span": "L215-L217",
       "signature": "def get_connection_count(self, session_id: str) -> int",
       "exported": true,
       "origin": "ast",
@@ -3284,7 +3341,7 @@
       "name": "get_connection_health",
       "kind": "method",
       "path": "app/core/websocket_manager.py",
-      "span": "L212-L219",
+      "span": "L227-L234",
       "signature": "def get_connection_health(self, session_id: str) -> Dict[str, dict]",
       "exported": true,
       "origin": "ast",
@@ -3299,7 +3356,7 @@
       "name": "get_connection_stats",
       "kind": "method",
       "path": "app/core/websocket_manager.py",
-      "span": "L204-L206",
+      "span": "L219-L221",
       "signature": "def get_connection_stats(self, session_id: str) -> Optional[dict]",
       "exported": true,
       "origin": "ast",
@@ -3314,7 +3371,7 @@
       "name": "get_session_participants",
       "kind": "method",
       "path": "app/core/websocket_manager.py",
-      "span": "L196-L198",
+      "span": "L211-L213",
       "signature": "def get_session_participants(self, session_id: str) -> Set[WebSocket]",
       "exported": true,
       "origin": "ast",
@@ -3329,7 +3386,7 @@
       "name": "ping_connections",
       "kind": "method",
       "path": "app/core/websocket_manager.py",
-      "span": "L221-L244",
+      "span": "L236-L259",
       "signature": "async def ping_connections(self, session_id: str)",
       "exported": true,
       "origin": "ast",
@@ -3344,7 +3401,7 @@
       "name": "send_personal_message",
       "kind": "method",
       "path": "app/core/websocket_manager.py",
-      "span": "L146-L175",
+      "span": "L161-L190",
       "signature": "async def send_personal_message(self, websocket: WebSocket, message: dict)",
       "exported": true,
       "origin": "ast",
@@ -4277,6 +4334,108 @@
       "exported": true,
       "origin": "ast",
       "body_hash": "8d31a4e973b8da8a2cc7c56c6be3524f489505a3dcc15c4170e23368dacec7db",
+      "summary_state": "pending",
+      "summary": null,
+      "crux": null
+    },
+    {
+      "id": "app/schemas/game_diagnostic.py",
+      "name": "game_diagnostic.py",
+      "kind": "file",
+      "path": "app/schemas/game_diagnostic.py",
+      "span": "L1-L68",
+      "signature": null,
+      "exported": true,
+      "origin": "ast",
+      "body_hash": "382a4bc7193f123dbf02abd0520f6cc2112222fab14e636b14e4bce136e97a52",
+      "chars": 2853,
+      "summary_state": "pending",
+      "summary": null,
+      "crux": null
+    },
+    {
+      "id": "app/schemas/game_diagnostic.py#BrowserGameBatch",
+      "name": "BrowserGameBatch",
+      "kind": "class",
+      "path": "app/schemas/game_diagnostic.py",
+      "span": "L65-L67",
+      "signature": "class BrowserGameBatch(BaseModel)",
+      "exported": true,
+      "origin": "ast",
+      "body_hash": "403ced9e87d3bf437ef19854bbb4ea9fd0eca6c9e5e1593c4244061b895384e6",
+      "summary_state": "pending",
+      "summary": null,
+      "crux": null
+    },
+    {
+      "id": "app/schemas/game_diagnostic.py#BrowserGameEvent",
+      "name": "BrowserGameEvent",
+      "kind": "class",
+      "path": "app/schemas/game_diagnostic.py",
+      "span": "L36-L62",
+      "signature": "class BrowserGameEvent(BaseModel)",
+      "exported": true,
+      "origin": "ast",
+      "body_hash": "e31ec90832866123f3955bababa6bd0f8949eaa04e1427730c8085443eb648ef",
+      "summary_state": "pending",
+      "summary": null,
+      "crux": null
+    },
+    {
+      "id": "app/schemas/game_diagnostic.py#BrowserGameEvent.aware_time",
+      "name": "aware_time",
+      "kind": "method",
+      "path": "app/schemas/game_diagnostic.py",
+      "span": "L54-L57",
+      "signature": "def aware_time(cls, value)",
+      "exported": true,
+      "origin": "ast",
+      "body_hash": "ae90bef590fab41e719dbdbb995e5a0720cc15d5f513ceacf32340c98624d8c3",
+      "summary_state": "pending",
+      "summary": null,
+      "crux": null,
+      "owner": "BrowserGameEvent"
+    },
+    {
+      "id": "app/schemas/game_diagnostic.py#BrowserGameEvent.bounded_details",
+      "name": "bounded_details",
+      "kind": "method",
+      "path": "app/schemas/game_diagnostic.py",
+      "span": "L61-L62",
+      "signature": "def bounded_details(cls, value)",
+      "exported": true,
+      "origin": "ast",
+      "body_hash": "b8fcc6de740b69a618e52f98b7d91dc4a0fcd2177b3ab2e37ff314a82bca2a75",
+      "summary_state": "pending",
+      "summary": null,
+      "crux": null,
+      "owner": "BrowserGameEvent"
+    },
+    {
+      "id": "app/schemas/game_diagnostic.py#BrowserGameEvent.known_event",
+      "name": "known_event",
+      "kind": "method",
+      "path": "app/schemas/game_diagnostic.py",
+      "span": "L47-L50",
+      "signature": "def known_event(cls, value)",
+      "exported": true,
+      "origin": "ast",
+      "body_hash": "cdfd4053846eac873263ad50f5c30fa3b856ee57c91c44fe1c7b868728f7d681",
+      "summary_state": "pending",
+      "summary": null,
+      "crux": null,
+      "owner": "BrowserGameEvent"
+    },
+    {
+      "id": "app/schemas/game_diagnostic.py#validate_details",
+      "name": "validate_details",
+      "kind": "function",
+      "path": "app/schemas/game_diagnostic.py",
+      "span": "L22-L33",
+      "signature": "def validate_details(values)",
+      "exported": true,
+      "origin": "ast",
+      "body_hash": "13be3ad81809d61edcd7a3f7ac936740a04703c27d040f5193c0920b94af6611",
       "summary_state": "pending",
       "summary": null,
       "crux": null
@@ -8917,6 +9076,102 @@
       "confidence": "extracted"
     },
     {
+      "source": "app/api/endpoints/game_diagnostics.py",
+      "target": "app/api/endpoints/game_diagnostics.py#receive_game_diagnostics",
+      "relation": "contains",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/api/endpoints/game_diagnostics.py",
+      "target": "app",
+      "relation": "imports",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/api/endpoints/game_diagnostics.py",
+      "target": "app.core.deps",
+      "relation": "imports",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/api/endpoints/game_diagnostics.py",
+      "target": "app.core.game_diagnostics",
+      "relation": "imports",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/api/endpoints/game_diagnostics.py",
+      "target": "app.schemas.game_diagnostic",
+      "relation": "imports",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/api/endpoints/game_diagnostics.py",
+      "target": "asyncio",
+      "relation": "imports",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/api/endpoints/game_diagnostics.py",
+      "target": "datetime",
+      "relation": "imports",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/api/endpoints/game_diagnostics.py",
+      "target": "fastapi",
+      "relation": "imports",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/api/endpoints/game_diagnostics.py",
+      "target": "hashlib",
+      "relation": "imports",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/api/endpoints/game_diagnostics.py",
+      "target": "json",
+      "relation": "imports",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/api/endpoints/game_diagnostics.py",
+      "target": "os",
+      "relation": "imports",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/api/endpoints/game_diagnostics.py",
+      "target": "pydantic",
+      "relation": "imports",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/api/endpoints/game_diagnostics.py",
+      "target": "sqlalchemy",
+      "relation": "imports",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/api/endpoints/game_diagnostics.py",
+      "target": "sqlalchemy.ext.asyncio",
+      "relation": "imports",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/api/endpoints/game_diagnostics.py#receive_game_diagnostics",
+      "target": "app/core/game_diagnostics.py#context_from_headers",
+      "relation": "calls",
+      "confidence": "inferred"
+    },
+    {
+      "source": "app/api/endpoints/game_diagnostics.py#receive_game_diagnostics",
+      "target": "app/core/game_diagnostics.py#send_to_admin",
+      "relation": "calls",
+      "confidence": "inferred"
+    },
+    {
       "source": "app/api/endpoints/play_applications.py",
       "target": "app/api/endpoints/play_applications.py#create_play_application",
       "relation": "contains",
@@ -10190,6 +10445,18 @@
     },
     {
       "source": "app/core/game_diagnostics.py",
+      "target": "app/core/game_diagnostics.py#queue_diagnostic",
+      "relation": "contains",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/core/game_diagnostics.py",
+      "target": "app/core/game_diagnostics.py#record_navigation_delivery",
+      "relation": "contains",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/core/game_diagnostics.py",
       "target": "app/core/game_diagnostics.py#record_request",
       "relation": "contains",
       "confidence": "extracted"
@@ -10273,6 +10540,18 @@
       "confidence": "extracted"
     },
     {
+      "source": "app/core/game_diagnostics.py#queue_diagnostic",
+      "target": "app/core/game_diagnostics.py#send_to_admin",
+      "relation": "calls",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/core/game_diagnostics.py#record_navigation_delivery",
+      "target": "app/core/game_diagnostics.py#queue_diagnostic",
+      "relation": "calls",
+      "confidence": "extracted"
+    },
+    {
       "source": "app/core/game_diagnostics.py#record_request",
       "target": "app/core/error_tracking.py#capture_event",
       "relation": "calls",
@@ -10286,7 +10565,7 @@
     },
     {
       "source": "app/core/game_diagnostics.py#record_request",
-      "target": "app/core/game_diagnostics.py#send_to_admin",
+      "target": "app/core/game_diagnostics.py#queue_diagnostic",
       "relation": "calls",
       "confidence": "extracted"
     },
@@ -10370,6 +10649,12 @@
     },
     {
       "source": "app/core/websocket_manager.py",
+      "target": "app.core.game_diagnostics",
+      "relation": "imports",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/core/websocket_manager.py",
       "target": "asyncio",
       "relation": "imports",
       "confidence": "extracted"
@@ -10401,6 +10686,12 @@
     {
       "source": "app/core/websocket_manager.py",
       "target": "typing",
+      "relation": "imports",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/core/websocket_manager.py",
+      "target": "uuid",
       "relation": "imports",
       "confidence": "extracted"
     },
@@ -10487,6 +10778,12 @@
       "target": "app/core/websocket_manager.py#WebSocketManager.broadcast_to_session",
       "relation": "calls",
       "confidence": "extracted"
+    },
+    {
+      "source": "app/core/websocket_manager.py#WebSocketManager.broadcast_to_session",
+      "target": "app/core/game_diagnostics.py#record_navigation_delivery",
+      "relation": "calls",
+      "confidence": "inferred"
     },
     {
       "source": "app/core/websocket_manager.py#WebSocketManager.broadcast_to_session",
@@ -11465,6 +11762,90 @@
       "target": "BaseModel",
       "relation": "extends",
       "confidence": "inferred"
+    },
+    {
+      "source": "app/schemas/game_diagnostic.py",
+      "target": "app/schemas/game_diagnostic.py#BrowserGameBatch",
+      "relation": "contains",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/schemas/game_diagnostic.py",
+      "target": "app/schemas/game_diagnostic.py#BrowserGameEvent",
+      "relation": "contains",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/schemas/game_diagnostic.py",
+      "target": "app/schemas/game_diagnostic.py#validate_details",
+      "relation": "contains",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/schemas/game_diagnostic.py",
+      "target": "datetime",
+      "relation": "imports",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/schemas/game_diagnostic.py",
+      "target": "pydantic",
+      "relation": "imports",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/schemas/game_diagnostic.py",
+      "target": "re",
+      "relation": "imports",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/schemas/game_diagnostic.py",
+      "target": "typing",
+      "relation": "imports",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/schemas/game_diagnostic.py",
+      "target": "uuid",
+      "relation": "imports",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/schemas/game_diagnostic.py#BrowserGameBatch",
+      "target": "BaseModel",
+      "relation": "extends",
+      "confidence": "inferred"
+    },
+    {
+      "source": "app/schemas/game_diagnostic.py#BrowserGameEvent",
+      "target": "app/schemas/game_diagnostic.py#BrowserGameEvent.aware_time",
+      "relation": "contains",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/schemas/game_diagnostic.py#BrowserGameEvent",
+      "target": "app/schemas/game_diagnostic.py#BrowserGameEvent.bounded_details",
+      "relation": "contains",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/schemas/game_diagnostic.py#BrowserGameEvent",
+      "target": "app/schemas/game_diagnostic.py#BrowserGameEvent.known_event",
+      "relation": "contains",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/schemas/game_diagnostic.py#BrowserGameEvent",
+      "target": "BaseModel",
+      "relation": "extends",
+      "confidence": "inferred"
+    },
+    {
+      "source": "app/schemas/game_diagnostic.py#BrowserGameEvent.bounded_details",
+      "target": "app/schemas/game_diagnostic.py#validate_details",
+      "relation": "calls",
+      "confidence": "extracted"
     },
     {
       "source": "app/schemas/play_application.py",
