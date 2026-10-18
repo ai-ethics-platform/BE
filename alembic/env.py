@@ -1,3 +1,4 @@
+import re
 from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config
@@ -17,11 +18,12 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# alembic.ini에는 접속 정보를 평문으로 두지 않고, 앱과 동일한 .env 값으로 구성한다.
-# (alembic은 동기 드라이버가 필요해 pymysql 사용, 앱 런타임은 aiomysql 사용)
+# alembic.ini에는 접속 정보를 평문으로 두지 않고, 앱이 실제로 쓰는 SQLALCHEMY_DATABASE_URI를
+# 그대로 재사용한다 (DB_HOST/DB_USER/... 개별 필드는 .env에 값이 없거나 틀려도 아무도 안 읽어서
+# 방치돼 있을 수 있어 신뢰할 수 없음). alembic은 동기 드라이버가 필요해 pymysql로만 교체.
 config.set_main_option(
     "sqlalchemy.url",
-    f"mysql+pymysql://{settings.DB_USER}:{settings.DB_PASSWORD}@{settings.DB_HOST}:{settings.DB_PORT}/{settings.DB_NAME}",
+    re.sub(r"^mysql\+\w+://", "mysql+pymysql://", settings.SQLALCHEMY_DATABASE_URI),
 )
 
 # add your model's MetaData object here
