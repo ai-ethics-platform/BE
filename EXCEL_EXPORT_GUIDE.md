@@ -53,14 +53,15 @@ GET http://localhost:8000/api/research/experiments/export/excel?topic=자율주�
 - `gender`: 성별
 - `education_level`: 교육 수준
 
-라운드별 정보 (각 라운드당 5개 컬럼 × 5라운드 = 25개 컬럼):
+라운드별 정보 (각 라운드당 6개 컬럼 × 5라운드 = 30개 컬럼):
 - `R1_role` ~ `R5_role`: 각 라운드의 역할 (CG: 요양보호사, FAM: 가족, DEV: AI 개발자)
 - `R1_individual_choice` ~ `R5_individual_choice`: 개인 선택 (0~3)
 - `R1_individual_confidence` ~ `R5_individual_confidence`: 개인 확신도 (1~5)
 - `R1_group_choice` ~ `R5_group_choice`: 그룹 합의 선택 (0~3)
-- `R1_group_confidence` ~ `R5_group_confidence`: 그룹 합의 확신도 (1~5)
+- `R1_group_confidence` ~ `R5_group_confidence`: 그룹 합의 확신도 (1~5) — **방(그룹) 전체가 공유하는 값으로, 같은 방 참가자는 모두 동일하게 표시됩니다 (하위호환용 레거시 필드).**
+- `R1_individual_group_confidence` ~ `R5_individual_group_confidence`: 집단 선택에 대해 **참가자 개인**이 제출한 확신도 (1~5) — 참가자마다 다른 값이 나옵니다. "개인별 집단 확신도"가 필요하면 이 컬럼을 사용하세요.
 
-**총 컬럼 수: 33개**
+**총 컬럼 수: 38개**
 
 ### 역할 코드 매핑
 

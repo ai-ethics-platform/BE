@@ -187,16 +187,16 @@ app/
 
 ---
 
-## 💡 주요 기능 및 기술적 도전
+## 주요 기능 및 기술적 도전
 
 ### 1. 실시간 3자 음성 통신 (WebRTC)
 
-#### 🎯 과제
+#### 과제
 - **NAT Traversal**: 방화벽/NAT 환경에서 P2P 연결 실패
 - **Mesh Topology**: N명 연결 시 N(N-1)/2 개의 PeerConnection 관리
 - **시그널링 동기화**: offer/answer/candidate 메시지 순서 보장
 
-#### ✅ 솔루션
+#### 솔루션
 
 **1) WebRTC 시그널링 서버 (WebSocket)**
 ```python

@@ -80,7 +80,7 @@ AI 윤리 교육을 위한 **실시간 협업 학습 플랫폼**으로, 3명의 
 - Containerization: Docker + Docker Compose
 - CI/CD: GitHub Actions
 - Web Server: Nginx (Reverse Proxy)
-- SSL/TLS: Let's Encrypt (자동 갱신)
+- SSL/TLS: Let's Encrypt (현재 수동 갱신, 자동화 미구성)
 - Cloud: AWS EC2
 
 ---

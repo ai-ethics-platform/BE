@@ -207,7 +207,7 @@ class VoiceRecordingItem(BaseModel):
     user_id: Optional[int] = None
     guest_id: Optional[str] = None
     username: Optional[str] = None
-    file_path: str  # S3 URL
+    file_path: str  # 서버 로컬 경로 (recordings/*.wav), S3 아님
     file_size: Optional[int] = None
     duration: Optional[int] = None
     created_at: datetime

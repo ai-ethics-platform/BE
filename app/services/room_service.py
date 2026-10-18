@@ -876,11 +876,37 @@ class RoomService:
         
         if not consensus_choice:
             raise ValueError("먼저 합의 선택이 제출되어야 합니다.")
-        
-        # 확신도 및 서브토픽 업데이트
+
+        # 확신도 및 서브토픽 업데이트 (방 전체 공유값, 레거시 - 하위호환을 위해 유지)
         consensus_choice.confidence = confidence
         if subtopic is not None:
             consensus_choice.subtopic = subtopic
+
+        # 참가자별 확신도 별도 저장 (집단 선택에 대한 "개인별" 확신도)
+        participant_confidence_query = select(models.ConsensusConfidence).where(
+            and_(
+                models.ConsensusConfidence.room_id == room.id,
+                models.ConsensusConfidence.round_number == round_number,
+                models.ConsensusConfidence.participant_id == participant.id
+            )
+        )
+        participant_confidence_result = await db.execute(participant_confidence_query)
+        participant_confidence = participant_confidence_result.scalar_one_or_none()
+
+        if participant_confidence:
+            participant_confidence.confidence = confidence
+            if subtopic is not None:
+                participant_confidence.subtopic = subtopic
+        else:
+            participant_confidence = models.ConsensusConfidence(
+                room_id=room.id,
+                round_number=round_number,
+                participant_id=participant.id,
+                confidence=confidence,
+                subtopic=subtopic
+            )
+            db.add(participant_confidence)
+
         await db.commit()
         await db.refresh(consensus_choice)
         return consensus_choice

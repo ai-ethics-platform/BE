@@ -82,7 +82,24 @@ class ConsensusChoice(Base):
     round_number = Column(Integer, nullable=False)
     choice = Column(Integer, nullable=False)  # 1~4
     subtopic = Column(String(255), nullable=True)  # 서브토픽
-    confidence = Column(Integer, nullable=True)  # 1~5 확신도
+    confidence = Column(Integer, nullable=True)  # 1~5 확신도 (방 전체 공유값, 레거시 - 하위호환을 위해 유지)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     room = relationship("Room")
+
+# 라운드별 "집단 선택에 대한" 개인별 확신도 저장
+# ConsensusChoice.confidence 는 방 전체가 공유하는 값 하나뿐이라 참가자별 값을 구분할 수 없어서,
+# 참가자별로 별도 저장하기 위해 추가한 테이블 (RoundChoice와 동일한 패턴)
+class ConsensusConfidence(Base):
+    __tablename__ = "consensus_confidences"
+
+    id = Column(Integer, primary_key=True, index=True)
+    room_id = Column(Integer, ForeignKey("rooms.id"), nullable=False)
+    round_number = Column(Integer, nullable=False)
+    participant_id = Column(Integer, ForeignKey("room_participants.id"), nullable=False)
+    confidence = Column(Integer, nullable=True)  # 1~5 확신도
+    subtopic = Column(String(255), nullable=True)  # 서브토픽
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    room = relationship("Room")
+    participant = relationship("RoomParticipant")

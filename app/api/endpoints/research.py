@@ -16,7 +16,7 @@ from openpyxl.styles import Font, PatternFill, Alignment
 
 from app.core.deps import get_db
 from app.models import (
-    User, Room, RoomParticipant, RoundChoice, ConsensusChoice,
+    User, Room, RoomParticipant, RoundChoice, ConsensusChoice, ConsensusConfidence,
     VoiceSession, VoiceParticipant, VoiceRecording
 )
 from app.schemas.research import (
@@ -818,7 +818,9 @@ async def export_experiment_data_to_excel(
     - date_of_birth: 생년월일
     - gender: 성별
     - education_level: 교육 수준
-    - R1~R5 각각: role, individual_choice, individual_confidence, group_choice, group_confidence
+    - R1~R5 각각: role, individual_choice, individual_confidence, group_choice, group_confidence, individual_group_confidence
+    - group_confidence: 방(그룹) 전체가 공유하는 확신도 값 (하위호환용 레거시 필드, 참가자 전원 동일)
+    - individual_group_confidence: 집단 선택에 대해 "이 참가자 개인"이 제출한 확신도 (참가자별로 다를 수 있음)
     """
     # 방 쿼리 (AsyncSession에 맞게 수정)
     stmt = select(Room)
@@ -855,7 +857,8 @@ async def export_experiment_data_to_excel(
             f"R{round_num}_individual_choice",
             f"R{round_num}_individual_confidence",
             f"R{round_num}_group_choice",
-            f"R{round_num}_group_confidence"
+            f"R{round_num}_group_confidence",
+            f"R{round_num}_individual_group_confidence"
         ])
     
     # 헤더 작성
@@ -903,7 +906,16 @@ async def export_experiment_data_to_excel(
             round_choice_result = await db.execute(round_choice_stmt)
             round_choices = round_choice_result.scalars().all()
             round_choice_map = {rc.round_number: rc for rc in round_choices}
-            
+
+            # 라운드별 "집단 선택에 대한" 개인별 확신도 조회
+            consensus_confidence_stmt = select(ConsensusConfidence).where(
+                ConsensusConfidence.participant_id == participant.id
+            ).order_by(ConsensusConfidence.round_number)
+
+            consensus_confidence_result = await db.execute(consensus_confidence_stmt)
+            consensus_confidences = consensus_confidence_result.scalars().all()
+            consensus_confidence_map = {cc.round_number: cc for cc in consensus_confidences}
+
             # 기본 정보
             row_data = [
                 room.room_code,  # episode_code
@@ -929,20 +941,27 @@ async def export_experiment_data_to_excel(
                     individual_choice = rc.choice if rc.choice is not None else ""
                     individual_confidence = rc.confidence if rc.confidence is not None else ""
                 
-                # 그룹 합의 정보
+                # 그룹 합의 정보 (방 전체 공유값, 레거시)
                 group_choice = ""
                 group_confidence = ""
                 if round_num in consensus_map:
                     cc = consensus_map[round_num]
                     group_choice = cc.choice if cc.choice is not None else ""
                     group_confidence = cc.confidence if cc.confidence is not None else ""
-                
+
+                # 집단 선택에 대한 "이 참가자 개인"의 확신도
+                individual_group_confidence = ""
+                if round_num in consensus_confidence_map:
+                    icc = consensus_confidence_map[round_num]
+                    individual_group_confidence = icc.confidence if icc.confidence is not None else ""
+
                 row_data.extend([
                     role_str,
                     individual_choice,
                     individual_confidence,
                     group_choice,
-                    group_confidence
+                    group_confidence,
+                    individual_group_confidence
                 ])
             
             # 행 작성
@@ -1067,7 +1086,7 @@ async def get_voice_recordings(
     - start_date/end_date: 날짜 범위
     
     **응답:**
-    - 음성 녹음 파일의 S3 URL 목록
+    - 음성 녹음 파일의 경로 목록 (현재는 서버 로컬 경로, S3 아님)
     - 방 정보, 사용자 정보 포함
     """
     # 기본 쿼리: VoiceRecording + VoiceSession + Room + User 조인
@@ -1149,7 +1168,7 @@ async def get_voice_recordings(
             user_id=recording.user_id,
             guest_id=recording.guest_id,
             username=user.username if user else None,
-            file_path=recording.file_path,  # S3 URL
+            file_path=recording.file_path,  # 서버 로컬 경로 (recordings/*.wav), S3 아님
             file_size=recording.file_size,
             duration=recording.duration,
             created_at=recording.created_at,
