@@ -5,6 +5,7 @@ from sqlalchemy import pool
 
 from alembic import context
 
+from app.core.config import settings
 from app.db.base import Base  # Base는 declarative_base()로 생성된 객체여야 함
 
 # this is the Alembic Config object, which provides
@@ -15,6 +16,13 @@ config = context.config
 # This line sets up loggers basically.
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
+
+# alembic.ini에는 접속 정보를 평문으로 두지 않고, 앱과 동일한 .env 값으로 구성한다.
+# (alembic은 동기 드라이버가 필요해 pymysql 사용, 앱 런타임은 aiomysql 사용)
+config.set_main_option(
+    "sqlalchemy.url",
+    f"mysql+pymysql://{settings.DB_USER}:{settings.DB_PASSWORD}@{settings.DB_HOST}:{settings.DB_PORT}/{settings.DB_NAME}",
+)
 
 # add your model's MetaData object here
 # for 'autogenerate' support
