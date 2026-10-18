@@ -21,10 +21,9 @@ if config.config_file_name is not None:
 # alembic.ini에는 접속 정보를 평문으로 두지 않고, 앱이 실제로 쓰는 SQLALCHEMY_DATABASE_URI를
 # 그대로 재사용한다 (DB_HOST/DB_USER/... 개별 필드는 .env에 값이 없거나 틀려도 아무도 안 읽어서
 # 방치돼 있을 수 있어 신뢰할 수 없음). alembic은 동기 드라이버가 필요해 pymysql로만 교체.
-config.set_main_option(
-    "sqlalchemy.url",
-    re.sub(r"^mysql\+\w+://", "mysql+pymysql://", settings.SQLALCHEMY_DATABASE_URI),
-)
+# config.set_main_option()은 내부적으로 ConfigParser(% 보간 문법)를 거치기 때문에 비밀번호에
+# %가 있으면 깨진다 - ConfigParser를 타지 않도록 URL을 변수로만 들고 있다가 아래에서 직접 사용.
+DATABASE_URL = re.sub(r"^mysql\+\w+://", "mysql+pymysql://", settings.SQLALCHEMY_DATABASE_URI)
 
 # add your model's MetaData object here
 # for 'autogenerate' support
@@ -50,9 +49,8 @@ def run_migrations_offline() -> None:
     script output.
 
     """
-    url = config.get_main_option("sqlalchemy.url")
     context.configure(
-        url=url,
+        url=DATABASE_URL,
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
@@ -70,7 +68,7 @@ def run_migrations_online() -> None:
 
     """
     connectable = engine_from_config(
-        config.get_section(config.config_ini_section, {}),
+        {"sqlalchemy.url": DATABASE_URL},
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
