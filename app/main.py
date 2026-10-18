@@ -8,6 +8,7 @@ from app.api.api import api_router
 from app.core.config import settings
 from app.core.database import create_tables
 from app.core.error_tracking import capture_exception, shutdown_error_tracking
+from app.core.game_diagnostics import record_request, flush_game_diagnostics
 from fastapi.staticfiles import StaticFiles
 
 app = FastAPI(
@@ -27,6 +28,19 @@ async def report_unhandled_exception(request: Request, exc: Exception):
         status_code=500,
         content={"detail": "Internal server error"},
     )
+
+@app.middleware('http')
+async def record_game_request_context(request: Request, call_next):
+    status = 500
+    try:
+        response = await call_next(request)
+        status = response.status_code
+        return response
+    finally:
+        try:
+            record_request(request, status)
+        except Exception:
+            pass  # Diagnostics must not change API behavior.
 
 # CORS 설정
 app.add_middleware(
@@ -63,6 +77,7 @@ async def startup_event():
 
 @app.on_event("shutdown")
 async def shutdown_event():
+    await flush_game_diagnostics()
     shutdown_error_tracking()
 
 @app.get("/")

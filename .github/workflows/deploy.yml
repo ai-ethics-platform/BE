@@ -22,8 +22,10 @@ jobs:
         uses: appleboy/ssh-action@v0.1.5
         env:
           POSTHOG_PROJECT_TOKEN: ${{ secrets.POSTHOG_PROJECT_TOKEN }}
+          GAME_DIAGNOSTIC_URL: ${{ secrets.GAME_DIAGNOSTIC_URL }}
+          GAME_DIAGNOSTIC_API_KEY: ${{ secrets.GAME_DIAGNOSTIC_API_KEY }}
         with:
-          envs: POSTHOG_PROJECT_TOKEN
+          envs: POSTHOG_PROJECT_TOKEN,GAME_DIAGNOSTIC_URL,GAME_DIAGNOSTIC_API_KEY
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key_path: key.pem
@@ -44,6 +46,7 @@ jobs:
             echo "[2] .env 파일 생성 (base64 decode)"
             echo "${{ secrets.ENCODED_ENV_VARS }}" | base64 -d > .env
             printf '\nPOSTHOG_PROJECT_TOKEN=%s\n' "$POSTHOG_PROJECT_TOKEN" >> .env
+            printf '\nGAME_DIAGNOSTIC_URL=%s\nGAME_DIAGNOSTIC_API_KEY=%s\n' "$GAME_DIAGNOSTIC_URL" "$GAME_DIAGNOSTIC_API_KEY" >> .env
             echo "[3] Backend 빌드"
             docker-compose build backend
 

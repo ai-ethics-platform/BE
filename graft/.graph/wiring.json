@@ -1,8 +1,8 @@
 {
   "meta": {
     "version": 1,
-    "nodeCount": 522,
-    "edgeCount": 1056,
+    "nodeCount": 545,
+    "edgeCount": 1130,
     "languages": [
       "python"
     ],
@@ -765,12 +765,12 @@
       "name": "api.py",
       "kind": "file",
       "path": "app/api/api.py",
-      "span": "L1-L94",
+      "span": "L1-L96",
       "signature": null,
       "exported": true,
       "origin": "ast",
-      "body_hash": "e917bca55213b0a1af29fc2e5ec515edf10ecef538da0e37958ca15677876ec0",
-      "chars": 1783,
+      "body_hash": "3f9f028b48a4940977f9cfc51d47a555f1d74781732cee676c93423aefd6bd26",
+      "chars": 1883,
       "summary_state": "pending",
       "summary": null,
       "crux": null
@@ -993,12 +993,12 @@
       "name": "auth.py",
       "kind": "file",
       "path": "app/api/endpoints/auth.py",
-      "span": "L1-L234",
+      "span": "L1-L239",
       "signature": null,
       "exported": true,
       "origin": "ast",
-      "body_hash": "0ea37f21afc6114d09d52a6f675907b44dad15387268435b8c6f45345f9f58fc",
-      "chars": 7134,
+      "body_hash": "65d31c2ed5472d0db65bb2bc19e6778094aafbbcf1aec365d84da6650cbd2655",
+      "chars": 7282,
       "summary_state": "pending",
       "summary": null,
       "crux": null
@@ -1008,7 +1008,7 @@
       "name": "check_username_available",
       "kind": "function",
       "path": "app/api/endpoints/auth.py",
-      "span": "L135-L143",
+      "span": "L139-L147",
       "signature": "async def check_username_available( username_in: schemas.UsernameCheck, db: AsyncSession = Depends(get_db) ) -> Any",
       "exported": true,
       "origin": "ast",
@@ -1022,7 +1022,7 @@
       "name": "find_username",
       "kind": "function",
       "path": "app/api/endpoints/auth.py",
-      "span": "L147-L163",
+      "span": "L151-L167",
       "signature": "async def find_username( user_info: schemas.FindUsernameRequest, db: AsyncSession = Depends(get_db) ) -> Any",
       "exported": true,
       "origin": "ast",
@@ -1036,7 +1036,7 @@
       "name": "guest_login",
       "kind": "function",
       "path": "app/api/endpoints/auth.py",
-      "span": "L104-L131",
+      "span": "L108-L135",
       "signature": "async def guest_login( guest_id: str = Body(..., embed=True), db: AsyncSession = Depends(get_db) )",
       "exported": true,
       "origin": "ast",
@@ -1050,11 +1050,11 @@
       "name": "login",
       "kind": "function",
       "path": "app/api/endpoints/auth.py",
-      "span": "L19-L43",
-      "signature": "async def login( form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db) ) -> Any",
+      "span": "L19-L45",
+      "signature": "async def login( request: Request, form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db) ) -> Any",
       "exported": true,
       "origin": "ast",
-      "body_hash": "3124524638bb5ee31cc9536f83c5e4a9c697519746f4942d02cf65a0e1fe4dda",
+      "body_hash": "e4e90e10e3bd2673fe0aaaa1889dc767d3b0b92a77802ad3347a6b514696cceb",
       "summary_state": "pending",
       "summary": null,
       "crux": null
@@ -1064,11 +1064,11 @@
       "name": "login_json",
       "kind": "function",
       "path": "app/api/endpoints/auth.py",
-      "span": "L47-L71",
-      "signature": "async def login_json( user_credentials: schemas.UserLogin, db: AsyncSession = Depends(get_db) ) -> Any",
+      "span": "L49-L75",
+      "signature": "async def login_json( request: Request, user_credentials: schemas.UserLogin, db: AsyncSession = Depends(get_db) ) -> Any",
       "exported": true,
       "origin": "ast",
-      "body_hash": "fc770bebc6e6c0a5049f2ed411ef850acd5053946287544aa64c4016f919fd52",
+      "body_hash": "60c9f579c93690614bb4fd6c9e84f89830539dc77cdfcd53944316350ec97889",
       "summary_state": "pending",
       "summary": null,
       "crux": null
@@ -1078,7 +1078,7 @@
       "name": "refresh_token",
       "kind": "function",
       "path": "app/api/endpoints/auth.py",
-      "span": "L167-L234",
+      "span": "L171-L238",
       "signature": "async def refresh_token( refresh_token: str = Body(..., embed=True), db: AsyncSession = Depends(get_db) ) -> Any",
       "exported": true,
       "origin": "ast",
@@ -1092,7 +1092,7 @@
       "name": "register_user",
       "kind": "function",
       "path": "app/api/endpoints/auth.py",
-      "span": "L75-L100",
+      "span": "L79-L104",
       "signature": "async def register_user( user_in: schemas.UserCreate, db: AsyncSession = Depends(get_db) ) -> Any",
       "exported": true,
       "origin": "ast",
@@ -1482,6 +1482,35 @@
       "crux": null
     },
     {
+      "id": "app/api/endpoints/game_diagnostics.py",
+      "name": "game_diagnostics.py",
+      "kind": "file",
+      "path": "app/api/endpoints/game_diagnostics.py",
+      "span": "L1-L59",
+      "signature": null,
+      "exported": true,
+      "origin": "ast",
+      "body_hash": "167dd0a804c27c94584232d3d8eb6c1ee1e1750a9ee08e3457a7cb7c0b25ea0a",
+      "chars": 2731,
+      "summary_state": "pending",
+      "summary": null,
+      "crux": null
+    },
+    {
+      "id": "app/api/endpoints/game_diagnostics.py#receive_game_diagnostics",
+      "name": "receive_game_diagnostics",
+      "kind": "function",
+      "path": "app/api/endpoints/game_diagnostics.py",
+      "span": "L22-L58",
+      "signature": "async def receive_game_diagnostics(request: Request, db: AsyncSession = Depends(get_db), user=Depends(get_current_user_or_guest))",
+      "exported": true,
+      "origin": "ast",
+      "body_hash": "7172b35b0260b1b85864fab8c292187e31975c2c8a60bdd35dcc22e1e81aed64",
+      "summary_state": "pending",
+      "summary": null,
+      "crux": null
+    },
+    {
       "id": "app/api/endpoints/play_applications.py",
       "name": "play_applications.py",
       "kind": "file",
@@ -1712,12 +1741,12 @@
       "name": "rooms.py",
       "kind": "file",
       "path": "app/api/endpoints/rooms.py",
-      "span": "L1-L1182",
+      "span": "L1-L1199",
       "signature": null,
       "exported": true,
       "origin": "ast",
-      "body_hash": "5e815d7e0865931b5e02ba1f9e12fa3535486cc92d5824b9b6ca8e42b2f7ce64",
-      "chars": 40468,
+      "body_hash": "d70aa7de40ce8229a7b351d670c18cb1de0268af4c3448f31e881d80fca16772",
+      "chars": 41417,
       "summary_state": "pending",
       "summary": null,
       "crux": null
@@ -1727,7 +1756,7 @@
       "name": "assign_roles",
       "kind": "function",
       "path": "app/api/endpoints/rooms.py",
-      "span": "L516-L548",
+      "span": "L533-L565",
       "signature": "async def assign_roles( room_code: str, db: AsyncSession = Depends(get_db), current_user: models.User = Depends(get_current_approved_user) ) -> Any",
       "exported": true,
       "origin": "ast",
@@ -1741,11 +1770,11 @@
       "name": "create_private_room",
       "kind": "function",
       "path": "app/api/endpoints/rooms.py",
-      "span": "L258-L310",
-      "signature": "async def create_private_room( room_data: schemas.RoomCreatePrivate, db: AsyncSession = Depends(get_db), current_user: Union[models.User, dict] = Depends(get_current_approved_user) ) -> Any",
+      "span": "L266-L323",
+      "signature": "async def create_private_room( request: Request, room_data: schemas.RoomCreatePrivate, db: AsyncSession = Depends(get_db), current_user: Union[models.User, dict] = Depends(get_current_approved_user) ) -> Any",
       "exported": true,
       "origin": "ast",
-      "body_hash": "fa1e1301333ae5bd607159c6024e0d0941546c03aa68d123770b1d469e7d5461",
+      "body_hash": "358be8fe34ad67d1587edd7160d6054d73e42d15ac07a370f33d6d5e92798f3f",
       "summary_state": "pending",
       "summary": null,
       "crux": null
@@ -1755,11 +1784,11 @@
       "name": "create_public_room",
       "kind": "function",
       "path": "app/api/endpoints/rooms.py",
-      "span": "L23-L75",
-      "signature": "async def create_public_room( room_data: schemas.RoomCreatePublic, db: AsyncSession = Depends(get_db), current_user: Union[models.User, dict] = Depends(get_current_approved_user) ) -> Any",
+      "span": "L23-L80",
+      "signature": "async def create_public_room( request: Request, room_data: schemas.RoomCreatePublic, db: AsyncSession = Depends(get_db), current_user: Union[models.User, dict] = Depends(get_current_approved_user) ) -> Any",
       "exported": true,
       "origin": "ast",
-      "body_hash": "fb21a2ec9f93073d6fc01492642f4e222f20113ee33e5e34acec4a0e76857bdb",
+      "body_hash": "bc345a53da1e2f197571d13bc9d956e60ef41e8f5d23a48f5ac9ca12eb2e98f5",
       "summary_state": "pending",
       "summary": null,
       "crux": null
@@ -1769,7 +1798,7 @@
       "name": "get_ai_name",
       "kind": "function",
       "path": "app/api/endpoints/rooms.py",
-      "span": "L623-L632",
+      "span": "L640-L649",
       "signature": "async def get_ai_name( room_code: str, db: AsyncSession = Depends(get_db), current_user: models.User = Depends(get_current_approved_user) )",
       "exported": true,
       "origin": "ast",
@@ -1783,7 +1812,7 @@
       "name": "get_ai_type",
       "kind": "function",
       "path": "app/api/endpoints/rooms.py",
-      "span": "L597-L606",
+      "span": "L614-L623",
       "signature": "async def get_ai_type( room_code: str, db: AsyncSession = Depends(get_db), current_user: models.User = Depends(get_current_approved_user) )",
       "exported": true,
       "origin": "ast",
@@ -1797,7 +1826,7 @@
       "name": "get_choice_status",
       "kind": "function",
       "path": "app/api/endpoints/rooms.py",
-      "span": "L804-L832",
+      "span": "L821-L849",
       "signature": "async def get_choice_status( room_code: str, round_number: int, db: AsyncSession = Depends(get_db), current_user: models.User = Depends(get_current_approved_user) ) -> Any",
       "exported": true,
       "origin": "ast",
@@ -1811,7 +1840,7 @@
       "name": "get_page_sync_status",
       "kind": "function",
       "path": "app/api/endpoints/rooms.py",
-      "span": "L954-L1006",
+      "span": "L971-L1023",
       "signature": "async def get_page_sync_status( room_code: str, page_number: int, db: AsyncSession = Depends(get_db), current_user: models.User = Depends(get_current_approved_user) ) -> Any",
       "exported": true,
       "origin": "ast",
@@ -1825,7 +1854,7 @@
       "name": "get_private_rooms",
       "kind": "function",
       "path": "app/api/endpoints/rooms.py",
-      "span": "L314-L339",
+      "span": "L327-L352",
       "signature": "async def get_private_rooms( skip: int = 0, limit: int = 20, db: AsyncSession = Depends(get_db), current_user: Union[models.User, dict] = Depends(get_current_approved_user) ) -> Any",
       "exported": true,
       "origin": "ast",
@@ -1839,7 +1868,7 @@
       "name": "get_public_rooms",
       "kind": "function",
       "path": "app/api/endpoints/rooms.py",
-      "span": "L79-L104",
+      "span": "L84-L109",
       "signature": "async def get_public_rooms( skip: int = 0, limit: int = 20, db: AsyncSession = Depends(get_db), current_user: models.User = Depends(get_current_approved_user) ) -> Any",
       "exported": true,
       "origin": "ast",
@@ -1853,7 +1882,7 @@
       "name": "get_role_assignment_status",
       "kind": "function",
       "path": "app/api/endpoints/rooms.py",
-      "span": "L552-L580",
+      "span": "L569-L597",
       "signature": "async def get_role_assignment_status( room_code: str, db: AsyncSession = Depends(get_db), current_user: models.User = Depends(get_current_approved_user) ) -> Any",
       "exported": true,
       "origin": "ast",
@@ -1867,7 +1896,7 @@
       "name": "get_room_by_code",
       "kind": "function",
       "path": "app/api/endpoints/rooms.py",
-      "span": "L108-L138",
+      "span": "L113-L143",
       "signature": "async def get_room_by_code( room_code: str, db: AsyncSession = Depends(get_db), current_user: models.User = Depends(get_current_approved_user) ) -> Any",
       "exported": true,
       "origin": "ast",
@@ -1881,7 +1910,7 @@
       "name": "get_session_websocket_stats",
       "kind": "function",
       "path": "app/api/endpoints/rooms.py",
-      "span": "L850-L861",
+      "span": "L867-L878",
       "signature": "async def get_session_websocket_stats(session_id: str)",
       "exported": true,
       "origin": "ast",
@@ -1895,7 +1924,7 @@
       "name": "get_statistics",
       "kind": "function",
       "path": "app/api/endpoints/rooms.py",
-      "span": "L1090-L1125",
+      "span": "L1107-L1142",
       "signature": "async def get_statistics( exclude_dummy: bool = Query(True, description=\"더미 데이터 제외 여부\"), from_dt: Optional[str] = Query(None, description=\"시작 시각(ISO-8601)\"), to_dt: Optional[str] = Query(None, description=\"종료 시각(ISO-8601)\"), ai_type: Optional[int] = Query(None, description=\"AI 타입(1|2|3)\"), is_public: Optional[bool] = Query(None, description=\"공개 여부\"), db: AsyncSession = Depends(get_db) ) -> Any",
       "exported": true,
       "origin": "ast",
@@ -1909,7 +1938,7 @@
       "name": "get_statistics_by_subtopic",
       "kind": "function",
       "path": "app/api/endpoints/rooms.py",
-      "span": "L1128-L1154",
+      "span": "L1145-L1171",
       "signature": "async def get_statistics_by_subtopic( subtopic: str, exclude_dummy: bool = Query(True, description=\"더미 데이터 제외 여부\"), from_dt: Optional[str] = Query(None, description=\"시작 시각(ISO-8601)\"), to_dt: Optional[str] = Query(None, description=\"종료 시각(ISO-8601)\"), ai_type: Optional[int] = Query(None, description=\"AI 타입(1|2|3)\"), is_public: Optional[bool] = Query(None, description=\"공개 여부\"), db: AsyncSession = Depends(get_db) ) -> Any",
       "exported": true,
       "origin": "ast",
@@ -1923,7 +1952,7 @@
       "name": "get_websocket_health",
       "kind": "function",
       "path": "app/api/endpoints/rooms.py",
-      "span": "L864-L882",
+      "span": "L881-L899",
       "signature": "async def get_websocket_health(session_id: str)",
       "exported": true,
       "origin": "ast",
@@ -1937,7 +1966,7 @@
       "name": "get_websocket_stats",
       "kind": "function",
       "path": "app/api/endpoints/rooms.py",
-      "span": "L835-L847",
+      "span": "L852-L864",
       "signature": "async def get_websocket_stats()",
       "exported": true,
       "origin": "ast",
@@ -1951,11 +1980,11 @@
       "name": "join_room_by_code",
       "kind": "function",
       "path": "app/api/endpoints/rooms.py",
-      "span": "L142-L200",
+      "span": "L147-L208",
       "signature": "async def join_room_by_code( join_data: schemas.RoomJoinByCode, request: Request, db: AsyncSession = Depends(get_db), current_user: Union[models.User, dict] = Depends(get_current_approved_user) ) -> Any",
       "exported": true,
       "origin": "ast",
-      "body_hash": "1ac8c9afe6584682bb1e39d4cb2f3f000681a2d3c331ad71e7102f9eda6af80f",
+      "body_hash": "35c350fd8d00446309b2433e1d288c53f1ead990aa04c5f2df25ef507c64b5d4",
       "summary_state": "pending",
       "summary": null,
       "crux": null
@@ -1965,7 +1994,7 @@
       "name": "join_room_by_id",
       "kind": "function",
       "path": "app/api/endpoints/rooms.py",
-      "span": "L204-L254",
+      "span": "L212-L262",
       "signature": "async def join_room_by_id( room_id: int, join_data: schemas.RoomJoinRequest, db: AsyncSession = Depends(get_db), current_user: Union[models.User, dict] = Depends(get_current_approved_user) ) -> Any",
       "exported": true,
       "origin": "ast",
@@ -1979,7 +2008,7 @@
       "name": "leave_room",
       "kind": "function",
       "path": "app/api/endpoints/rooms.py",
-      "span": "L438-L512",
+      "span": "L455-L529",
       "signature": "async def leave_room( leave_data: schemas.RoomLeaveRequest, db: AsyncSession = Depends(get_db), current_user: Union[models.User, dict] = Depends(get_current_user_or_guest) ) -> Any",
       "exported": true,
       "origin": "ast",
@@ -1993,7 +2022,7 @@
       "name": "list_statistics_subtopics",
       "kind": "function",
       "path": "app/api/endpoints/rooms.py",
-      "span": "L1157-L1181",
+      "span": "L1174-L1198",
       "signature": "async def list_statistics_subtopics( exclude_dummy: bool = Query(True, description=\"더미 데이터 제외 여부\"), from_dt: Optional[str] = Query(None, description=\"시작 시각(ISO-8601)\"), to_dt: Optional[str] = Query(None, description=\"종료 시각(ISO-8601)\"), ai_type: Optional[int] = Query(None, description=\"AI 타입(1|2|3)\"), is_public: Optional[bool] = Query(None, description=\"공개 여부\"), db: AsyncSession = Depends(get_db) ) -> Any",
       "exported": true,
       "origin": "ast",
@@ -2007,7 +2036,7 @@
       "name": "manual_page_sync_signal",
       "kind": "function",
       "path": "app/api/endpoints/rooms.py",
-      "span": "L1051-L1087",
+      "span": "L1068-L1104",
       "signature": "async def manual_page_sync_signal( room_code: str, page_number: int, signal_type: str = \"three_next\", db: AsyncSession = Depends(get_db), current_user: models.User = Depends(get_current_approved_user) ) -> Any",
       "exported": true,
       "origin": "ast",
@@ -2021,7 +2050,7 @@
       "name": "ping_websocket_connections",
       "kind": "function",
       "path": "app/api/endpoints/rooms.py",
-      "span": "L885-L894",
+      "span": "L902-L911",
       "signature": "async def ping_websocket_connections(session_id: str)",
       "exported": true,
       "origin": "ast",
@@ -2035,7 +2064,7 @@
       "name": "record_page_arrival",
       "kind": "function",
       "path": "app/api/endpoints/rooms.py",
-      "span": "L898-L950",
+      "span": "L915-L967",
       "signature": "async def record_page_arrival( arrival_data: schemas.room.PageArrivalRequest, db: AsyncSession = Depends(get_db), current_user: Union[models.User, dict] = Depends(get_current_approved_user) ) -> Any",
       "exported": true,
       "origin": "ast",
@@ -2049,7 +2078,7 @@
       "name": "reset_page_sync_status",
       "kind": "function",
       "path": "app/api/endpoints/rooms.py",
-      "span": "L1010-L1047",
+      "span": "L1027-L1064",
       "signature": "async def reset_page_sync_status( room_code: str, page_number: int, db: AsyncSession = Depends(get_db), current_user: models.User = Depends(get_current_approved_user) ) -> Any",
       "exported": true,
       "origin": "ast",
@@ -2063,7 +2092,7 @@
       "name": "reset_room_status",
       "kind": "function",
       "path": "app/api/endpoints/rooms.py",
-      "span": "L404-L434",
+      "span": "L421-L451",
       "signature": "async def reset_room_status( reset_data: schemas.RoomResetRequest, db: AsyncSession = Depends(get_db) ) -> Any",
       "exported": true,
       "origin": "ast",
@@ -2077,7 +2106,7 @@
       "name": "set_ai_name",
       "kind": "function",
       "path": "app/api/endpoints/rooms.py",
-      "span": "L610-L619",
+      "span": "L627-L636",
       "signature": "async def set_ai_name( req: schemas.AiNameRequest, db: AsyncSession = Depends(get_db), current_user: models.User = Depends(get_current_approved_user) )",
       "exported": true,
       "origin": "ast",
@@ -2091,7 +2120,7 @@
       "name": "set_ai_type",
       "kind": "function",
       "path": "app/api/endpoints/rooms.py",
-      "span": "L584-L593",
+      "span": "L601-L610",
       "signature": "async def set_ai_type( req: schemas.AiTypeSelectRequest, db: AsyncSession = Depends(get_db), current_user: models.User = Depends(get_current_approved_user) )",
       "exported": true,
       "origin": "ast",
@@ -2105,7 +2134,7 @@
       "name": "submit_consensus_choice",
       "kind": "function",
       "path": "app/api/endpoints/rooms.py",
-      "span": "L721-L758",
+      "span": "L738-L775",
       "signature": "async def submit_consensus_choice( room_code: str, choice_data: schemas.ConsensusChoiceRequest, db: AsyncSession = Depends(get_db), current_user: Union[models.User, dict] = Depends(get_current_approved_user) ) -> Any: # 합의 선택 제출 (round_number는 body로)",
       "exported": true,
       "origin": "ast",
@@ -2119,7 +2148,7 @@
       "name": "submit_consensus_confidence",
       "kind": "function",
       "path": "app/api/endpoints/rooms.py",
-      "span": "L761-L800",
+      "span": "L778-L817",
       "signature": "async def submit_consensus_confidence( room_code: str, confidence_data: schemas.ConsensusConfidenceRequest, db: AsyncSession = Depends(get_db), current_user: Union[models.User, dict] = Depends(get_current_approved_user) ) -> Any",
       "exported": true,
       "origin": "ast",
@@ -2133,7 +2162,7 @@
       "name": "submit_individual_confidence",
       "kind": "function",
       "path": "app/api/endpoints/rooms.py",
-      "span": "L679-L718",
+      "span": "L696-L735",
       "signature": "async def submit_individual_confidence( room_code: str, confidence_data: schemas.IndividualConfidenceRequest, db: AsyncSession = Depends(get_db), current_user: Union[models.User, dict] = Depends(get_current_approved_user) ) -> Any",
       "exported": true,
       "origin": "ast",
@@ -2147,7 +2176,7 @@
       "name": "submit_round_choice",
       "kind": "function",
       "path": "app/api/endpoints/rooms.py",
-      "span": "L637-L676",
+      "span": "L654-L693",
       "signature": "async def submit_round_choice( room_code: str, choice_data: schemas.RoundChoiceRequest, db: AsyncSession = Depends(get_db), current_user: Union[models.User, dict] = Depends(get_current_approved_user) ) -> Any",
       "exported": true,
       "origin": "ast",
@@ -2161,11 +2190,11 @@
       "name": "toggle_ready_status",
       "kind": "function",
       "path": "app/api/endpoints/rooms.py",
-      "span": "L343-L400",
-      "signature": "async def toggle_ready_status( ready_data: schemas.RoomReadyRequest, db: AsyncSession = Depends(get_db), current_user: Union[models.User, dict] = Depends(get_current_approved_user) ) -> Any",
+      "span": "L356-L417",
+      "signature": "async def toggle_ready_status( request: Request, ready_data: schemas.RoomReadyRequest, db: AsyncSession = Depends(get_db), current_user: Union[models.User, dict] = Depends(get_current_approved_user) ) -> Any",
       "exported": true,
       "origin": "ast",
-      "body_hash": "2f2812ffcb485491f10e1cde29b2d09e72e80e04f75aae10fa6457ae6edd6d64",
+      "body_hash": "16a014ff997f506ca73d29e0b002c4e3e935d670f6e460b3c760999ba51a8410",
       "summary_state": "pending",
       "summary": null,
       "crux": null
@@ -2989,6 +3018,105 @@
       "crux": null
     },
     {
+      "id": "app/core/game_diagnostics.py",
+      "name": "game_diagnostics.py",
+      "kind": "file",
+      "path": "app/core/game_diagnostics.py",
+      "span": "L1-L129",
+      "signature": null,
+      "exported": true,
+      "origin": "ast",
+      "body_hash": "646d980906e1d7230bf51021969ae20d0006f50ed8222cedea400814e66afb91",
+      "chars": 6040,
+      "summary_state": "pending",
+      "summary": null,
+      "crux": null
+    },
+    {
+      "id": "app/core/game_diagnostics.py#context_from_headers",
+      "name": "context_from_headers",
+      "kind": "function",
+      "path": "app/core/game_diagnostics.py",
+      "span": "L23-L44",
+      "signature": "def context_from_headers(headers)",
+      "exported": true,
+      "origin": "ast",
+      "body_hash": "c47489c2112bd2c3e5aa1fc3365c4ab8451b1f41011d5a7d09f346907db4b983",
+      "summary_state": "pending",
+      "summary": null,
+      "crux": null
+    },
+    {
+      "id": "app/core/game_diagnostics.py#flush_game_diagnostics",
+      "name": "flush_game_diagnostics",
+      "kind": "function",
+      "path": "app/core/game_diagnostics.py",
+      "span": "L104-L106",
+      "signature": "async def flush_game_diagnostics()",
+      "exported": true,
+      "origin": "ast",
+      "body_hash": "239d8003226cec6b5b8b1c17843f7d7f00c84f3410a1bb39be4fb5678f08d0b7",
+      "summary_state": "pending",
+      "summary": null,
+      "crux": null
+    },
+    {
+      "id": "app/core/game_diagnostics.py#queue_diagnostic",
+      "name": "queue_diagnostic",
+      "kind": "function",
+      "path": "app/core/game_diagnostics.py",
+      "span": "L77-L84",
+      "signature": "def queue_diagnostic(payload)",
+      "exported": true,
+      "origin": "ast",
+      "body_hash": "80df22a51f2aecc61c480f716de6ea048edba9c61c78f91b79b386763fb2266e",
+      "summary_state": "pending",
+      "summary": null,
+      "crux": null
+    },
+    {
+      "id": "app/core/game_diagnostics.py#record_navigation_delivery",
+      "name": "record_navigation_delivery",
+      "kind": "function",
+      "path": "app/core/game_diagnostics.py",
+      "span": "L109-L128",
+      "signature": "def record_navigation_delivery(websocket, message, succeeded)",
+      "exported": true,
+      "origin": "ast",
+      "body_hash": "0c8d30b8c34c583888206a3f9ff62c41b6e1768dc57ecc88b487cdcc44039e99",
+      "summary_state": "pending",
+      "summary": null,
+      "crux": null
+    },
+    {
+      "id": "app/core/game_diagnostics.py#record_request",
+      "name": "record_request",
+      "kind": "function",
+      "path": "app/core/game_diagnostics.py",
+      "span": "L47-L74",
+      "signature": "def record_request(request, status)",
+      "exported": true,
+      "origin": "ast",
+      "body_hash": "32f1f0cbee5f06a903f50ae9def8485e9ac932362e7c7254b5e68f83d3bf286a",
+      "summary_state": "pending",
+      "summary": null,
+      "crux": null
+    },
+    {
+      "id": "app/core/game_diagnostics.py#send_to_admin",
+      "name": "send_to_admin",
+      "kind": "function",
+      "path": "app/core/game_diagnostics.py",
+      "span": "L87-L101",
+      "signature": "async def send_to_admin(payload)",
+      "exported": true,
+      "origin": "ast",
+      "body_hash": "f768755186877ffa5cf96819f2ef8da00461fd5a2a6248c7c6ebdc988888fdf0",
+      "summary_state": "pending",
+      "summary": null,
+      "crux": null
+    },
+    {
       "id": "app/core/security.py",
       "name": "security.py",
       "kind": "file",
@@ -3064,12 +3192,12 @@
       "name": "websocket_manager.py",
       "kind": "file",
       "path": "app/core/websocket_manager.py",
-      "span": "L1-L248",
+      "span": "L1-L263",
       "signature": null,
       "exported": true,
       "origin": "ast",
-      "body_hash": "155d3b3c4d407c8487f8f34c294c11e44b1cb9144677a27cbd980395655f3def",
-      "chars": 10404,
+      "body_hash": "85a904354c74881d347a8b746a9dbd8f3179f4d99e2390254491db4582b53db6",
+      "chars": 10958,
       "summary_state": "pending",
       "summary": null,
       "crux": null
@@ -3079,11 +3207,11 @@
       "name": "WebSocketManager",
       "kind": "class",
       "path": "app/core/websocket_manager.py",
-      "span": "L12-L244",
+      "span": "L14-L259",
       "signature": "class WebSocketManager",
       "exported": true,
       "origin": "ast",
-      "body_hash": "f239f910fa2a2d7f8c2341498f058fc47cbc09854b92b13329df490dc0bd455c",
+      "body_hash": "1272f736a8f94c80e6c5dd8fdb441a7b6912df11f5e12abbeade01a5c445256b",
       "summary_state": "pending",
       "summary": null,
       "crux": null
@@ -3093,7 +3221,7 @@
       "name": "__init__",
       "kind": "method",
       "path": "app/core/websocket_manager.py",
-      "span": "L13-L21",
+      "span": "L15-L23",
       "signature": "def __init__(self): # 세션별 연결된 클라이언트들",
       "exported": false,
       "origin": "ast",
@@ -3108,7 +3236,7 @@
       "name": "broadcast_participant_event",
       "kind": "method",
       "path": "app/core/websocket_manager.py",
-      "span": "L187-L194",
+      "span": "L202-L209",
       "signature": "async def broadcast_participant_event(self, session_id: str, event_type: str, participant: schemas.VoiceParticipant)",
       "exported": true,
       "origin": "ast",
@@ -3123,11 +3251,11 @@
       "name": "broadcast_to_session",
       "kind": "method",
       "path": "app/core/websocket_manager.py",
-      "span": "L101-L144",
+      "span": "L103-L159",
       "signature": "async def broadcast_to_session(self, session_id: str, message: dict)",
       "exported": true,
       "origin": "ast",
-      "body_hash": "444a8386999603f3a3b4f2eef8749f21e0187d8c5a597cffd26445adcfe723e3",
+      "body_hash": "95858c82b31c8754b72e9d058dad73970f09e44379baab4b1c4e5c7e1ab1db2d",
       "summary_state": "pending",
       "summary": null,
       "crux": null,
@@ -3138,7 +3266,7 @@
       "name": "broadcast_voice_status",
       "kind": "method",
       "path": "app/core/websocket_manager.py",
-      "span": "L177-L185",
+      "span": "L192-L200",
       "signature": "async def broadcast_voice_status(self, session_id: str, participant: schemas.VoiceParticipant)",
       "exported": true,
       "origin": "ast",
@@ -3153,7 +3281,7 @@
       "name": "connect",
       "kind": "method",
       "path": "app/core/websocket_manager.py",
-      "span": "L24-L79",
+      "span": "L26-L81",
       "signature": "async def connect(self, websocket: WebSocket, session_id: str, user_info: dict)",
       "exported": true,
       "origin": "ast",
@@ -3168,7 +3296,7 @@
       "name": "disconnect",
       "kind": "method",
       "path": "app/core/websocket_manager.py",
-      "span": "L81-L99",
+      "span": "L83-L101",
       "signature": "def disconnect(self, websocket: WebSocket)",
       "exported": true,
       "origin": "ast",
@@ -3183,7 +3311,7 @@
       "name": "get_all_stats",
       "kind": "method",
       "path": "app/core/websocket_manager.py",
-      "span": "L208-L210",
+      "span": "L223-L225",
       "signature": "def get_all_stats(self) -> Dict[str, dict]",
       "exported": true,
       "origin": "ast",
@@ -3198,7 +3326,7 @@
       "name": "get_connection_count",
       "kind": "method",
       "path": "app/core/websocket_manager.py",
-      "span": "L200-L202",
+      "span": "L215-L217",
       "signature": "def get_connection_count(self, session_id: str) -> int",
       "exported": true,
       "origin": "ast",
@@ -3213,7 +3341,7 @@
       "name": "get_connection_health",
       "kind": "method",
       "path": "app/core/websocket_manager.py",
-      "span": "L212-L219",
+      "span": "L227-L234",
       "signature": "def get_connection_health(self, session_id: str) -> Dict[str, dict]",
       "exported": true,
       "origin": "ast",
@@ -3228,7 +3356,7 @@
       "name": "get_connection_stats",
       "kind": "method",
       "path": "app/core/websocket_manager.py",
-      "span": "L204-L206",
+      "span": "L219-L221",
       "signature": "def get_connection_stats(self, session_id: str) -> Optional[dict]",
       "exported": true,
       "origin": "ast",
@@ -3243,7 +3371,7 @@
       "name": "get_session_participants",
       "kind": "method",
       "path": "app/core/websocket_manager.py",
-      "span": "L196-L198",
+      "span": "L211-L213",
       "signature": "def get_session_participants(self, session_id: str) -> Set[WebSocket]",
       "exported": true,
       "origin": "ast",
@@ -3258,7 +3386,7 @@
       "name": "ping_connections",
       "kind": "method",
       "path": "app/core/websocket_manager.py",
-      "span": "L221-L244",
+      "span": "L236-L259",
       "signature": "async def ping_connections(self, session_id: str)",
       "exported": true,
       "origin": "ast",
@@ -3273,7 +3401,7 @@
       "name": "send_personal_message",
       "kind": "method",
       "path": "app/core/websocket_manager.py",
-      "span": "L146-L175",
+      "span": "L161-L190",
       "signature": "async def send_personal_message(self, websocket: WebSocket, message: dict)",
       "exported": true,
       "origin": "ast",
@@ -3347,12 +3475,12 @@
       "name": "main.py",
       "kind": "file",
       "path": "app/main.py",
-      "span": "L1-L85",
+      "span": "L1-L100",
       "signature": null,
       "exported": true,
       "origin": "ast",
-      "body_hash": "7529670425a63d58aa5341b1ee77419ccfd5155a91c38b5d1aff8a409f299318",
-      "chars": 2380,
+      "body_hash": "16a8093d7b2b8818c7217f0b8573a9e3ad7cf4866e5cfcf88d4baa8f7bc929c4",
+      "chars": 2875,
       "summary_state": "pending",
       "summary": null,
       "crux": null
@@ -3362,7 +3490,7 @@
       "name": "health_check",
       "kind": "function",
       "path": "app/main.py",
-      "span": "L73-L80",
+      "span": "L88-L95",
       "signature": "async def health_check()",
       "exported": true,
       "origin": "ast",
@@ -3372,11 +3500,25 @@
       "crux": null
     },
     {
+      "id": "app/main.py#record_game_request_context",
+      "name": "record_game_request_context",
+      "kind": "function",
+      "path": "app/main.py",
+      "span": "L33-L43",
+      "signature": "async def record_game_request_context(request: Request, call_next)",
+      "exported": true,
+      "origin": "ast",
+      "body_hash": "d1552e981a04fd272c648f82429a4e1bf2292181754a596dba859dedbd9133d6",
+      "summary_state": "pending",
+      "summary": null,
+      "crux": null
+    },
+    {
       "id": "app/main.py#report_unhandled_exception",
       "name": "report_unhandled_exception",
       "kind": "function",
       "path": "app/main.py",
-      "span": "L22-L29",
+      "span": "L23-L30",
       "signature": "async def report_unhandled_exception(request: Request, exc: Exception)",
       "exported": true,
       "origin": "ast",
@@ -3390,7 +3532,7 @@
       "name": "root",
       "kind": "function",
       "path": "app/main.py",
-      "span": "L69-L70",
+      "span": "L84-L85",
       "signature": "async def root()",
       "exported": true,
       "origin": "ast",
@@ -3404,11 +3546,11 @@
       "name": "shutdown_event",
       "kind": "function",
       "path": "app/main.py",
-      "span": "L65-L66",
+      "span": "L79-L81",
       "signature": "async def shutdown_event()",
       "exported": true,
       "origin": "ast",
-      "body_hash": "67e7f0e0ea0725a0842f53fd0c6def1391778e4a6dc793806e36625689af82ad",
+      "body_hash": "5822812dbb03f3bad0267e19882e97e835df51cbd98b0447fc38a5bd5ec04257",
       "summary_state": "pending",
       "summary": null,
       "crux": null
@@ -3418,7 +3560,7 @@
       "name": "startup_event",
       "kind": "function",
       "path": "app/main.py",
-      "span": "L59-L61",
+      "span": "L73-L75",
       "signature": "async def startup_event(): # 데이터베이스 테이블 생성",
       "exported": true,
       "origin": "ast",
@@ -4192,6 +4334,108 @@
       "exported": true,
       "origin": "ast",
       "body_hash": "8d31a4e973b8da8a2cc7c56c6be3524f489505a3dcc15c4170e23368dacec7db",
+      "summary_state": "pending",
+      "summary": null,
+      "crux": null
+    },
+    {
+      "id": "app/schemas/game_diagnostic.py",
+      "name": "game_diagnostic.py",
+      "kind": "file",
+      "path": "app/schemas/game_diagnostic.py",
+      "span": "L1-L68",
+      "signature": null,
+      "exported": true,
+      "origin": "ast",
+      "body_hash": "382a4bc7193f123dbf02abd0520f6cc2112222fab14e636b14e4bce136e97a52",
+      "chars": 2853,
+      "summary_state": "pending",
+      "summary": null,
+      "crux": null
+    },
+    {
+      "id": "app/schemas/game_diagnostic.py#BrowserGameBatch",
+      "name": "BrowserGameBatch",
+      "kind": "class",
+      "path": "app/schemas/game_diagnostic.py",
+      "span": "L65-L67",
+      "signature": "class BrowserGameBatch(BaseModel)",
+      "exported": true,
+      "origin": "ast",
+      "body_hash": "403ced9e87d3bf437ef19854bbb4ea9fd0eca6c9e5e1593c4244061b895384e6",
+      "summary_state": "pending",
+      "summary": null,
+      "crux": null
+    },
+    {
+      "id": "app/schemas/game_diagnostic.py#BrowserGameEvent",
+      "name": "BrowserGameEvent",
+      "kind": "class",
+      "path": "app/schemas/game_diagnostic.py",
+      "span": "L36-L62",
+      "signature": "class BrowserGameEvent(BaseModel)",
+      "exported": true,
+      "origin": "ast",
+      "body_hash": "e31ec90832866123f3955bababa6bd0f8949eaa04e1427730c8085443eb648ef",
+      "summary_state": "pending",
+      "summary": null,
+      "crux": null
+    },
+    {
+      "id": "app/schemas/game_diagnostic.py#BrowserGameEvent.aware_time",
+      "name": "aware_time",
+      "kind": "method",
+      "path": "app/schemas/game_diagnostic.py",
+      "span": "L54-L57",
+      "signature": "def aware_time(cls, value)",
+      "exported": true,
+      "origin": "ast",
+      "body_hash": "ae90bef590fab41e719dbdbb995e5a0720cc15d5f513ceacf32340c98624d8c3",
+      "summary_state": "pending",
+      "summary": null,
+      "crux": null,
+      "owner": "BrowserGameEvent"
+    },
+    {
+      "id": "app/schemas/game_diagnostic.py#BrowserGameEvent.bounded_details",
+      "name": "bounded_details",
+      "kind": "method",
+      "path": "app/schemas/game_diagnostic.py",
+      "span": "L61-L62",
+      "signature": "def bounded_details(cls, value)",
+      "exported": true,
+      "origin": "ast",
+      "body_hash": "b8fcc6de740b69a618e52f98b7d91dc4a0fcd2177b3ab2e37ff314a82bca2a75",
+      "summary_state": "pending",
+      "summary": null,
+      "crux": null,
+      "owner": "BrowserGameEvent"
+    },
+    {
+      "id": "app/schemas/game_diagnostic.py#BrowserGameEvent.known_event",
+      "name": "known_event",
+      "kind": "method",
+      "path": "app/schemas/game_diagnostic.py",
+      "span": "L47-L50",
+      "signature": "def known_event(cls, value)",
+      "exported": true,
+      "origin": "ast",
+      "body_hash": "cdfd4053846eac873263ad50f5c30fa3b856ee57c91c44fe1c7b868728f7d681",
+      "summary_state": "pending",
+      "summary": null,
+      "crux": null,
+      "owner": "BrowserGameEvent"
+    },
+    {
+      "id": "app/schemas/game_diagnostic.py#validate_details",
+      "name": "validate_details",
+      "kind": "function",
+      "path": "app/schemas/game_diagnostic.py",
+      "span": "L22-L33",
+      "signature": "def validate_details(values)",
+      "exported": true,
+      "origin": "ast",
+      "body_hash": "13be3ad81809d61edcd7a3f7ac936740a04703c27d040f5193c0920b94af6611",
       "summary_state": "pending",
       "summary": null,
       "crux": null
@@ -7368,6 +7612,95 @@
       "crux": null
     },
     {
+      "id": "tests/test_game_diagnostics.py",
+      "name": "test_game_diagnostics.py",
+      "kind": "file",
+      "path": "tests/test_game_diagnostics.py",
+      "span": "L1-L35",
+      "signature": null,
+      "exported": true,
+      "origin": "ast",
+      "body_hash": "20daa1179c3deb906418af7c0b0e4c2d70961711ba24a00a21203ed2c0432d09",
+      "chars": 1789,
+      "summary_state": "pending",
+      "summary": null,
+      "crux": null
+    },
+    {
+      "id": "tests/test_game_diagnostics.py#GameDiagnosticsTests",
+      "name": "GameDiagnosticsTests",
+      "kind": "class",
+      "path": "tests/test_game_diagnostics.py",
+      "span": "L8-L34",
+      "signature": "class GameDiagnosticsTests(unittest.TestCase)",
+      "exported": true,
+      "origin": "ast",
+      "body_hash": "24cba5f15a618f02d506e5d2fca2e0ea3eb9c1dc1dec78aeb709e1abc1b67375",
+      "summary_state": "pending",
+      "summary": null,
+      "crux": null
+    },
+    {
+      "id": "tests/test_game_diagnostics.py#GameDiagnosticsTests.test_malformed_and_oversized_metadata",
+      "name": "test_malformed_and_oversized_metadata",
+      "kind": "method",
+      "path": "tests/test_game_diagnostics.py",
+      "span": "L12-L14",
+      "signature": "def test_malformed_and_oversized_metadata(self)",
+      "exported": true,
+      "origin": "ast",
+      "body_hash": "a8d4d4580008a0474ade08be43873617f3d4fb0226cc29ecdd0984546541a3cf",
+      "summary_state": "pending",
+      "summary": null,
+      "crux": null,
+      "owner": "GameDiagnosticsTests"
+    },
+    {
+      "id": "tests/test_game_diagnostics.py#GameDiagnosticsTests.test_missing_metadata_is_not_reported_as_missing_game_code",
+      "name": "test_missing_metadata_is_not_reported_as_missing_game_code",
+      "kind": "method",
+      "path": "tests/test_game_diagnostics.py",
+      "span": "L9-L10",
+      "signature": "def test_missing_metadata_is_not_reported_as_missing_game_code(self)",
+      "exported": true,
+      "origin": "ast",
+      "body_hash": "ed30cfa80b149c72a166c29a8af64802a6960d9e06d4b9c88aa5155ab8233dc0",
+      "summary_state": "pending",
+      "summary": null,
+      "crux": null,
+      "owner": "GameDiagnosticsTests"
+    },
+    {
+      "id": "tests/test_game_diagnostics.py#GameDiagnosticsTests.test_only_bounded_context_is_kept",
+      "name": "test_only_bounded_context_is_kept",
+      "kind": "method",
+      "path": "tests/test_game_diagnostics.py",
+      "span": "L16-L23",
+      "signature": "def test_only_bounded_context_is_kept(self)",
+      "exported": true,
+      "origin": "ast",
+      "body_hash": "e6ba6e12e61fd08a98f4fdd70cb186cd2cec94968e6be0da3a0323f080c85812",
+      "summary_state": "pending",
+      "summary": null,
+      "crux": null,
+      "owner": "GameDiagnosticsTests"
+    },
+    {
+      "id": "tests/test_game_diagnostics.py#GameDiagnosticsTests.test_server_account_is_correlated_without_identity_or_body",
+      "name": "test_server_account_is_correlated_without_identity_or_body",
+      "kind": "method",
+      "path": "tests/test_game_diagnostics.py",
+      "span": "L25-L34",
+      "signature": "def test_server_account_is_correlated_without_identity_or_body(self)",
+      "exported": true,
+      "origin": "ast",
+      "body_hash": "cd49493d0f3762f431ba9598a4df7099a5e3ed9078443c0a404f71bbe4a2ddd1",
+      "summary_state": "pending",
+      "summary": null,
+      "crux": null,
+      "owner": "GameDiagnosticsTests"
+    },
+    {
       "id": "tests/test_room_game_binding.py",
       "name": "test_room_game_binding.py",
       "kind": "file",
@@ -8743,6 +9076,102 @@
       "confidence": "extracted"
     },
     {
+      "source": "app/api/endpoints/game_diagnostics.py",
+      "target": "app/api/endpoints/game_diagnostics.py#receive_game_diagnostics",
+      "relation": "contains",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/api/endpoints/game_diagnostics.py",
+      "target": "app",
+      "relation": "imports",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/api/endpoints/game_diagnostics.py",
+      "target": "app.core.deps",
+      "relation": "imports",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/api/endpoints/game_diagnostics.py",
+      "target": "app.core.game_diagnostics",
+      "relation": "imports",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/api/endpoints/game_diagnostics.py",
+      "target": "app.schemas.game_diagnostic",
+      "relation": "imports",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/api/endpoints/game_diagnostics.py",
+      "target": "asyncio",
+      "relation": "imports",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/api/endpoints/game_diagnostics.py",
+      "target": "datetime",
+      "relation": "imports",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/api/endpoints/game_diagnostics.py",
+      "target": "fastapi",
+      "relation": "imports",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/api/endpoints/game_diagnostics.py",
+      "target": "hashlib",
+      "relation": "imports",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/api/endpoints/game_diagnostics.py",
+      "target": "json",
+      "relation": "imports",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/api/endpoints/game_diagnostics.py",
+      "target": "os",
+      "relation": "imports",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/api/endpoints/game_diagnostics.py",
+      "target": "pydantic",
+      "relation": "imports",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/api/endpoints/game_diagnostics.py",
+      "target": "sqlalchemy",
+      "relation": "imports",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/api/endpoints/game_diagnostics.py",
+      "target": "sqlalchemy.ext.asyncio",
+      "relation": "imports",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/api/endpoints/game_diagnostics.py#receive_game_diagnostics",
+      "target": "app/core/game_diagnostics.py#context_from_headers",
+      "relation": "calls",
+      "confidence": "inferred"
+    },
+    {
+      "source": "app/api/endpoints/game_diagnostics.py#receive_game_diagnostics",
+      "target": "app/core/game_diagnostics.py#send_to_admin",
+      "relation": "calls",
+      "confidence": "inferred"
+    },
+    {
       "source": "app/api/endpoints/play_applications.py",
       "target": "app/api/endpoints/play_applications.py#create_play_application",
       "relation": "contains",
@@ -10003,6 +10432,144 @@
       "confidence": "extracted"
     },
     {
+      "source": "app/core/game_diagnostics.py",
+      "target": "app/core/game_diagnostics.py#context_from_headers",
+      "relation": "contains",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/core/game_diagnostics.py",
+      "target": "app/core/game_diagnostics.py#flush_game_diagnostics",
+      "relation": "contains",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/core/game_diagnostics.py",
+      "target": "app/core/game_diagnostics.py#queue_diagnostic",
+      "relation": "contains",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/core/game_diagnostics.py",
+      "target": "app/core/game_diagnostics.py#record_navigation_delivery",
+      "relation": "contains",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/core/game_diagnostics.py",
+      "target": "app/core/game_diagnostics.py#record_request",
+      "relation": "contains",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/core/game_diagnostics.py",
+      "target": "app/core/game_diagnostics.py#send_to_admin",
+      "relation": "contains",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/core/game_diagnostics.py",
+      "target": "app.core.config",
+      "relation": "imports",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/core/game_diagnostics.py",
+      "target": "app.core.error_tracking",
+      "relation": "imports",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/core/game_diagnostics.py",
+      "target": "asyncio",
+      "relation": "imports",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/core/game_diagnostics.py",
+      "target": "datetime",
+      "relation": "imports",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/core/game_diagnostics.py",
+      "target": "hashlib",
+      "relation": "imports",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/core/game_diagnostics.py",
+      "target": "httpx",
+      "relation": "imports",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/core/game_diagnostics.py",
+      "target": "jose",
+      "relation": "imports",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/core/game_diagnostics.py",
+      "target": "json",
+      "relation": "imports",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/core/game_diagnostics.py",
+      "target": "logging",
+      "relation": "imports",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/core/game_diagnostics.py",
+      "target": "os",
+      "relation": "imports",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/core/game_diagnostics.py",
+      "target": "re",
+      "relation": "imports",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/core/game_diagnostics.py",
+      "target": "uuid",
+      "relation": "imports",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/core/game_diagnostics.py#queue_diagnostic",
+      "target": "app/core/game_diagnostics.py#send_to_admin",
+      "relation": "calls",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/core/game_diagnostics.py#record_navigation_delivery",
+      "target": "app/core/game_diagnostics.py#queue_diagnostic",
+      "relation": "calls",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/core/game_diagnostics.py#record_request",
+      "target": "app/core/error_tracking.py#capture_event",
+      "relation": "calls",
+      "confidence": "inferred"
+    },
+    {
+      "source": "app/core/game_diagnostics.py#record_request",
+      "target": "app/core/game_diagnostics.py#context_from_headers",
+      "relation": "calls",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/core/game_diagnostics.py#record_request",
+      "target": "app/core/game_diagnostics.py#queue_diagnostic",
+      "relation": "calls",
+      "confidence": "extracted"
+    },
+    {
       "source": "app/core/security.py",
       "target": "app/core/security.py#create_access_token",
       "relation": "contains",
@@ -10082,6 +10649,12 @@
     },
     {
       "source": "app/core/websocket_manager.py",
+      "target": "app.core.game_diagnostics",
+      "relation": "imports",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/core/websocket_manager.py",
       "target": "asyncio",
       "relation": "imports",
       "confidence": "extracted"
@@ -10113,6 +10686,12 @@
     {
       "source": "app/core/websocket_manager.py",
       "target": "typing",
+      "relation": "imports",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/core/websocket_manager.py",
+      "target": "uuid",
       "relation": "imports",
       "confidence": "extracted"
     },
@@ -10202,6 +10781,12 @@
     },
     {
       "source": "app/core/websocket_manager.py#WebSocketManager.broadcast_to_session",
+      "target": "app/core/game_diagnostics.py#record_navigation_delivery",
+      "relation": "calls",
+      "confidence": "inferred"
+    },
+    {
+      "source": "app/core/websocket_manager.py#WebSocketManager.broadcast_to_session",
       "target": "app/core/websocket_manager.py#WebSocketManager.disconnect",
       "relation": "calls",
       "confidence": "extracted"
@@ -10286,6 +10871,12 @@
     },
     {
       "source": "app/main.py",
+      "target": "app/main.py#record_game_request_context",
+      "relation": "contains",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/main.py",
       "target": "app/main.py#report_unhandled_exception",
       "relation": "contains",
       "confidence": "extracted"
@@ -10334,6 +10925,12 @@
     },
     {
       "source": "app/main.py",
+      "target": "app.core.game_diagnostics",
+      "relation": "imports",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/main.py",
       "target": "datetime",
       "relation": "imports",
       "confidence": "extracted"
@@ -10375,6 +10972,12 @@
       "confidence": "extracted"
     },
     {
+      "source": "app/main.py#record_game_request_context",
+      "target": "app/core/game_diagnostics.py#record_request",
+      "relation": "calls",
+      "confidence": "inferred"
+    },
+    {
       "source": "app/main.py#report_unhandled_exception",
       "target": "app/core/error_tracking.py#capture_exception",
       "relation": "calls",
@@ -10383,6 +10986,12 @@
     {
       "source": "app/main.py#shutdown_event",
       "target": "app/core/error_tracking.py#shutdown_error_tracking",
+      "relation": "calls",
+      "confidence": "inferred"
+    },
+    {
+      "source": "app/main.py#shutdown_event",
+      "target": "app/core/game_diagnostics.py#flush_game_diagnostics",
       "relation": "calls",
       "confidence": "inferred"
     },
@@ -11153,6 +11762,90 @@
       "target": "BaseModel",
       "relation": "extends",
       "confidence": "inferred"
+    },
+    {
+      "source": "app/schemas/game_diagnostic.py",
+      "target": "app/schemas/game_diagnostic.py#BrowserGameBatch",
+      "relation": "contains",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/schemas/game_diagnostic.py",
+      "target": "app/schemas/game_diagnostic.py#BrowserGameEvent",
+      "relation": "contains",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/schemas/game_diagnostic.py",
+      "target": "app/schemas/game_diagnostic.py#validate_details",
+      "relation": "contains",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/schemas/game_diagnostic.py",
+      "target": "datetime",
+      "relation": "imports",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/schemas/game_diagnostic.py",
+      "target": "pydantic",
+      "relation": "imports",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/schemas/game_diagnostic.py",
+      "target": "re",
+      "relation": "imports",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/schemas/game_diagnostic.py",
+      "target": "typing",
+      "relation": "imports",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/schemas/game_diagnostic.py",
+      "target": "uuid",
+      "relation": "imports",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/schemas/game_diagnostic.py#BrowserGameBatch",
+      "target": "BaseModel",
+      "relation": "extends",
+      "confidence": "inferred"
+    },
+    {
+      "source": "app/schemas/game_diagnostic.py#BrowserGameEvent",
+      "target": "app/schemas/game_diagnostic.py#BrowserGameEvent.aware_time",
+      "relation": "contains",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/schemas/game_diagnostic.py#BrowserGameEvent",
+      "target": "app/schemas/game_diagnostic.py#BrowserGameEvent.bounded_details",
+      "relation": "contains",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/schemas/game_diagnostic.py#BrowserGameEvent",
+      "target": "app/schemas/game_diagnostic.py#BrowserGameEvent.known_event",
+      "relation": "contains",
+      "confidence": "extracted"
+    },
+    {
+      "source": "app/schemas/game_diagnostic.py#BrowserGameEvent",
+      "target": "BaseModel",
+      "relation": "extends",
+      "confidence": "inferred"
+    },
+    {
+      "source": "app/schemas/game_diagnostic.py#BrowserGameEvent.bounded_details",
+      "target": "app/schemas/game_diagnostic.py#validate_details",
+      "relation": "calls",
+      "confidence": "extracted"
     },
     {
       "source": "app/schemas/play_application.py",
@@ -13727,6 +14420,90 @@
       "target": "scripts/export_data_example.py#get_choice_analysis",
       "relation": "calls",
       "confidence": "extracted"
+    },
+    {
+      "source": "tests/test_game_diagnostics.py",
+      "target": "tests/test_game_diagnostics.py#GameDiagnosticsTests",
+      "relation": "contains",
+      "confidence": "extracted"
+    },
+    {
+      "source": "tests/test_game_diagnostics.py",
+      "target": "app.core.game_diagnostics",
+      "relation": "imports",
+      "confidence": "extracted"
+    },
+    {
+      "source": "tests/test_game_diagnostics.py",
+      "target": "json",
+      "relation": "imports",
+      "confidence": "extracted"
+    },
+    {
+      "source": "tests/test_game_diagnostics.py",
+      "target": "types",
+      "relation": "imports",
+      "confidence": "extracted"
+    },
+    {
+      "source": "tests/test_game_diagnostics.py",
+      "target": "unittest",
+      "relation": "imports",
+      "confidence": "extracted"
+    },
+    {
+      "source": "tests/test_game_diagnostics.py",
+      "target": "unittest.mock",
+      "relation": "imports",
+      "confidence": "extracted"
+    },
+    {
+      "source": "tests/test_game_diagnostics.py#GameDiagnosticsTests",
+      "target": "tests/test_game_diagnostics.py#GameDiagnosticsTests.test_malformed_and_oversized_metadata",
+      "relation": "contains",
+      "confidence": "extracted"
+    },
+    {
+      "source": "tests/test_game_diagnostics.py#GameDiagnosticsTests",
+      "target": "tests/test_game_diagnostics.py#GameDiagnosticsTests.test_missing_metadata_is_not_reported_as_missing_game_code",
+      "relation": "contains",
+      "confidence": "extracted"
+    },
+    {
+      "source": "tests/test_game_diagnostics.py#GameDiagnosticsTests",
+      "target": "tests/test_game_diagnostics.py#GameDiagnosticsTests.test_only_bounded_context_is_kept",
+      "relation": "contains",
+      "confidence": "extracted"
+    },
+    {
+      "source": "tests/test_game_diagnostics.py#GameDiagnosticsTests",
+      "target": "tests/test_game_diagnostics.py#GameDiagnosticsTests.test_server_account_is_correlated_without_identity_or_body",
+      "relation": "contains",
+      "confidence": "extracted"
+    },
+    {
+      "source": "tests/test_game_diagnostics.py#GameDiagnosticsTests.test_malformed_and_oversized_metadata",
+      "target": "app/core/game_diagnostics.py#context_from_headers",
+      "relation": "calls",
+      "confidence": "inferred"
+    },
+    {
+      "source": "tests/test_game_diagnostics.py#GameDiagnosticsTests.test_missing_metadata_is_not_reported_as_missing_game_code",
+      "target": "app/core/game_diagnostics.py#context_from_headers",
+      "relation": "calls",
+      "confidence": "inferred"
+    },
+    {
+      "source": "tests/test_game_diagnostics.py#GameDiagnosticsTests.test_only_bounded_context_is_kept",
+      "target": "app/core/game_diagnostics.py#context_from_headers",
+      "relation": "calls",
+      "confidence": "inferred"
+    },
+    {
+      "source": "tests/test_game_diagnostics.py#GameDiagnosticsTests.test_server_account_is_correlated_without_identity_or_body",
+      "target": "app/core/game_diagnostics.py#record_request",
+      "relation": "calls",
+      "confidence": "inferred"
     },
     {
       "source": "tests/test_room_game_binding.py",

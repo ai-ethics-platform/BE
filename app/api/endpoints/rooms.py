@@ -21,6 +21,7 @@ page_sync_status: Dict[str, Dict[int, Set[str]]] = {}
 
 @router.post("/create/public", response_model=schemas.RoomCreateResponse)
 async def create_public_room(
+    request: Request,
     room_data: schemas.RoomCreatePublic,
     db: AsyncSession = Depends(get_db),
     current_user: Union[models.User, dict] = Depends(get_current_approved_user)
@@ -31,6 +32,8 @@ async def create_public_room(
     - 생성자가 자동으로 방에 입장됨
     """
     
+    request.state.diagnostic_room_code = None
+    request.state.diagnostic_submitted_game_code = room_data.custom_game_code
     try:
         # 사용자 정보 추출
         print(f"[공개방] current_user 타입: {type(current_user)}")
@@ -58,6 +61,8 @@ async def create_public_room(
             creator_id=creator_id,
             creator_nickname=creator_nickname
         )
+        request.state.diagnostic_room_code = room.room_code
+        request.state.diagnostic_room_game_code = room.custom_game_code
         
         return schemas.RoomCreateResponse(
             room=room,
@@ -149,8 +154,11 @@ async def join_room_by_code(
     방 코드로 방 입장
     """
     try:
+        request.state.diagnostic_room_code = join_data.room_code
         # 방 코드로 방 찾기
         room = await room_service.get_room_by_code(db=db, room_code=join_data.room_code)
+        if room:
+            request.state.diagnostic_room_game_code = room.custom_game_code
         if not room:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -256,6 +264,7 @@ async def join_room_by_id(
 
 @router.post("/create/private", response_model=schemas.RoomCreateResponse)
 async def create_private_room(
+    request: Request,
     room_data: schemas.RoomCreatePrivate,
     db: AsyncSession = Depends(get_db),
     current_user: Union[models.User, dict] = Depends(get_current_approved_user)
@@ -266,6 +275,8 @@ async def create_private_room(
     - 생성자가 자동으로 방에 입장됨
     """
     
+    request.state.diagnostic_room_code = None
+    request.state.diagnostic_submitted_game_code = room_data.custom_game_code
     try:
         # 사용자 정보 추출
         print(f"🔍 [비공개방] current_user 타입: {type(current_user)}")
@@ -293,6 +304,8 @@ async def create_private_room(
             creator_id=creator_id,
             creator_nickname=creator_nickname
         )
+        request.state.diagnostic_room_code = room.room_code
+        request.state.diagnostic_room_game_code = room.custom_game_code
         
         return schemas.RoomCreateResponse(
             room=room,
@@ -341,6 +354,7 @@ async def get_private_rooms(
 
 @router.post("/ready", response_model=schemas.RoomReadyResponse)
 async def toggle_ready_status(
+    request: Request,
     ready_data: schemas.RoomReadyRequest,
     db: AsyncSession = Depends(get_db),
     current_user: Union[models.User, dict] = Depends(get_current_approved_user)
@@ -350,6 +364,8 @@ async def toggle_ready_status(
     - 사용자의 준비 상태를 변경합니다
     - 3명이 모두 준비되면 3초 후 게임 시작이 예약됩니다
     """
+    request.state.diagnostic_room_code = ready_data.room_code
+    request.state.diagnostic_submitted_game_code = ready_data.custom_game_code
     try:
         # 사용자 정보 추출
         if isinstance(current_user, models.User):
@@ -371,6 +387,7 @@ async def toggle_ready_status(
             guest_id=guest_id,
             custom_game_code=ready_data.custom_game_code,
         )
+        request.state.diagnostic_room_game_code = room.custom_game_code
         
         # 응답 메시지 생성
         if game_starting:

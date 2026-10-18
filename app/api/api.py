@@ -7,6 +7,7 @@ from app.api.endpoints import (
     auth,
     chat,
     custom_games,
+    game_diagnostics,
     play_applications,
     research,
     rooms,
@@ -18,6 +19,7 @@ from app.api.endpoints import (
 
 
 api_router = APIRouter()
+api_router.include_router(game_diagnostics.router, tags=["game_diagnostics"])
 
 api_router.include_router(
     auth.router,

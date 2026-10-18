@@ -61,3 +61,16 @@ Docker와 GitHub Actions를 통해 자동 배포됩니다.
 
 # URL !
 https://www.dilemmai-idl.com/
+
+### Browser game diagnostics
+
+Authenticated `POST /game-diagnostics` receives at most five bounded observations per
+20 KB request. It validates an event/detail allowlist, resolves the reported room's
+current game binding, hashes the authenticated account ID, and forwards to the existing
+private admin receiver. Browser fields remain explicitly marked `browser_report`.
+The separate diagnostic request waits for admin persistence; retries reuse event IDs.
+It never gates a gameplay API or navigation. No database migration is needed.
+
+`next_page` broadcasts carry an optional diagnostic UUID; socket-write results use the
+same UUID as browser receipt/destination reports. Older clients ignore the added field.
+These writes are best-effort background records, not proof of browser delivery.

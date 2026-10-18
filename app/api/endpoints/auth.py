@@ -1,7 +1,7 @@
 from datetime import timedelta
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, status, Body
+from fastapi import APIRouter, Depends, HTTPException, status, Body, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 from jose import jwt, JWTError
@@ -17,6 +17,7 @@ router = APIRouter()
 
 @router.post("/login", response_model=schemas.Token)
 async def login(
+    request: Request,
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: AsyncSession = Depends(get_db)
 ) -> Any:
@@ -34,6 +35,7 @@ async def login(
             detail="아이디 또는 비밀번호가 올바르지 않습니다",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    request.state.diagnostic_user_id = user.id
     access_token = auth_service.create_access_token(user.id)
     refresh_token = auth_service.create_refresh_token(user.id)
     return {
@@ -45,6 +47,7 @@ async def login(
 
 @router.post("/login-json", response_model=schemas.Token)
 async def login_json(
+    request: Request,
     user_credentials: schemas.UserLogin,
     db: AsyncSession = Depends(get_db)
 ) -> Any:
@@ -62,6 +65,7 @@ async def login_json(
             detail="아이디 또는 비밀번호가 올바르지 않습니다",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    request.state.diagnostic_user_id = user.id
     access_token = auth_service.create_access_token(user.id)
     refresh_token = auth_service.create_refresh_token(user.id)
     return {
