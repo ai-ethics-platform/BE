@@ -6,3 +6,5 @@ __pycache__/
 
 # Generated Graft cache; graph cards are versioned.
 /graft/.cache/
+
+uploads/

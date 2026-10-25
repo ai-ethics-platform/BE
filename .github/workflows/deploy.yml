@@ -47,6 +47,17 @@ jobs:
             echo "${{ secrets.ENCODED_ENV_VARS }}" | base64 -d > .env
             printf '\nPOSTHOG_PROJECT_TOKEN=%s\n' "$POSTHOG_PROJECT_TOKEN" >> .env
             printf '\nGAME_DIAGNOSTIC_URL=%s\nGAME_DIAGNOSTIC_API_KEY=%s\n' "$GAME_DIAGNOSTIC_URL" "$GAME_DIAGNOSTIC_API_KEY" >> .env
+            echo "[2-1] 업로드 이미지 볼륨 최초 이전"
+            # 볼륨 도입 전 컨테이너 안에만 있던 이미지를 한 번만 호스트로 꺼낸다
+            if [ ! -d uploads/images ]; then
+              mkdir -p uploads
+              BACKEND_ID=$(docker-compose ps -q backend || true)
+              if [ -n "$BACKEND_ID" ]; then
+                docker cp "$BACKEND_ID":/app/app/static/images uploads/images || true
+              fi
+              mkdir -p uploads/images
+            fi
+
             echo "[3] Backend 빌드"
             docker-compose build backend
 

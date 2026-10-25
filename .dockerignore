@@ -61,4 +61,7 @@ docker-compose.yml
 
 # 문서
 README.md
-*.md 
+*.md
+
+# 업로드 파일 (볼륨으로 마운트)
+uploads/
