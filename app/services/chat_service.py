@@ -1,23 +1,35 @@
 from typing import Any, Dict, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from openai import OpenAI
+from openai import AsyncOpenAI, APITimeoutError
 from pydantic import BaseModel
 import os
 import uuid
 import json
+import asyncio
+import logging
+import time
 
 from app.core.config import settings
 from app.models.chat_session import ChatSession
 from app.schemas.chat_session import ChatSessionCreate, ChatSessionUpdate, MultiStepChatRequest, MultiStepChatResponse
 from app.schemas.step_responses import STEP_RESPONSE_MODELS
 
+logger = logging.getLogger(__name__)
+RESPONSE_TIMEOUT_SECONDS = 60
+EXTRACTION_TIMEOUT_SECONDS = 15
+CHAT_TIMEOUT_SECONDS = 80
+
 
 class ChatService:
     def __init__(self):
         self.openai_client = None
         if settings.OPENAI_API_KEY:
-            self.openai_client = OpenAI(api_key=settings.OPENAI_API_KEY)
+            self.openai_client = AsyncOpenAI(
+                api_key=settings.OPENAI_API_KEY,
+                timeout=RESPONSE_TIMEOUT_SECONDS,
+                max_retries=0,
+            )
         
         # 단계별 순서 정의
         self.step_order = ["opening", "question", "flip", "roles", "ending"]
@@ -147,6 +159,7 @@ class ChatService:
         if manual_variables:
             input_variables.update(manual_variables)
         
+        started_at = time.monotonic()
         try:
             # 1. OpenAI Playground API로 프롬프트 처리
             prompt_obj = {
@@ -165,9 +178,9 @@ class ChatService:
             print(f"[DEBUG] Calling OpenAI with prompt_obj: {prompt_obj}")
             print(f"[DEBUG] Input: {user_input[:50] if len(user_input) > 50 else user_input}...")
             
-            response = self.openai_client.responses.create(
-                prompt=prompt_obj,
-                input=user_input
+            response = await asyncio.wait_for(
+                self.openai_client.responses.create(prompt=prompt_obj, input=user_input),
+                timeout=RESPONSE_TIMEOUT_SECONDS,
             )
             
             # 응답 텍스트 추출
@@ -205,6 +218,8 @@ class ChatService:
                         model="gpt-4o-mini",
                         temperature=0,  # 변수 추출은 deterministic하게
                         api_key=settings.OPENAI_API_KEY,
+                        timeout=EXTRACTION_TIMEOUT_SECONDS,
+                        max_retries=0,
                     )
                     
                     # PydanticOutputParser 생성
@@ -226,10 +241,13 @@ class ChatService:
                     
                     # 체인 실행
                     chain = prompt_template | llm | parser
-                    parsed_result = await chain.ainvoke({
-                        "raw_response": raw_response_text,
-                        "format_instructions": format_instructions
-                    })
+                    parsed_result = await asyncio.wait_for(
+                        chain.ainvoke({
+                            "raw_response": raw_response_text,
+                            "format_instructions": format_instructions
+                        }),
+                        timeout=EXTRACTION_TIMEOUT_SECONDS,
+                    )
                     
                     # 파싱된 결과에서 변수만 추출 (response_text 제외!)
                     if isinstance(parsed_result, BaseModel):
@@ -253,8 +271,12 @@ class ChatService:
             # response_text는 항상 원본 사용! (LangChain 결과 무시)
             return raw_response_text, parsed_variables
             
+        except (asyncio.TimeoutError, APITimeoutError) as e:
+            raise TimeoutError("AI response timed out") from e
         except Exception as e:
             raise ValueError(f"OpenAI API call failed: {e}")
+        finally:
+            logger.info("chat_ai step=%s elapsed_seconds=%.2f", step, time.monotonic() - started_at)
     
     async def process_multi_step_chat(
         self, 

@@ -3,11 +3,13 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 import os
+import asyncio
+import logging
 
 from app.core.deps import get_db
 from app.schemas.chat import ChatRequest, ChatResponse, ImageRequest, ImageResponse
 from app.schemas.chat_session import MultiStepChatRequest, MultiStepChatResponse
-from app.services.chat_service import chat_service
+from app.services.chat_service import chat_service, CHAT_TIMEOUT_SECONDS, RESPONSE_TIMEOUT_SECONDS
 
 
 router = APIRouter()
@@ -17,15 +19,13 @@ router = APIRouter()
 async def chat_with_prompt(payload: ChatRequest, db: AsyncSession = Depends(get_db)) -> Any:
     try:
         # Lazy import to avoid startup dependency if key missing
-        from openai import OpenAI
+        from openai import AsyncOpenAI
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"OpenAI SDK import error: {e}")
 
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
         raise HTTPException(status_code=500, detail="OPENAI_API_KEY is not configured")
-
-    client = OpenAI(api_key=api_key)
 
     # Resolve variables: prefer prompt.variables > context > {}
     prompt_obj = None
@@ -43,10 +43,11 @@ async def chat_with_prompt(payload: ChatRequest, db: AsyncSession = Depends(get_
         prompt_obj = {"id": None}
 
     try:
-        resp = client.responses.create(
-            prompt=prompt_obj,
-            input=payload.input,
-        )
+        async with AsyncOpenAI(api_key=api_key, timeout=RESPONSE_TIMEOUT_SECONDS, max_retries=0) as client:
+            resp = await asyncio.wait_for(
+                client.responses.create(prompt=prompt_obj, input=payload.input),
+                timeout=RESPONSE_TIMEOUT_SECONDS,
+            )
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"OpenAI call failed: {e}")
 
@@ -139,15 +140,14 @@ Return a JSON object describing the intended image:
 
     # DALL-E로 이미지 생성
     try:
-        from openai import OpenAI
-        client = OpenAI(api_key=api_key)
+        from openai import AsyncOpenAI
         
         size = payload.size or "1024x1024"
-        img = client.images.generate(
-            model="dall-e-3",
-            prompt=final_prompt,
-            size=size,
-        )
+        async with AsyncOpenAI(api_key=api_key, timeout=120, max_retries=0) as client:
+            img = await asyncio.wait_for(
+                client.images.generate(model="dall-e-3", prompt=final_prompt, size=size),
+                timeout=120,
+            )
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"OpenAI image call failed: {e}")
 
@@ -209,8 +209,16 @@ async def multi_step_chat(
     단계 순서: topic -> question -> situation -> discussion -> conclusion
     """
     try:
-        response = await chat_service.process_multi_step_chat(db, request)
+        response = await asyncio.wait_for(
+            chat_service.process_multi_step_chat(db, request),
+            timeout=CHAT_TIMEOUT_SECONDS,
+        )
         return response
+    except asyncio.TimeoutError:
+        logging.getLogger(__name__).warning(
+            "chat_timeout session_id=%s step=%s", request.session_id, request.step
+        )
+        raise HTTPException(status_code=504, detail="AI 응답이 지연되고 있어요. 대화를 유지한 채 다시 시도해 주세요.")
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
@@ -248,5 +256,4 @@ async def delete_session(session_id: str, db: AsyncSession = Depends(get_db)) ->
         return {"message": f"Session {session_id} deleted successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to delete session: {e}")
-
 
