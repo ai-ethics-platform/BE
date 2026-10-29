@@ -12,7 +12,7 @@ from app.services.custom_game_service import custom_game_service
 from app import models
 import smtplib
 from email.mime.text import MIMEText
-
+from fastapi import Header, Response
 
 router = APIRouter()
 
@@ -32,7 +32,7 @@ async def create_custom_game(
         data=payload.data,
     )
     base_url = os.getenv("FRONTEND_BASE_URL", "https://www.dilemmai.org")
-    return {"code": game.code, "url": f"{base_url}/?code={game.code}"}
+    return {"code": game.code, "url": f"{base_url}/?code={game.code}", "edit_code": game.edit_code}
 
 
 @router.get("/custom-games/{code}", response_model=schemas.CustomGame)
@@ -75,11 +75,13 @@ async def upload_representative_image(
 async def update_representative_images(
     code: str,
     payload: schemas.RepresentativeImagesUpdate,
+    x_edit_code: str = Header(..., alias="X-Edit-Code"),
     db: AsyncSession = Depends(get_db)
 ) -> Any:
     game = await custom_game_service.get_by_code(db, code)
     if not game:
         raise HTTPException(status_code=404, detail="커스텀 게임을 찾을 수 없습니다.")
+    _verify_edit_code(game, x_edit_code)
     current = _load_data(game).get("representativeImages", {})
     current.update(payload.images)
     await _merge_and_save(db, game, {"representativeImages": current})
@@ -110,16 +112,42 @@ async def _merge_and_save(db: AsyncSession, game, patch: dict) -> None:
     await db.commit()
     await db.refresh(game)
 
+def _verify_edit_code(game: models.CustomGame, x_edit_code: str) -> None:
+    if not custom_game_service.verify_edit_code(game, x_edit_code):
+        raise HTTPException(status_code=403, detail="edit_code가 일치하지 않습니다.")
+
+
+@router.get("/custom-games/{code}/preview")
+async def preview_custom_game(
+    code: str,
+    response: Response,
+    x_edit_code: str = Header(..., alias="X-Edit-Code", min_length=1, max_length=64),
+    db: AsyncSession = Depends(get_db),
+) -> Any:
+    game = await custom_game_service.get_by_code(db, code)
+    if not game:
+        raise HTTPException(status_code=404, detail="커스텀 게임을 찾을 수 없습니다.")
+    _verify_edit_code(game, x_edit_code)
+    response.headers["Cache-Control"] = "no-store"
+    return {
+        "code": game.code,
+        "title": game.title,
+        "representative_image_url": game.representative_image_url,
+        "data": _load_data(game),
+    }
+
 
 @router.put("/custom-games/{code}/opening")
 async def update_opening(
     code: str,
     payload: schemas.OpeningUpdate,
+    x_edit_code: str = Header(..., alias="X-Edit-Code"),
     db: AsyncSession = Depends(get_db)
 ) -> Any:
     game = await custom_game_service.get_by_code(db, code)
     if not game:
         raise HTTPException(status_code=404, detail="커스텀 게임을 찾을 수 없습니다.")
+    _verify_edit_code(game, x_edit_code)
     await _merge_and_save(db, game, {"opening": payload.opening})
     return {"message": "updated"}
 
@@ -128,6 +156,7 @@ async def update_opening(
 async def update_roles(
     code: str,
     payload: schemas.RolesUpdate,
+    x_edit_code: str = Header(..., alias="X-Edit-Code"),
     db: AsyncSession = Depends(get_db)
 ) -> Any:
     game = await custom_game_service.get_by_code(db, code)
@@ -136,6 +165,7 @@ async def update_roles(
     patch = {"roles": [r.model_dump() for r in payload.roles]}
     if payload.background is not None:
         patch["rolesBackground"] = payload.background
+    _verify_edit_code(game, x_edit_code)
     await _merge_and_save(db, game, patch)
     return {"message": "updated"}
 
@@ -144,11 +174,13 @@ async def update_roles(
 async def update_dilemma(
     code: str,
     payload: schemas.DilemmaUpdate,
+    x_edit_code: str = Header(..., alias="X-Edit-Code"),
     db: AsyncSession = Depends(get_db)
 ) -> Any:
     game = await custom_game_service.get_by_code(db, code)
     if not game:
         raise HTTPException(status_code=404, detail="커스텀 게임을 찾을 수 없습니다.")
+    _verify_edit_code(game, x_edit_code)
     await _merge_and_save(db, game, {
         "dilemma": {
             "situation": payload.situation,
@@ -163,11 +195,13 @@ async def update_dilemma(
 async def update_flips(
     code: str,
     payload: schemas.FlipsUpdate,
+    x_edit_code: str = Header(..., alias="X-Edit-Code"),
     db: AsyncSession = Depends(get_db)
 ) -> Any:
     game = await custom_game_service.get_by_code(db, code)
     if not game:
         raise HTTPException(status_code=404, detail="커스텀 게임을 찾을 수 없습니다.")
+    _verify_edit_code(game, x_edit_code)
     await _merge_and_save(db, game, {
         "flips": {
             "agree_texts": payload.agree_texts,
@@ -181,11 +215,13 @@ async def update_flips(
 async def update_ending(
     code: str,
     payload: schemas.EndingUpdate,
+    x_edit_code: str = Header(..., alias="X-Edit-Code"),
     db: AsyncSession = Depends(get_db)
 ) -> Any:
     game = await custom_game_service.get_by_code(db, code)
     if not game:
         raise HTTPException(status_code=404, detail="커스텀 게임을 찾을 수 없습니다.")
+    _verify_edit_code(game, x_edit_code)
     await _merge_and_save(db, game, {
         "finalMessages": {
             "agree": payload.agree,
@@ -200,11 +236,13 @@ async def update_ending(
 async def update_title(
     code: str,
     payload: schemas.TitleUpdate,
+    x_edit_code: str = Header(..., alias="X-Edit-Code"),
     db: AsyncSession = Depends(get_db)
 ) -> Any:
     game = await custom_game_service.get_by_code(db, code)
     if not game:
         raise HTTPException(status_code=404, detail="커스텀 게임을 찾을 수 없습니다.")
+    _verify_edit_code(game, x_edit_code)
     # db column에도 반영
     game.title = payload.title
     await _merge_and_save(db, game, {"title": payload.title})
@@ -245,10 +283,15 @@ async def upload_role_image(
     code: str,
     slot: int,
     file: UploadFile = File(...),
+    x_edit_code: str = Header(..., alias="X-Edit-Code"),
     db: AsyncSession = Depends(get_db),
 ) -> Any:
     if slot not in [1, 2, 3]:
         raise HTTPException(status_code=400, detail="slot은 1,2,3만 허용됩니다.")
+    game = await custom_game_service.get_by_code(db, code)
+    if not game:
+        raise HTTPException(status_code=404, detail="커스텀 게임을 찾을 수 없습니다.")
+    _verify_edit_code(game, x_edit_code)
     ext = os.path.splitext(file.filename)[1].lower()
     if ext not in [".jpg", ".jpeg", ".png"]:
         raise HTTPException(status_code=400, detail="JPG 또는 PNG 파일만 허용됩니다.")
@@ -258,9 +301,6 @@ async def upload_role_image(
         shutil.copyfileobj(file.file, buffer)
     url_path = f"/static/images/roles/{filename}"
     # store into game.data.roleImages[slot]
-    game = await custom_game_service.get_by_code(db, code)
-    if not game:
-        raise HTTPException(status_code=404, detail="커스텀 게임을 찾을 수 없습니다.")
     current = _load_data(game).get("roleImages", {})
     current[str(slot)] = url_path
     await _merge_and_save(db, game, {"roleImages": current})
@@ -282,10 +322,15 @@ async def upload_dilemma_image(
     code: str,
     slot: str,
     file: UploadFile = File(...),
+    x_edit_code: str = Header(..., alias="X-Edit-Code"),
     db: AsyncSession = Depends(get_db),
 ) -> Any:
     if slot not in ["dilemma_image_1", "dilemma_image_3", "dilemma_image_4_1", "dilemma_image_4_2"]:
         raise HTTPException(status_code=400, detail="slot은 dilemma_image_1, dilemma_image_3, dilemma_image_4_1, dilemma_image_4_2만 허용됩니다.")
+    game = await custom_game_service.get_by_code(db, code)
+    if not game:
+        raise HTTPException(status_code=404, detail="커스텀 게임을 찾을 수 없습니다.")
+    _verify_edit_code(game, x_edit_code)
     ext = os.path.splitext(file.filename)[1].lower()
     if ext not in [".jpg", ".jpeg", ".png"]:
         raise HTTPException(status_code=400, detail="JPG 또는 PNG 파일만 허용됩니다.")
@@ -295,9 +340,6 @@ async def upload_dilemma_image(
         shutil.copyfileobj(file.file, buffer)
     url_path = f"/static/images/dilemmas/{filename}"
     # store into game.data.representativeImages[slot]
-    game = await custom_game_service.get_by_code(db, code)
-    if not game:
-        raise HTTPException(status_code=404, detail="커스텀 게임을 찾을 수 없습니다.")
     current = _load_data(game).get("representativeImages", {})
     current[slot] = url_path
     await _merge_and_save(db, game, {"representativeImages": current})

@@ -14,6 +14,10 @@ def _generate_code(length: int = 10) -> str:
     return ''.join(secrets.choice(alphabet) for _ in range(length))
 
 
+def _generate_edit_code() -> str:
+    return secrets.token_urlsafe(32)
+
+
 class CustomGameService:
     @staticmethod
     async def create(
@@ -28,9 +32,10 @@ class CustomGameService:
     ) -> models.CustomGame:
         # unique code
         code = await CustomGameService._generate_unique_code(db)
-
+        edit_code = await CustomGameService._generate_unique_edit_code(db)
         game = models.CustomGame(
             code=code,
+            edit_code=edit_code,
             teacher_name=teacher_name,
             teacher_school=teacher_school,
             teacher_email=teacher_email,
@@ -42,6 +47,21 @@ class CustomGameService:
         await db.commit()
         await db.refresh(game)
         return game
+
+    @staticmethod
+    async def _generate_unique_edit_code(db: AsyncSession) -> str:
+        while True:
+            edit_code = _generate_edit_code()
+            exists = await db.execute(
+                select(models.CustomGame.id).where(models.CustomGame.edit_code == edit_code)
+            )
+
+            if exists.scalar_one_or_none() is None:
+                return edit_code
+
+    @staticmethod
+    def verify_edit_code(game: models.CustomGame, edit_code: str) -> bool:
+        return bool(game.edit_code and edit_code) and secrets.compare_digest(game.edit_code, edit_code)
 
     @staticmethod
     async def get_by_code(db: AsyncSession, code: str) -> Optional[models.CustomGame]:

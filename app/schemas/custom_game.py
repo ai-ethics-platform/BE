@@ -35,6 +35,7 @@ class CustomGame(BaseModel):
 class CustomGameCreateResponse(BaseModel):
     code: str
     url: str
+    edit_code: str
 
 
 # Sectional payloads (page-wise updates)

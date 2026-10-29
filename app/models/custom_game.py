@@ -9,6 +9,7 @@ class CustomGame(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     code = Column(String(20), unique=True, index=True, nullable=False)
+    edit_code = Column(String(64), unique=True, index=True, nullable=True)
 
     # Teacher info
     teacher_name = Column(String(100), nullable=False)
